@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DIPOSIUM — WIP</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* --- WIP page specific styles (keeps your existing theme) --- */
+    :root {
+      --wip-accent: #74c0fc;
+      --wip-muted: rgba(255,255,255,.55);
+    }
+    html, body { height: 100%; }
+    body.wip {
+      display: grid;
+      place-items: center;
+      background: var(--color-bg);
+      color: var(--color-text);
+      font-family: "DM Sans", system-ui, -apple-system, Segoe UI, Roboto, "TheGoodMonolith", sans-serif;
+      overflow: hidden;
+    }
+    .wip-wrap {
+      position: relative;
+      width: min(100vw, 960px);
+      padding: clamp(20px, 5vw, 56px);
+      border: 1px solid var(--color-text-border-opacity01);
+      border-radius: 16px;
+      text-align: center;
+      backdrop-filter: blur(6px);
+      isolation: isolate;
+    }
+    .wip-wrap::after {
+      /* subtle scanline for projectors to avoid pure static burn-in */
+      content: "";
+      position: absolute; inset: 0;
+      background: repeating-linear-gradient(
+        to bottom,
+        rgba(255,255,255,0.03), rgba(255,255,255,0.03) 1px,
+        transparent 1px, transparent 3px
+      );
+      mix-blend-mode: soft-light;
+      opacity: .25;
+      pointer-events: none;
+      border-radius: 16px;
+      animation: breathe 4s ease-in-out infinite;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .wip-wrap::after { animation: none; }
+    }
+    @keyframes breathe {
+      0%,100% { opacity: .15; }
+      50% { opacity: .35; }
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: .6em;
+      font-size: clamp(12px, 1.8vw, 14px);
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--wip-muted);
+      border: 1px solid var(--color-text-border-opacity04);
+      padding: .5em .9em;
+      border-radius: 999px;
+    }
+    .dot { width: .55em; aspect-ratio: 1; border-radius: 50%; background: var(--wip-accent); box-shadow: 0 0 12px var(--wip-accent); }
+    h1 {
+      margin: clamp(16px, 3.5vh, 28px) 0 0;
+      font-weight: 900;
+      font-size: clamp(28px, 6.4vw, 64px);
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+    .subtitle {
+      margin-top: .6rem;
+      color: var(--wip-muted);
+      font-size: clamp(13px, 2.4vw, 16px);
+      letter-spacing: .18em;
+      text-transform: uppercase;
+    }
+    .panel {
+      margin: clamp(16px, 3vh, 28px) auto 0;
+      width: min(100%, 720px);
+      padding: clamp(12px, 2.6vw, 20px);
+      border: 1px solid var(--color-text-border-opacity04);
+      border-radius: 12px;
+      text-align: left;
+      background: rgba(255,255,255,0.03);
+    }
+    .panel p {
+      margin: .35rem 0;
+      line-height: 1.6;
+      font-size: clamp(14px, 2.4vw, 17px);
+    }
+    .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      background: rgba(255,255,255,0.06);
+      padding: .15em .5em;
+      border-radius: 6px;
+      border: 1px dashed var(--color-text-border-opacity04);
+    }
+    .btn-row {
+      margin-top: clamp(14px, 3.2vh, 28px);
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .btn {
+      cursor: pointer;
+      text-decoration: none;
+      color: #0b0b0b;
+      background: var(--color-text);
+      border: none;
+      border-radius: 12px;
+      padding: .9em 1.2em;
+      font-weight: 800;
+      letter-spacing: .06em;
+      transition: transform .2s ease, opacity .2s ease;
+    }
+    .btn:hover { transform: translateY(-1px); opacity: .95; }
+    .btn.secondary {
+      color: var(--color-text);
+      background: transparent;
+      border: 1px solid var(--color-text-border-opacity04);
+    }
+    footer {
+      margin-top: clamp(14px, 3vh, 24px);
+      font-size: 12px;
+      color: var(--wip-muted);
+      letter-spacing: .08em;
+    }
+  </style>
+</head>
+<body class="wip">
+  <main class="wip-wrap" role="main" aria-labelledby="wip-title">
+    <span class="badge"><span class="dot" aria-hidden="true"></span> SYSTEM: 7F IS NOW ONLINE</span>
+    <h1 id="wip-title"><span data-slug>THIS PAGE</span> · WORK IN PROGRESS</h1>
+    <p class="subtitle">이 메뉴는 아직 준비 중입니다</p>
+
+    <section class="panel" aria-live="polite">
+      <p><strong>임시 안내</strong> · 현재 로컬 전시 버전입니다. 선택하신 메뉴(<span class="mono" id="loc"></span>)는 아직 제작 중이며, 업데이트 이후 정상 작동합니다.</p>
+      <p>지금은 <span class="mono">index.html</span>로 돌아가 다른 메뉴를 탐색해 주세요.</p>
+      <p class="mono" id="now"></p>
+    </section>
+
+    <div class="btn-row">
+      <a class="btn" href="index.html">메인으로</a>
+      <button class="btn secondary" id="back">이전 페이지</button>
+    </div>
+
+    <footer>© DIPOSIUM — Local build placeholder</footer>
+  </main>
+
+  <script>
+    (function(){
+      const path = location.pathname.split("/").pop() || "wip.html";
+      const slug = (path.replace(/\\.html?$/i, "") || "wip").toLowerCase();
+      const map = { wall:"WALL", comment:"COMMENTS", contributors:"CONTRIBUTORS", artworks:"ARTWORKS", wip:"WIP" };
+      const label = map[slug] || slug.toUpperCase();
+      document.querySelector("[data-slug]").textContent = label;
+      document.getElementById("loc").textContent = path;
+      // time (local)
+      try {
+        const now = new Date();
+        const fmt = now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0")+"-"+String(now.getDate()).padStart(2,"0")+" "
+          + String(now.getHours()).padStart(2,"0")+":"+String(now.getMinutes()).padStart(2,"0");
+        document.getElementById("now").textContent = "현재 시각 · " + fmt;
+      } catch {}
+      // back button
+      document.getElementById("back").addEventListener("click", () => history.length ? history.back() : (location.href="index.html"));
+      // keyboard escape/backspace
+      document.addEventListener("keydown", (e) => {
+        const k = (e.key||"").toLowerCase();
+        if (k === "escape" || k === "backspace") {
+          e.preventDefault();
+          history.length ? history.back() : (location.href="index.html");
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
