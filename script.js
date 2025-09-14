@@ -414,6 +414,39 @@ document.addEventListener('keydown', (ev) => {
 
 
 
-/* add select menu hover effect from "select box.md" file */
+// === Inject corners into each .menu-item and animate on hover ===
+(() => {
+  // 동일한 아이콘 path를 사용 (md의 corner SVG path)
+  const cornerSVG = `
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path fill="currentColor" d="M12 4V12H4V14H14V4H12Z"></path>
+    </svg>`;
+
+  const items = document.querySelectorAll('.menu-item');
+  items.forEach((item) => {
+    // 코너가 없으면 4개 생성
+    if (!item.querySelector('.corner')) {
+      ['top-left','top-right','bottom-left','bottom-right'].forEach(pos => {
+        const el = document.createElement('span');
+        el.className = `corner ${pos}`;
+        el.innerHTML = cornerSVG;
+        item.appendChild(el);
+      });
+    }
+
+    const corners = item.querySelectorAll('.corner');
+    gsap.set(corners, { opacity: 0 });
+
+    // hover 시 나타나기 (stagger로 순차)
+    const showCorners = () => gsap.to(corners, { opacity: 1, duration: 0.3, stagger: 0.05, ease: 'power2.out' });
+    const hideCorners = () => gsap.to(corners, { opacity: 0, duration: 0.3, stagger: 0.05, ease: 'power2.in' });
+
+    item.addEventListener('mouseenter', showCorners);
+    item.addEventListener('mouseleave', hideCorners);
+    // 키보드 접근성(탭 포커스)도 동일 처리
+    item.addEventListener('focus', showCorners);
+    item.addEventListener('blur', hideCorners);
+  });
+})();
 
  
