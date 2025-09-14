@@ -76,7 +76,7 @@ let discPulse = gsap.fromTo(
     ease: "sine.inOut",
     repeat: -1,
     yoyo: true,
-    paused: false // 기본은 정지, 필요 시 showDisc에서 켬
+    paused: true  // 기본 정지 → showDisc/hideDisc에서 제어
   }
 );
 // 원반 title 기본 애니메이션 끝
@@ -232,6 +232,7 @@ const container = document.querySelector("#mosaic");
    container.append(canvas);
  }
 
+// (최적화 A) 프레임 세팅
 const interval = 1000 / 60;
 const ctx = canvas.getContext("2d");
 
@@ -258,9 +259,16 @@ const getDelay = (x, y, direction) => {
 const initPixels = () => {
   const h = Math.floor(rand(0, 360));
   const colorsLen = 5;
-  const colors = Array.from({ length: colorsLen }, (_, index) => `hsl(${Math.floor(rand(h, h + (index + 1) * 10))} 100% ${rand(50, 100)}%)`);
+  // (최적화 B) 색 파싱 호환성: 쉼표형 HSL로 고정
+  const colors = Array.from({ length: colorsLen }, (_, index) => {
+    const hh = Math.floor(rand(h, h + (index + 1) * 10));
+    const ll = Math.floor(rand(55, 85));
+    return `hsl(${hh}, 100%, ${ll}%)`;
+  });
   
-  const gap = 6; // Math.floor(width * 0.025)
+  // (최적화 C) 총 픽셀 수 제한(동적 gap): N ≈ (w/g)*(h/g) ≤ MAX_PIXELS
+  const MAX_PIXELS = 50000;
+  const gap = Math.max(6, Math.floor(Math.sqrt((width * height) / MAX_PIXELS)));
   const step = (width + height) * 0.005;
   const speed = rand(0.008, 0.25);
   const maxSize = Math.floor(gap * 0.5);
@@ -326,12 +334,16 @@ function resize() {
   cancelAnimationFrame(request);
   
   const rect = container.getBoundingClientRect();
- 
-  width = Math.floor(rect.width);
+  // (최적화 D) 내부 해상도 축소 + 보정 스케일
+  const RENDER_SCALE = (window.devicePixelRatio > 1) ? 0.66 : 0.8; // 고DPR일수록 더 낮춤
+  width  = Math.floor(rect.width);   // 논리(레이아웃) 크기
   height = Math.floor(rect.height);
-  
-  canvas.width = width;
-  canvas.height = height;
+  canvas.width  = Math.floor(width  * RENDER_SCALE);  // 실제 렌더 크기
+  canvas.height = Math.floor(height * RENDER_SCALE);
+  canvas.style.width  = width  + 'px';
+  canvas.style.height = height + 'px';
+  // 레이아웃 좌표계(픽셀) → 내부 좌표계 보정
+  ctx.setTransform(RENDER_SCALE, 0, 0, RENDER_SCALE, 0, 0);
   
   initPixels();
   
@@ -344,6 +356,16 @@ if (container) {
   new ResizeObserver(resize).observe(container);
   resize();
 }
+
+// (최적화 E) 탭 비가시 시 루프 정지
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    if (typeof request !== "undefined") cancelAnimationFrame(request);
+  } else {
+    // 다시 보이면 프레임 재개
+    resize();
+  }
+});
 // 모자이크 배경 끝
 
 
