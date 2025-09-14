@@ -388,14 +388,17 @@ function runIntroSequence() {
   // 4) 메뉴 표시
   tl.add(() => showSelectMenu());
 }
+// 인트로 시퀀스 끝
 
+
+
+
+
+
+/* 사용자 입력 트리거 모음 */
 // 타이틀 클릭 트리거
 document.querySelector(".title-container")
   .addEventListener("click", runIntroSequence);
-
-
-
-
 
 // 테스트용 사용자 입력
 document.addEventListener('keydown', (ev) => {
@@ -411,12 +414,15 @@ document.addEventListener('keydown', (ev) => {
     hideDisc();
   }
 });
+// 사용자 입력 트리거 끝
+
+
+
 
 
 
 // === Inject corners into each .menu-item and animate on hover ===
 (() => {
-  // 동일한 아이콘 path를 사용 (md의 corner SVG path)
   const cornerSVG = `
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <path fill="currentColor" d="M12 4V12H4V14H14V4H12Z"></path>
@@ -424,7 +430,6 @@ document.addEventListener('keydown', (ev) => {
 
   const items = document.querySelectorAll('.menu-item');
   items.forEach((item) => {
-    // 코너가 없으면 4개 생성
     if (!item.querySelector('.corner')) {
       ['top-left','top-right','bottom-left','bottom-right'].forEach(pos => {
         const el = document.createElement('span');
@@ -433,20 +438,128 @@ document.addEventListener('keydown', (ev) => {
         item.appendChild(el);
       });
     }
-
     const corners = item.querySelectorAll('.corner');
     gsap.set(corners, { opacity: 0 });
-
-    // hover 시 나타나기 (stagger로 순차)
-    const showCorners = () => gsap.to(corners, { opacity: 1, duration: 0.3, stagger: 0.05, ease: 'power2.out' });
-    const hideCorners = () => gsap.to(corners, { opacity: 0, duration: 0.3, stagger: 0.05, ease: 'power2.in' });
-
-    item.addEventListener('mouseenter', showCorners);
-    item.addEventListener('mouseleave', hideCorners);
-    // 키보드 접근성(탭 포커스)도 동일 처리
-    item.addEventListener('focus', showCorners);
-    item.addEventListener('blur', hideCorners);
+    const show = () => gsap.to(corners, { opacity: 1, duration: 0.3, stagger: 0.05, ease: 'power2.out' });
+    const hide = () => gsap.to(corners, { opacity: 0, duration: 0.25, stagger: 0.05, ease: 'power2.in'  });
+    item.addEventListener('mouseenter', show);
+    item.addEventListener('mouseleave', hide);
+    item.addEventListener('focus', show);
+    item.addEventListener('blur', hide);
   });
 })();
+// 코너 주입 및 호버 애니메이션 끝
 
- 
+
+
+// === Card Pixel Canvas (center-out mosaic on hover) ===
+(() => {
+  class CardPixel {
+    constructor(canvas, ctx, x, y, color, speed, delay) {
+      this.canvas = canvas; this.ctx = ctx;
+      this.x = x; this.y = y; this.color = color;
+      this.speed = (Math.random() * 0.8 + 0.1) * speed;
+      this.size = 0; this.sizeStep = Math.random() * 0.4;
+      this.minSize = 0.5; this.maxSizeInt = 2;
+      this.maxSize = Math.random() * (this.maxSizeInt - this.minSize) + this.minSize;
+      this.delay = delay; this.counter = 0;
+      this.counterStep = Math.random() * 4 + (canvas.width + canvas.height) * 0.01;
+      this.isIdle = false; this.isReverse = false; this.isShimmer = false;
+    }
+    draw() {
+      const o = this.maxSizeInt * 0.5 - this.size * 0.5;
+      this.ctx.fillStyle = this.color;
+      this.ctx.fillRect(this.x + o, this.y + o, this.size, this.size);
+    }
+    appear() {
+      this.isIdle = false;
+      if (this.counter <= this.delay) { this.counter += this.counterStep; return; }
+      if (this.size >= this.maxSize) this.isShimmer = true;
+      if (this.isShimmer) this.shimmer(); else this.size += this.sizeStep;
+      this.draw();
+    }
+    disappear() {
+      this.isShimmer = false; this.counter = 0;
+      if (this.size <= 0) { this.isIdle = true; return; }
+      this.size -= 0.1; this.draw();
+    }
+    shimmer() {
+      if (this.size >= this.maxSize) this.isReverse = true;
+      else if (this.size <= this.minSize) this.isReverse = false;
+      this.size += (this.isReverse ? -1 : 1) * this.speed;
+    }
+  }
+
+  class CardPixelCanvas extends HTMLElement {
+    static register(tag = "pixel-canvas") {
+      if ("customElements" in window && !customElements.get(tag)) {
+        customElements.define(tag, this);
+      }
+    }
+    static css = `
+      :host{ display:block; inline-size:100%; block-size:100%; overflow:hidden; }
+      canvas{ width:100%; height:100%; display:block; }
+    `;
+    get colors() { return this.dataset.colors?.split(",") || ["#f8fafc","#f1f5f9","#cbd5e1"]; }
+    get gap()    { const v = parseInt(this.dataset.gap || 6); return Math.min(50, Math.max(4, v)); }
+    get speed()  {
+      const v = parseInt(this.dataset.speed || 35), t=0.001;
+      if (matchMedia("(prefers-reduced-motion: reduce)").matches) return 0;
+      return Math.min(100, Math.max(0, v)) * t;
+    }
+    connectedCallback(){
+      this._parent = this.parentNode;
+      this.shadow = this.attachShadow({mode:"open"});
+      const sheet = new CSSStyleSheet(); sheet.replaceSync(CardPixelCanvas.css);
+      this.shadow.adoptedStyleSheets = [sheet];
+      this.canvas = document.createElement("canvas");
+      this.ctx = this.canvas.getContext("2d");
+      this.shadow.append(this.canvas);
+      this.ti = 1000/60; this.tp = performance.now();
+      this.init();
+      this.ro = new ResizeObserver(()=>this.init()); this.ro.observe(this);
+      this._parent.addEventListener("mouseenter", this);
+      this._parent.addEventListener("mouseleave", this);
+      this._parent.addEventListener("focusin", this);
+      this._parent.addEventListener("focusout", this);
+    }
+    disconnectedCallback(){
+      this.ro?.disconnect();
+      ["mouseenter","mouseleave","focusin","focusout"].forEach(ev=>this._parent?.removeEventListener(ev,this));
+    }
+    handleEvent(e){ this["on"+e.type](e); }
+    onmouseenter(){ this.play("appear"); }
+    onmouseleave(){ this.play("disappear"); }
+    onfocusin(e){ if (!e.currentTarget.contains(e.relatedTarget)) this.play("appear"); }
+    onfocusout(e){ if (!e.currentTarget.contains(e.relatedTarget)) this.play("disappear"); }
+    play(name){ cancelAnimationFrame(this.af); this.af = this.loop(name); }
+    init(){
+      const r = this.getBoundingClientRect();
+      this.canvas.width = Math.floor(r.width);
+      this.canvas.height = Math.floor(r.height);
+      this.pixels = [];
+      for (let x=0; x<this.canvas.width; x+=this.gap){
+        for (let y=0; y<this.canvas.height; y+=this.gap){
+          const color = this.colors[Math.floor(Math.random()*this.colors.length)];
+          const dx = x - this.canvas.width/2, dy = y - this.canvas.height/2;
+          const delay = Math.hypot(dx,dy); // 중앙에서 시작
+          this.pixels.push(new CardPixel(this.canvas,this.ctx,x,y,color,this.speed,delay));
+        }
+      }
+    }
+    loop(fn){
+      this.af = requestAnimationFrame(()=>this.loop(fn));
+      const now = performance.now(), diff = now - this.tp;
+      if (diff < this.ti) return;
+      this.tp = now - (diff % this.ti);
+      this.ctx.clearRect(0,0,this.canvas.width,this.canvas.height);
+      let allIdle = true;
+      for (let i=0;i<this.pixels.length;i++){
+        this.pixels[i][fn](); allIdle = allIdle && this.pixels[i].isIdle;
+      }
+      if (allIdle) cancelAnimationFrame(this.af);
+    }
+  }
+  CardPixelCanvas.register(); // <pixel-canvas> 사용 가능
+})();
+// pixel-canvas 끝

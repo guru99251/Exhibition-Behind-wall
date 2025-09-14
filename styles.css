@@ -6,8 +6,9 @@
   --color-bg: #0e0f0f;
   --color-text: #fff;
   --color-text-border: #f8f8f8;
-  --color-text-bg-hover: rgba(118, 194, 231, 0.7);
-  --color-text-border-hover: rgba(255, 255, 255, 0.25);
+  --color-text-border-opacity01: rgba(255, 255, 255, 0.06);
+  --color-text-border-opacity04: rgba(255, 255, 255, 0.38);
+  --color-text-border-hover: rgba(255, 255, 255, 0.45);
   --color-test: #fd0000;
 }
 
@@ -130,6 +131,9 @@ body {
   fill: var(--color-text);
 }
 
+
+
+
 /* Select Menu (선택 페이지) === */
 .select-menu{
   position: fixed;
@@ -142,18 +146,12 @@ body {
   pointer-events: none;
 }
 
-.select-menu .menu-grid{
-  display: grid;
-  grid-template-columns: repeat(2, minmax(180px, 22vmin));
-  gap: clamp(16px, 3vw, 32px);
-}
-
 .select-menu .menu-item{
   aspect-ratio: 1/1;
   display: flex; 
   align-items: center; 
   justify-content: center;
-  border: 1px solid rgba(255,255,255,0.06);
+  border: 1px solid var(--color-text-border-opacity01);
   color: var(--color-text); text-decoration: none;
   text-transform: uppercase; 
   letter-spacing: 0.12em; 
@@ -162,34 +160,134 @@ body {
   transition: border-color .3s ease;
 }
 
-.select-menu .menu-item:hover{
-  border-color: var(--color-text-border-hover);
+
+
+/* === Select menu : row layout === */
+.select-menu .menu-row{
+  display: flex;
+  gap: clamp(16px, 3vw, 32px);
+  justify-content: center;
+  align-items: stretch;
+  flex-wrap: nowrap;     /* 한 줄 유지 */
+}
+@media (max-width: 900px){
+  .select-menu .menu-row{ flex-wrap: wrap; } /* 좁으면 자동 줄바꿈 */
 }
 
-
-/* === Select menu corner decoration === */
-.select-menu .menu-item {
+/* 공통 카드 */
+.select-menu .menu-item{
+  width: min(22vmin, 220px);
+  aspect-ratio: 1/1;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  border: 1px solid rgba(255,255,255,0.06);
+  text-align: center;
+  text-decoration: none;
+  color: var(--color-text);
+  backdrop-filter: blur(6px);
+  transition: border-color .3s ease, background .3s ease;
+  
+  /* === Select menu corner decoration === */
   position: relative;      /* 코너 절대위치 기준점 */
   overflow: visible;       /* 코너가 밖으로 나와도 보이게 */
+  isolation: isolate;
+
+}
+.select-menu .menu-item:hover{
+  border-color: var(--color-text-border-hover);
+  background: rgba(255,255,255,0.04);
 }
 
-/* 공통 코너 박스 */
+
+/* 코너 장식 */
 .select-menu .menu-item .corner {
   position: absolute;
   width: 16px;
   height: 16px;
   color: #fff;
   opacity: 0;              /* 기본은 숨김 */
-  z-index: 1;
+  z-index: 3;           /* 아이콘 위 */
   pointer-events: none;
 }
+
 .select-menu .menu-item .corner svg {
   width: 100%;
   height: 100%;
 }
-
 /* 각 코너 위치 & 회전 */
 .select-menu .menu-item .corner.top-left     { top: -8px;  left: -8px; }
 .select-menu .menu-item .corner.top-right    { top: -8px;  right: -8px;  transform: rotate(90deg); }
 .select-menu .menu-item .corner.bottom-left  { bottom: -8px; left: -8px;  transform: rotate(-90deg); }
 .select-menu .menu-item .corner.bottom-right { bottom: -8px; right: -8px; transform: rotate(180deg); }
+
+
+
+
+/* 제목(= animation-title 역할) */
+.menu-title{
+  position: relative;
+  font-size: 12px;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+  opacity: .9;
+  margin-bottom: 14px;
+  z-index: 1;
+}
+  /* 텍스트 밑줄(테두리) */
+.menu-title::after{
+  content:"";
+  display:block;
+  width: 60%;
+  margin: 8px auto 0;
+  border-bottom: 1px solid var(--color-text-border-opacity04);
+}
+
+/* 아이콘 영역(= menu-container 역할) */
+.menu-icon{ 
+  position: absolute;
+  z-index: 1;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%); 
+  width: 50%;
+  height: auto; 
+}
+
+/* pixel-canvas */
+.select-menu .menu-item pixel-canvas{
+  position: absolute; inset: 0;
+  z-index: 0; opacity: 0;
+  transition: opacity 600ms cubic-bezier(0.5,1,0.89,1.5);
+  border-radius: 16px;
+  clip-path: inset(0 round 16px); /* 배경만 라운드로 클립 */
+}
+.select-menu .menu-item:hover pixel-canvas,
+.select-menu .menu-item:focus-within pixel-canvas{ opacity: 1; }
+
+/* 그라디언트 negative 영역 */
+.select-menu .menu-item::after{
+  content:"";
+  position:absolute; inset:0; margin:auto; aspect-ratio:1;
+  background: radial-gradient(circle, var(--color-bg, rgba(255,255,255,.032)), transparent 85%);
+  opacity:0; z-index:0;
+  transition: opacity 800ms cubic-bezier(0.45,0,0.55,1);
+  border-radius: 16px;
+  clip-path: inset(0 round 16px); /* 배경만 라운드로 클립 */
+}
+.select-menu .menu-item:hover::after,
+.select-menu .menu-item:focus-within::after{ opacity:1; }
+
+/* SVG 아이콘 크기/색 */
+.menu-icon.svg-icon svg{
+  position: relative; z-index:1;
+  width: 50%; height: auto;
+  color: rgba(255,255,255,0.55);
+  transition: color 300ms cubic-bezier(0.45,0,0.55,1), transform 300ms cubic-bezier(0.45,0,0.55,1);
+}
+.menu-item:hover .menu-icon.svg-icon svg,
+.menu-item:focus-within .menu-icon.svg-icon svg{
+  color: var(--active-color, #fff);
+  transform: scale(1.06);
+}
