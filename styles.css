@@ -1,0 +1,167 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap');
+
+:root {
+  --color-bg: #1D1E22;
+  --color-text: #fff;
+  --color-text-border: #f8f8f8;
+  --color-text-bg-hover: rgba(118, 194, 231, 0.7);
+  --color-test: #fd0000;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+  background: var(--color-bg);
+  min-height: 100vh;
+}
+
+/* 원반 TITLE 로딩  */
+body {
+  display: flex;
+  flex-flow: column nowrap;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text);
+  font-family: "TheGoodMonolith", monospace;
+  gap: 0px;
+}
+
+
+/* 텍스트 TITLE */
+.title-container { 
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: 'DM Sans', sans-serif;
+}
+
+.title-container:before {
+  content: "";
+  position: absolute;
+  inset: -10% -15%; /* 글자 영역보다 크게 확장 */
+  z-index: 2;  /* 배경이 글자 뒤에만 나오도록 */
+  border: 1px solid var(--color-text-border);
+  opacity: 0; 
+}
+
+.title-container:hover::before {
+  animation: borderFadeIn 1.25s forwards, pulse 1.5s infinite;
+}
+
+.cinema-title {
+  position: relative;
+  text-align: center;
+  color: var(--color-text);
+  font-family: "Cinzel", "Trajan Pro", serif;
+}
+
+.cinema-title:hover {
+  animation: pulse 1.5s infinite;
+}
+
+.cinema-title h1 {
+  font-size: clamp(2rem, 2.5vw, 3rem); /* 전시장에서 가로넓이 보고 조정할 것 */
+  font-weight: 900;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+}
+
+.cinema-title h2 {
+  font-size: clamp(1rem, 2.5vw, 1rem);
+  font-weight: 400;
+  margin-top: 1rem;
+  letter-spacing: 1.2em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+@keyframes borderFadeIn {
+  to { opacity: 1; }
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(118, 194, 231, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 20px rgba(155, 89, 182, 0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(155, 89, 182, 0); }
+}
+
+
+/* 모자이크 배경 */
+#mosaic {
+  z-index: 0;       /* 배경이지만 음수는 피해야 함 */
+  position: fixed;   /* 화면 고정 */
+  inset: 0;          /* top/right/bottom/left: 0 */ 
+  pointer-events: none; /* 클릭 방해 X */
+  width: 100vw;
+  height: 100vh;
+}
+
+
+.ellipse {
+  z-index: 10;
+  position: fixed;        /* 화면 기준으로 고정 */
+  inset: 0;               /* 전체 화면 차지 */
+  display: grid;          /* 중앙 정렬용 */
+  place-items: center;    /* 수직/수평 중앙 */
+  z-index: 10;            /* 로딩 마크는 항상 위 */
+  pointer-events: none;   /* 클릭 막지 않으려면 none, 모달처럼 막으려면 auto */
+  opacity: 0;             /* 초깃값: 숨김 */
+  visibility: hidden;     /* 초깃값: 숨김 */
+}
+
+.ellipse svg {
+  transform: rotate(-40deg);
+  height: auto;
+  width: min(25vw, 25vh);
+}
+.ellipse svg text {
+  fill: var(--color-text);
+}
+
+/* Select Menu (선택 페이지) */
+.select-menu{
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  z-index: 5;                 /* 모자이크(0) 위, 원반(10)보다는 아래로 두고 타이밍으로 제어 */
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.select-menu .menu-grid{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(180px, 22vmin));
+  gap: clamp(16px, 3vw, 32px);
+}
+
+.select-menu .menu-item{
+  aspect-ratio: 1/1;
+  display: flex; align-items: center; justify-content: center;
+  border: 1px solid rgba(255,255,255,.25);
+  color: #fff; text-decoration: none;
+  text-transform: uppercase; letter-spacing: .12em; font-weight: 700;
+  background: rgba(255,255,255,0.04);
+  backdrop-filter: blur(6px);
+  border-radius: 16px;
+  transition: transform .3s ease, border-color .3s ease, background .3s ease;
+}
+.select-menu .menu-item:hover{
+  transform: translateY(-4px);
+  border-color: var(--color-text-bg-hover);
+  background: rgba(118,194,231,0.08);
+}
+
+
+/* corner decoration */
+/* add select menu hover effect code from "select box.md" file */
