@@ -11,9 +11,9 @@
     <div class="page-backdrop" aria-hidden="true"></div>
 
     <div class="page-shell">
-        <header class="page-header" data-page-header="primary">
+        <header class="page-header" data-page-header="primary" id="wallSidebar" aria-hidden="false">
             <div class="page-header__inner">
-                <button class="page-header__toggle" type="button" data-page-header-toggle aria-expanded="true" aria-label="사이드 패널 접기">
+                <button class="page-header__toggle" type="button" data-page-header-toggle aria-expanded="true" aria-controls="wallSidebar" aria-label="사이드 패널 접기">
                     <span aria-hidden="true" class="page-header__toggle-icon">&lt;</span>
                     <span class="page-header__toggle-text">Collapse</span>
                 </button>
@@ -55,7 +55,16 @@
             </div>
         </header>
 
-        <main class="page-main">
+        <!-- Floating button to reopen the header after collapse -->
+        <button class="page-header__floating" type="button"
+            data-page-header-open
+            aria-controls="wallSidebar"
+            aria-expanded="false"
+            hidden>
+            Open Panel
+        </button>
+
+        <main class="page-main wall-main">
             <div class="wall-stage">
                 <div class="floor-stack">
                     <article id="floor-1" class="floor-section" data-floor="1">
@@ -316,8 +325,8 @@
                             </div>
                         </div>
                     </article>
-                </div>
 
+                </div>
                 <aside class="floor-selector" aria-label="Floor navigation">
                     <div class="floor-selector__shaft">
                         <button type="button" class="floor-selector__button" data-target="#floor-7" data-floor="7">
@@ -354,7 +363,7 @@
         </main>
     </div>
 
-    <button class="page-header__floating" hidden type="button" data-page-header-floating="primary" aria-expanded="false" aria-label="사이드 패널 열기">
+    <button class="page-header__floating" hidden type="button" data-page-header-floating="primary" aria-expanded="false" aria-controls="wallSidebar" aria-label="사이드 패널 열기">
         메뉴 열기
     </button>
 
@@ -370,5 +379,8 @@
     <script src="script.js"></script>
 </body>
 </html>
+
+
+
 
 

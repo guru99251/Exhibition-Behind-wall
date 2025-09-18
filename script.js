@@ -1,6 +1,6 @@
-﻿// ?섏〈 ?쇱씠釉뚮윭由?濡쒕뱶 ?댄썑 ?ㅽ뻾??(defer)
+﻿// Execute after third-party libraries load (deferred).
 gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
-// ?? ?ㅽ겕濡??몃━嫄?
+// Basic fade-in animation for elements tagged with .fade-in.
 gsap.to(".fade-in", {
   opacity: 1,
   y: 0,
@@ -12,8 +12,8 @@ gsap.to(".fade-in", {
 
 
 
-/* ?먮컲 title 濡쒕뵫 ?⑥닔 */
-// 湲곕낯 ?좊땲硫붿씠??(濡쒕뵫?붾㈃)
+/* Ellipse title animation helpers */
+// Default animation used on the loading screen.
 const createAnimation = ({
   duration = 21,
   reversed = false,
@@ -67,10 +67,10 @@ createAnimation({
   textProperties: { fontSize: /iPhone/.test(navigator.userAgent) ? "19px" : "17px" }
 });
 
-// ?좊땲硫붿씠??breath ?좊땲硫붿씠??
+// Pulse animation configuration for the loading disc.
 const DISC_PULSE_MIN = 0.45;
 const DISC_PULSE_MAX = 1.0;
-const DISC_PULSE_DUR = 1.05; // ?먮━寃? 2.5~4.0 異붿쿇
+const DISC_PULSE_DUR = 1.05; // Recommended range: 2.5-4.0 seconds.
 
 let discPulse = gsap.fromTo(
   ".ellipse svg",
@@ -81,37 +81,37 @@ let discPulse = gsap.fromTo(
     ease: "sine.inOut",
     repeat: -1,
     yoyo: true,
-    paused: true  // 湲곕낯 ?뺤? ??showDisc/hideDisc?먯꽌 ?쒖뼱
+    paused: true  // Keep paused; showDisc/hideDisc will resume or pause as needed.
   }
 );
-// ?먮컲 title 湲곕낯 ?좊땲硫붿씠????
+// Base title animation wiring.
 
 
-// ?먮컲 title ?쒖떆/?④? ?⑥닔
+// Helpers for showing and hiding the ellipse title graphic.
 const discEl = document.querySelector(".ellipse");
 const DISC_FADE_IN  = 1.25;
 const DISC_FADE_OUT = 0.75;
 
-// ?붿뒪???먮컲) ?쒖떆: ?꾩슂 ????댄? ?띿뒪???좊땲硫붿씠?섎룄 ?④퍡 ?쒖옉
+// When the overlay is visible we mirror the intro animation behaviour.
 function showDisc({ withTitle = false, text = "" } = {}) {
   if (!discEl) return;
 
-  // ?ㅻ쾭?덉씠 ?쒖떆 + ?쒓컖?곸쑝濡??깆옣
-  gsap.set(discEl, { pointerEvents: "auto" }); // ?ㅻ쾭?덉씠濡??대┃ 留됯퀬 ?띕떎硫?auto, ?꾨땲硫?none
+  // Allow pointer interaction while the disc overlay is visible.
+  gsap.set(discEl, { pointerEvents: "auto" }); // Toggle pointer events on the overlay element itself.
   gsap.to(discEl, { duration:DISC_FADE_IN, autoAlpha: 1, ease: "power2.out" });
   
   if (withTitle) {
-    // 湲곗〈 title ?좊땲硫붿씠???좏떥???ъ궗?⑺븳?ㅻ㈃:
+    // Reuse the existing title animation if it has already been initialised.
     if (typeof startEllipseTitle === "function") {
       startEllipseTitle(text || "Loading // Please wait // --");
     } else {
-      // ?꾩옱 ?뚯씪? 利됱떆 ?ㅽ뻾(createAnimation ?몄텧) 以묒씠?? 洹?遺遺꾩쓣 二쇱꽍 泥섎━?섍퀬
-      // startEllipseTitle/stopEllipseTitle ?섑띁瑜??꾩엯?섏꽭?? (?꾨옒 ?덈궡 李멸퀬)
+      // Legacy implementation created the animation on demand; kept for reference.
+      // startEllipseTitle/stopEllipseTitle can be reintroduced later if required.
     }
   }
 }
 
-// ?붿뒪???먮컲) ?④?: ?띿뒪???좊땲硫붿씠?섎룄 媛숈씠 ?뺤?
+// When hiding the disc, also stop any running animation.
 function hideDisc() {
   if (!discEl) return;
 
@@ -127,14 +127,14 @@ function hideDisc() {
     }
   });
 }
-// ?먮컲 ??
+// End of ellipse helpers.
 
 
 
 
 
 
-/* 紐⑥옄?댄겕 諛곌꼍 */
+/* Mosaic background animation */
 const rand = (min, max) => {
   return Math.random() * (max - min) + min;
 }
@@ -237,7 +237,7 @@ const container = document.querySelector("#mosaic");
    container.append(canvas);
  }
 
-// (理쒖쟻??A) ?꾨젅???명똿
+// (Optimization A) Frame timing and context setup.
 const interval = 1000 / 60;
 const ctx = canvas.getContext("2d");
 
@@ -264,14 +264,14 @@ const getDelay = (x, y, direction) => {
 const initPixels = () => {
   const h = Math.floor(rand(0, 360));
   const colorsLen = 5;
-  // (理쒖쟻??B) ???뚯떛 ?명솚?? ?쇳몴??HSL濡?怨좎젙
+  // (Optimization B) Pre-generate the HSL colour palette for the mosaic.
   const colors = Array.from({ length: colorsLen }, (_, index) => {
     const hh = Math.floor(rand(h, h + (index + 1) * 10));
     const ll = Math.floor(rand(55, 85));
     return `hsl(${hh}, 100%, ${ll}%)`;
   });
   
-  // (理쒖쟻??C) 珥??쎌? ???쒗븳(?숈쟻 gap): N ??(w/g)*(h/g) ??MAX_PIXELS
+  // (Optimization C) Adapt the grid gap so the pixel count stays under MAX_PIXELS.
   const MAX_PIXELS = 50000;
   const gap = Math.max(6, Math.floor(Math.sqrt((width * height) / MAX_PIXELS)));
   const step = (width + height) * 0.005;
@@ -339,15 +339,15 @@ function resize() {
   cancelAnimationFrame(request);
   
   const rect = container.getBoundingClientRect();
-  // (理쒖쟻??D) ?대? ?댁긽??異뺤냼 + 蹂댁젙 ?ㅼ???
-  const RENDER_SCALE = (window.devicePixelRatio > 1) ? 0.66 : 0.8; // 怨잻PR?쇱닔濡?????땄
-  width  = Math.floor(rect.width);   // ?쇰━(?덉씠?꾩썐) ?ш린
+  // (Optimization D) Reduce render scale on high-DPI displays.
+  const RENDER_SCALE = (window.devicePixelRatio > 1) ? 0.66 : 0.8; // Use a lower render scale for HiDPI screens.
+  width  = Math.floor(rect.width);   // Layout width in CSS pixels.
   height = Math.floor(rect.height);
-  canvas.width  = Math.floor(width  * RENDER_SCALE);  // ?ㅼ젣 ?뚮뜑 ?ш린
+  canvas.width  = Math.floor(width  * RENDER_SCALE);  // Canvas width in device pixels.
   canvas.height = Math.floor(height * RENDER_SCALE);
   canvas.style.width  = width  + 'px';
   canvas.style.height = height + 'px';
-  // ?덉씠?꾩썐 醫뚰몴怨??쎌?) ???대? 醫뚰몴怨?蹂댁젙
+  // Align canvas coordinates with the layout coordinate system.
   ctx.setTransform(RENDER_SCALE, 0, 0, RENDER_SCALE, 0, 0);
   
   initPixels();
@@ -362,49 +362,49 @@ if (container) {
   resize();
 }
 
-// (理쒖쟻??E) ??鍮꾧?????猷⑦봽 ?뺤?
+// (Optimization E) Pause the animation while the tab is hidden.
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
     if (typeof request !== "undefined") cancelAnimationFrame(request);
   } else {
-    // ?ㅼ떆 蹂댁씠硫??꾨젅???ш컻
+    // Resume the mosaic as soon as the page becomes visible again.
     resize();
   }
 });
-// 紐⑥옄?댄겕 諛곌꼍 ??
+// Mosaic background helpers
 
 
 
 
 
-/* ???숈옉 ?⑥닔 */
-// 紐⑥옄?댄겕 ?섏씠?쒖븘??+ 猷⑦봽 ?뺤?
+/* Mosaic helpers */
+// Fade out the mosaic and stop the animation loop.
 function fadeOutMosaic() {
   gsap.to("#mosaic", { duration: 0.8, autoAlpha: 0, ease: "power2.out" });
-  // ?ㅼ쓬 ?꾨젅???덉빟 痍⑥냼濡?猷⑦봽 以묒?
+  // Cancel any pending animation frame when hiding.
   if (typeof request !== "undefined") cancelAnimationFrame(request);
 }
 
-// 硫붾돱 ?쒖떆
+// Reveal the menu overlay.
 function showSelectMenu() {
   gsap.set("#select-menu", { visibility: "visible", pointerEvents: "auto" });
   gsap.to("#select-menu", { duration: 0.8, autoAlpha: 1, ease: "power2.out" });
 }
 
-// ?명듃濡??쒗?? ??댄? ?대┃ ???ㅽ뻾
+// Clicking the landing title starts the intro sequence.
 function runIntroSequence() {
   const tl = gsap.timeline();
 
-  // 1) ??댄? ?섏씠?쒖븘??
+  // Step 1: fade out the landing title.
   tl.to(".title-container", { duration: 0.6, autoAlpha: 0, ease: "power2.out" }, 0);
 
-  // 2) 紐⑥옄?댄겕 ?섏씠?쒖븘??+猷⑦봽?뺤?)
+  // Step 2: fade out the mosaic background.
   tl.add(() => fadeOutMosaic(), 0);
 
-  // 3) ?먮컲 ?쒖떆 ???s ?좎? ???먮컲 ?④?
+  // Step 3: play the disc intro animation.
   tl.add(() => { if (typeof discPulse !== "undefined" && discPulse) discPulse.play(); }, "<");
   tl.to(".ellipse", { duration: DISC_FADE_IN, autoAlpha: 1, ease: "power2.out" }, "<");
-  tl.to({}, { duration: 2.8 }); // n珥??좎? ?쒓컙 ?ㅼ젙?
+  tl.to({}, { duration: 2.8 }); // Hold briefly before fading the disc out.
   tl.to(".ellipse", {
     duration: DISC_FADE_OUT,
     autoAlpha: 0,
@@ -412,24 +412,26 @@ function runIntroSequence() {
     onStart: () => { if (typeof discPulse !== "undefined" && discPulse) discPulse.pause(); }
   });
 
-  // 4) 硫붾돱 ?쒖떆
+  // Step 4: show the menu.
   tl.add(() => showSelectMenu());
 }
-// ?명듃濡??쒗????
+// End of intro sequence setup.
 
 
 
 
 
 
-/* ?ъ슜???낅젰 ?몃━嫄?紐⑥쓬 */
-// ??댄? ?대┃ ?몃━嫄?
-document.querySelector(".title-container")
-  .addEventListener("click", runIntroSequence);
+/* Keyboard shortcuts */
+// Start the intro sequence with a click on the title container.
+const introTrigger = document.querySelector(".title-container");
+if (introTrigger) {
+  introTrigger.addEventListener("click", runIntroSequence);
+}
 
-// ?뚯뒪?몄슜 ?ъ슜???낅젰
+// Keyboard shortcuts for manual control.
 document.addEventListener('keydown', (ev) => {
-  // ?낅젰 ?꾨뱶???ъ빱?ㅻ맂 寃쎌슦 ?⑥텞??臾댁떆
+  // Ignore shortcuts when focus is inside a form control.
   const tag = document.activeElement && document.activeElement.tagName;
   if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(tag)) return;
 
@@ -441,38 +443,38 @@ document.addEventListener('keydown', (ev) => {
     hideDisc();
   }
 });
-// ?ъ슜???낅젰 ?몃━嫄???
+// End keyboard shortcut handlers.
 
 
 
 // // === Page transition loader (?s disc before navigating) ===
 // (function setupPageTransitionLoader() {
-//   const DURATION_MS = 2200; // ?섏씠吏 ?대룞 ???붿뒪???깆옣 ?쒓컙 ?ㅼ젙)
+//   const DURATION_MS = 2200; // Duration of the optional transition overlay.
 
-//   // ?덉쟾?섍쾶 body ?대┃?먯꽌 <a>留??↔린
+//   // Intercept clicks on same-page links to show the transition overlay.
 //   document.addEventListener('click', (ev) => {
 //     const a = ev.target.closest && ev.target.closest('a[href]');
 //     if (!a) return;
 
 //     const href = a.getAttribute('href') || '';
-//     // ?????덈룄?? ?ㅼ슫濡쒕뱶, ?댁떆 ?대룞, ?몃? 留곹겕 ?깆? ?쒖쇅
+//     // Skip external links, downloads, anchors, or new tabs.
 //     if (
 //       a.target === '_blank' ||
 //       a.hasAttribute('download') ||
 //       href.startsWith('#') ||
 //       /^https?:\/\//i.test(href) && !href.startsWith(location.origin)
 //     ) {
-//       return; // 湲곕낯 ?숈옉 洹몃?濡?
+//       return; // Keep the default behaviour in those cases.
 //     }
 
-//     // ?꾩옱 ?섏씠吏濡쒖쓽 ?대룞? 臾댁떆
+//     // Ignore navigation to the same page.
 //     if (href.replace(/#.*$/, '') === location.pathname.replace(/\/+$/, '')) {
 //       return;
 //     }
 
 //     ev.preventDefault();
 
-//     // 濡쒕뵫 ?붿뒪???쒖떆 (?꾩슂 ???띿뒪??蹂寃?媛??
+//     // Optionally show the loading disc.
 //     if (typeof showDisc === 'function') {
 //       showDisc({ withTitle: false });
 //     }
@@ -481,12 +483,12 @@ document.addEventListener('keydown', (ev) => {
 //     }, DURATION_MS);
 //   });
 
-//   // ?ъ슜?먭? ?ㅻ줈媛湲??깆쑝濡??뚯븘?붿쓣 ???붿뒪?ш? 蹂댁씠吏 ?딅룄濡?蹂댁젙
+//   // Hide the disc again when returning from bfcache.
 //   window.addEventListener('pageshow', (e) => {
 //     if (e.persisted && typeof hideDisc === 'function') hideDisc();
 //   });
 // })();
-// // ?섏씠吏 ?꾪솚 濡쒕뜑 ??
+// // Page transition loader end
 
 
 
@@ -520,7 +522,7 @@ document.addEventListener('keydown', (ev) => {
     item.addEventListener('blur', hide);
   });
 })();
-// 肄붾꼫 二쇱엯 諛??몃쾭 ?좊땲硫붿씠????
+// Highlight corners on menu tiles when hovered.
 
 
 
@@ -614,7 +616,7 @@ document.addEventListener('keydown', (ev) => {
         for (let y=0; y<this.canvas.height; y+=this.gap){
           const color = this.colors[Math.floor(Math.random()*this.colors.length)];
           const dx = x - this.canvas.width/2, dy = y - this.canvas.height/2;
-          const delay = Math.hypot(dx,dy); // 以묒븰?먯꽌 ?쒖옉
+          const delay = Math.hypot(dx,dy); // Delay scales with distance from the card center.
           this.pixels.push(new CardPixel(this.canvas,this.ctx,x,y,color,this.speed,delay));
         }
       }
@@ -632,83 +634,87 @@ document.addEventListener('keydown', (ev) => {
       if (allIdle) cancelAnimationFrame(this.af);
     }
   }
-  CardPixelCanvas.register(); // <pixel-canvas> ?ъ슜 媛??
+  CardPixelCanvas.register(); // Register the <pixel-canvas> custom element.
 })();
-// pixel-canvas ??
+// Floor selector and tooltip interactions for the wall view.
 (() => {
-  const floorSections = Array.from(document.querySelectorAll('.floor-section'));
-  const floorButtons = Array.from(document.querySelectorAll('.floor-selector__button'));
-  const cards = Array.from(document.querySelectorAll('.plan-card'));
-  if (!floorSections.length || !floorButtons.length || !cards.length) { return; }
+  const scroller = document.querySelector('.page-wall .page-main');
+  const floorSections = Array.from(document.querySelectorAll('.page-wall .floor-section'));
+  const floorButtons = Array.from(document.querySelectorAll('.page-wall .floor-selector__button'));
+  const cards = Array.from(document.querySelectorAll('.page-wall .plan-card'));
+  if (!scroller || !floorSections.length || !floorButtons.length || !cards.length) { return; }
+  if (typeof gsap === 'undefined') { return; }
+
+  scroller.scrollTop = 0;
+
 
   const WALL_ARTWORK_ROLLOUT = {
     'spectral-loop': {
       name: 'Spectral Loop',
-      summary: '?ъ슫?쒖? ?됱쓣 ?숆린?뷀븯??紐곗엯???ㅼ튂.',
+      summary: 'Immersive installation that syncs sound and colour.',
       floors: [
-        { level: '1F 쨌 Reference', note: '二쇳뙆?섎?蹂?而щ윭 ?ㅽ럺?몃읆怨??뚰뼢 ?섑뵆???뺣━.' },
-        { level: '2F 쨌 Storyboard', note: '猷⑦봽 ?쒖옉쨌媛먯냽 援ш컙??紐낆떆???쒗??蹂대뱶.' },
-        { level: '3F 쨌 Sketches', note: '?뚮룞 ?⑦꽩怨??쇱씠???덉씠?대? ???쒕줈?됱쑝濡??ㅽ뿕.' },
-        { level: '4F 쨌 Work Photos', note: '?꾨줈?앺꽣 援먯젙怨??ш렇 癒몄떊 ?명똿 怨쇱젙 湲곕줉.' },
-        { level: '5F 쨌 Screenshots', note: '8K 理쒖쥌 ?꾨젅?꾧낵 ?됰낫??LUT 寃곌낵.' },
-        { level: '6F 쨌 Light Lab', note: '?덉씠?, ?ㅻえ洹? ?쇱꽌 諛섏쓳 ?뚯뒪??濡쒓렇.' },
-        { level: '7F 쨌 Final', note: '愿?뚭컼 ?꾩튂???곕씪 ?뚯쟾?섎뒗 理쒖쥌 鍮??곗텧.' }
+        { level: '1F 쨌 Reference', note: 'Grouped frequency spectra and audio samples.' },
+        { level: '2F 쨌 Storyboard', note: 'Storyboard highlighting loop acceleration and deceleration.' },
+        { level: '3F 쨌 Sketches', note: 'Hand sketches exploring wave patterns and light layers.' },
+        { level: '4F 쨌 Work Photos', note: 'Projector calibration and fog-machine setup shots.' },
+        { level: '5F 쨌 Screenshots', note: '8K final frames and colour grade results.' },
+        { level: '6F 쨌 Light Lab', note: 'Laser, fog, and sensor-response logs.' },
+        { level: '7F 쨌 Final', note: 'Final beam choreography reacting to visitor position.' }
       ]
     },
     'memory-patch': {
       name: 'Memory Patch',
-      summary: '愿?뚯옄??硫붿떆吏瑜??덉씠?대뱶 UI濡??ш뎄?깊븯???명꽣?숈뀡.',
+      summary: 'Interactive UI that rebuilds visitor messages into layered panels.',
       floors: [
-        { level: '1F 쨌 Reference', note: '媛먯꽦 ?ㅼ썙?쒖? 而щ윭 ?ㅼ?移?由ъ꽌移?' },
-        { level: '2F 쨌 Storyboard', note: 'QR ?ㅼ틪遺??媛먯젙 遺꾨쪟源뚯????ъ슜???뚮줈??' },
-        { level: '3F 쨌 Sketches', note: '移대뱶 ?뺣젹, 紐⑤떖 ?꾪솚???꾪븳 ??댁뼱 ?ㅼ?移?' },
-        { level: '4F 쨌 Work Photos', note: '?꾨줈?좏????λ퉬? ? ?묒뾽 ?λ㈃.' },
-        { level: '5F 쨌 Screenshots', note: '?ㅼ젣 ?볤? ?곗씠?곌? ?꾩쟻??UI 罹≪쿂.' },
-        { level: '6F 쨌 Light Lab', note: '?쒖뒪泥??몄떇怨?LED 諛섏쓳 ?섑뵆留?' },
-        { level: '7F 쨌 Final', note: '?쇱씠釉?肄붾찘???ㅻ쾭?덉씠媛 ?⑹퀜吏?理쒖쥌 踰쎈㈃.' }
+        { level: '1F 쨌 Reference', note: 'Research into tone keywords and colour swatches.' },
+        { level: '2F 쨌 Storyboard', note: 'Flow from QR scan through emotion classification.' },
+        { level: '3F 쨌 Sketches', note: 'Wire sketches for card sorting and modal transitions.' },
+        { level: '4F 쨌 Work Photos', note: 'Prototype hardware collaboration shots.' },
+        { level: '5F 쨌 Screenshots', note: 'UI captures with live comment data.' },
+        { level: '6F 쨌 Light Lab', note: 'Gesture recognition and LED reaction sampling.' },
+        { level: '7F 쨌 Final', note: 'Final wall showing live comment overlays.' }
       ]
     },
     'tidal-dream': {
       name: 'Tidal Dream',
-      summary: '?댁뼇 ?앺깭 ?쒕??덉씠?섏쓣 ?ㅼ떆媛꾩쑝濡??ъ궗?섎뒗 ?묓뭹.',
+      summary: 'Real-time projection inspired by ocean ecosystems.',
       floors: [
-        { level: '1F 쨌 Reference', note: '?앸Ъ 諛쒓킅怨??뚮룄 ?ъ쭊, ?곗씠???섏쭛.' },
-        { level: '2F 쨌 Storyboard', note: '議곗닔 ?먮쫫怨??명꽣?숈뀡 ??대컢 ?ㅽ넗由щ씪??' },
-        { level: '3F 쨌 Sketches', note: '?뚰떚???쇱슦?낃낵 鍮?踰덉쭚 ?뺥깭 ?곌뎄.' },
-        { level: '4F 쨌 Work Photos', note: '?섎㈃ 諛섏궗 ?뚯뒪?몄? ?뚰떚???붾쾭源??꾩옣.' },
-        { level: '5F 쨌 Screenshots', note: 'HDR ?ㅽ떥怨??됱긽 鍮꾧탳 ?꾨젅??' },
-        { level: '6F 쨌 Light Lab', note: '?쇱꽌 留듯븨, ?섎룞 ?뚰삎 議곗젅 湲곕줉.' },
-        { level: '7F 쨌 Final', note: '愿媛??뚯꽦??諛섏쓳?섎뒗 ?ㅼ뀡 ?쇰궇??' }
+        { level: '1F 쨌 Reference', note: 'Collected references for bioluminescence and waves.' },
+        { level: '2F 쨌 Storyboard', note: 'Storyboard outlining tides and interaction timing.' },
+        { level: '3F 쨌 Sketches', note: 'Studies for particle routing and light bloom.' },
+        { level: '4F 쨌 Work Photos', note: 'Reflection tests and particle debugging shots.' },
+        { level: '5F 쨌 Screenshots', note: 'HDR stills and colour comparison frames.' },
+        { level: '6F 쨌 Light Lab', note: 'Sensor mapping with manual waveform adjustments.' },
+        { level: '7F 쨌 Final', note: 'Ocean finale responding to audience audio.' }
       ]
     },
     'orbital-city': {
       name: 'Orbital City',
-      summary: '寃뚯엫 ?붿쭊 湲곕컲 ?명꽣?숉떚釉??쒕꽕癒명떛.',
+      summary: 'Game-engine driven interactive cinematic.',
       floors: [
-        { level: '1F 쨌 Reference', note: '?꾩떆 援ъ“臾쇨낵 吏덇컧 ?덊띁?곗뒪.' },
-        { level: '2F 쨌 Storyboard', note: '?좏깮 遺꾧린? 而룹떊 ?꾪솚 湲고쉷.' },
-        { level: '3F 쨌 Sketches', note: '?먭렐怨?移대찓??寃쎈줈 ?ㅼ?移?' },
-        { level: '4F 쨌 Work Photos', note: '而⑦듃濡ㅻ윭 泥댄뿕議??뗭뾽 湲곕줉.' },
-        { level: '5F 쨌 Screenshots', note: '?쒕꽕癒명떛 而룰낵 UI ?ㅻ쾭?덉씠.' },
-        { level: '6F 쨌 Light Lab', note: '而⑦듃濡ㅻ윭 吏꾨룞, ???LED ?곕룞 ?뚯뒪??' },
-        { level: '7F 쨌 Final', note: '沅ㅻ룄 蹂?붽? ?ㅼ떆媛꾩쑝濡?諛섏쁺???붾뵫 ?쒗??' }
+        { level: '1F 쨌 Reference', note: 'Reference boards for structures and materials.' },
+        { level: '2F 쨌 Storyboard', note: 'Branching decisions and cutscene transition plans.' },
+        { level: '3F 쨌 Sketches', note: 'Perspective and camera path sketches.' },
+        { level: '4F 쨌 Work Photos', note: 'Controller experience bay setup shots.' },
+        { level: '5F 쨌 Screenshots', note: 'Cinematic frames and UI overlays.' },
+        { level: '6F 쨌 Light Lab', note: 'Controller haptics and LED integration tests.' },
+        { level: '7F 쨌 Final', note: 'Ending sequence reflecting real-time orbit changes.' }
       ]
     },
     'flora-signal': {
       name: 'Flora Signal',
-      summary: '?앸Ъ ?앹껜 ?곗씠?곕? ?쒓컖쨌泥?컖?쇰줈 踰덉뿭???ㅼ튂.',
+      summary: 'Installation translating plant bio-signals into visuals and audio.',
       floors: [
-        { level: '1F 쨌 Reference', note: '?앸Ъ ?꾧린 ?좏샇? ?⑦꽩 ?먮즺.' },
-        { level: '2F 쨌 Storyboard', note: '愿?뚯옄 ?명꽣?숈뀡怨??곗씠???먮쫫 ?ㅼ씠?닿렇??' },
-        { level: '3F 쨌 Sketches', note: '洹몃옒??紐⑤뱢怨??꾪삎 諛곗튂 ?곌뎄.' },
-        { level: '4F 쨌 Work Photos', note: '?쇱꽌 罹섎━釉뚮젅?댁뀡 諛??꾨궇濡쒓렇 ?ㅽ뿕.' },
-        { level: '5F 쨌 Screenshots', note: '?곗씠??鍮꾩＜?쇨낵 ?뚰삎 UI 罹≪쿂.' },
-        { level: '6F 쨌 Light Lab', note: '?좏샇 蹂댁젙怨??뚰뼢 ?뚯뒪??濡쒓렇.' },
-        { level: '7F 쨌 Final', note: '?ㅼ떆媛??좏샇媛 ?ъ궗?섎뒗 理쒖쥌 紐⑥뒿.' }
+        { level: '1F 쨌 Reference', note: 'Collected plant bio-signal references.' },
+        { level: '2F 쨌 Storyboard', note: 'Interaction and data-flow diagram.' },
+        { level: '3F 쨌 Sketches', note: 'Graphic module and geometry studies.' },
+        { level: '4F 쨌 Work Photos', note: 'Sensor calibration and analogue experiments.' },
+        { level: '5F 쨌 Screenshots', note: 'Data visualisation and waveform UI captures.' },
+        { level: '6F 쨌 Light Lab', note: 'Signal normalisation and audio testing logs.' },
+        { level: '7F 쨌 Final', note: 'Final projection with live plant signals.' }
       ]
     }
   };
-
   const tooltip = document.createElement('div');
   tooltip.className = 'plan-tooltip';
   tooltip.hidden = true;
@@ -720,7 +726,7 @@ document.addEventListener('keydown', (ev) => {
   const renderTooltip = (key) => {
     const info = WALL_ARTWORK_ROLLOUT[key];
     if (!info) {
-      tooltip.innerHTML = '<div class="plan-tooltip__title">?먮즺 以鍮꾩쨷</div>';
+          tooltip.innerHTML = '<div class="plan-tooltip__title">Data coming soon</div>';
       return;
     }
     const list = info.floors.map((item) => `
@@ -836,50 +842,92 @@ document.addEventListener('keydown', (ev) => {
     button.addEventListener('click', () => {
       const target = document.querySelector(button.dataset.target);
       if (target) {
-        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        scroller.scrollTo({ top: target.offsetTop, behavior: 'smooth' });
       }
     });
   });
 
-  const observer = new IntersectionObserver((entries) => {
+  const highlightObserver = new IntersectionObserver((entries) => {
     entries.forEach((entry) => {
+      const section = entry.target;
       if (entry.isIntersecting) {
-        setActiveFloor(entry.target.dataset.floor);
+        setActiveFloor(section.dataset.floor);
+        gsap.to(section, { autoAlpha: 1, y: 0, duration: 0.6, ease: 'power2.out' });
+      } else {
+        const direction = entry.boundingClientRect.top > 0 ? 60 : -60;
+        gsap.to(section, { autoAlpha: 0, y: direction, duration: 0.45, ease: 'power1.out' });
       }
     });
-  }, { rootMargin: '-35% 0px -35% 0px', threshold: 0.35 });
+  }, { root: scroller, threshold: 0.75 });
 
-  floorSections.forEach((section) => observer.observe(section));
-  setActiveFloor('1');
+  floorSections.forEach((section, index) => {
+    gsap.set(section, { autoAlpha: index === 0 ? 1 : 0, y: index === 0 ? 0 : 60 });
+    highlightObserver.observe(section);
+  });
+
+  setActiveFloor(floorSections[0].dataset.floor);
 })();
 
 (() => {
-  const header = document.querySelector('[data-page-header]');
-  if (!header) { return; }
+  const headers = document.querySelectorAll('[data-page-header]');
+  if (!headers.length) { return; }
 
-  const headerId = header.getAttribute('data-page-header') || 'primary';
-  const toggle = header.querySelector('[data-page-header-toggle]');
-  const floating = document.querySelector(`[data-page-header-floating="${headerId}"]`);
+  headers.forEach((header, index) => {
+    const headerKey = header.getAttribute('data-page-header') || `primary-${index}`;
+    const shell = header.closest('.page-shell');
+    if (!shell) { return; }
 
-  const setCollapsed = (collapsed) => {
-    header.classList.toggle('is-collapsed', collapsed);
-    if (toggle) {
-      toggle.setAttribute('aria-expanded', String(!collapsed));
-    }
-    if (floating) {
-      floating.hidden = !collapsed;
-      floating.setAttribute('aria-expanded', String(!collapsed));
-    }
-  };
+    const headerId = header.getAttribute('id') || `page-header-${headerKey}`;
+    header.id = headerId;
 
-  setCollapsed(false);
+    const toggle = header.querySelector('[data-page-header-toggle]');
+    const floating = document.querySelector(`[data-page-header-floating="${headerKey}"]`);
+    const icon = toggle?.querySelector('.page-header__toggle-icon');
+    const label = toggle?.querySelector('.page-header__toggle-text');
 
-  toggle?.addEventListener('click', () => setCollapsed(true));
-  floating?.addEventListener('click', () => {
+    const syncAria = (expanded) => {
+      header.setAttribute('aria-hidden', expanded ? 'false' : 'true');
+      toggle?.setAttribute('aria-expanded', String(expanded));
+      toggle?.setAttribute('aria-controls', headerId);
+      floating?.setAttribute('aria-controls', headerId);
+      floating?.setAttribute('aria-expanded', String(expanded));
+    };
+
+    const updateLabel = (collapsed) => {
+      if (icon) {
+        icon.textContent = collapsed ? '\u203A' : '\u2039';
+      }
+      if (label) {
+        label.textContent = collapsed ? 'Expand' : 'Collapse';
+      }
+    };
+
+    const setCollapsed = (collapsed, { focusFloating = false } = {}) => {
+      header.classList.toggle('is-collapsed', collapsed);
+      shell.classList.toggle('page-shell--header-collapsed', collapsed);
+
+      if (floating) {
+        floating.hidden = !collapsed;
+        if (collapsed && focusFloating) {
+          floating.focus({ preventScroll: true });
+        }
+      }
+
+      updateLabel(collapsed);
+      syncAria(!collapsed);
+    };
+
     setCollapsed(false);
-    toggle?.focus();
+
+    toggle?.addEventListener('click', () => setCollapsed(true, { focusFloating: true }));
+    floating?.addEventListener('click', () => {
+      setCollapsed(false);
+      toggle?.focus({ preventScroll: true });
+    });
   });
 })();
+
+
 
 (() => {
   const drawer = document.querySelector('[data-comment-drawer]');
@@ -911,3 +959,59 @@ document.addEventListener('keydown', (ev) => {
     }
   });
 })();
+
+
+// === Wall header collapse/expand ===
+(() => {
+  const shell   = document.querySelector('.page-shell');
+  const header  = document.querySelector('.page-header');
+  const toggle  = document.querySelector('[data-page-header-toggle]');
+  const opener  = document.querySelector('[data-page-header-open]');
+
+  if (!shell || !header || !toggle || !opener) return;
+
+  const collapse = () => {
+    shell.classList.add('page-shell--header-collapsed');
+    header.classList.add('is-collapsed');
+    toggle.setAttribute('aria-expanded', 'false');
+    opener.hidden = false;
+    opener.setAttribute('aria-expanded', 'false');
+  };
+  const expand = () => {
+    shell.classList.remove('page-shell--header-collapsed');
+    header.classList.remove('is-collapsed');
+    toggle.setAttribute('aria-expanded', 'true');
+    opener.hidden = true;
+    opener.setAttribute('aria-expanded', 'true');
+  };
+
+  toggle.addEventListener('click', (e) => {
+    e.preventDefault();
+    const expanded = toggle.getAttribute('aria-expanded') === 'true';
+    expanded ? collapse() : expand();
+  });
+  opener.addEventListener('click', (e) => {
+    e.preventDefault();
+    expand();
+  });
+})();
+
+// === Smooth enter/leave per floor (optional) ===
+(() => {
+  const floors = document.querySelectorAll('.floor-section');
+  if (!floors.length) return;
+  floors.forEach(sec => gsap.set(sec, { opacity: 0.85, y: 20 }));
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(({target, isIntersecting}) => {
+      if (isIntersecting) {
+        gsap.to(target, { opacity: 1, y: 0, duration: 0.5, ease: 'power2.out' });
+      }
+    });
+  }, { root: document.querySelector('.floor-stack'), threshold: 0.6 });
+  floors.forEach(sec => io.observe(sec));
+})();
+
+
+
+
+
