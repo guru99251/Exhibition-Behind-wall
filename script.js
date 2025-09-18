@@ -21,10 +21,15 @@ const createAnimation = ({
   text,
   textProperties = undefined
 }) => {
+  if (!target) { return; }
+
   const pathId = `path-${gsap.utils.random(100000, 999999, 1)}`;
   const props = { duration, ease: "none", repeat: -1 };
 
-  gsap.set(target.querySelector("path"), {
+  const pathEl = target.querySelector("path");
+  if (!pathEl) { return; }
+
+  gsap.set(pathEl, {
     attr: { fill: "none", id: pathId, stroke: "none" }
   });
 

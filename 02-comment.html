@@ -1,40 +1,164 @@
-<!DOCTYPE html>
-<html lang="ko">
+﻿<!DOCTYPE html>
+<html lang="ko" class="page">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>comment</title>
+    <title>Behind Wall · Live Comments</title>
     <link rel="stylesheet" href="styles.css">
 </head>
+<body class="page page-comment">
+    <div id="mosaic"></div>
+    <div class="page-backdrop" aria-hidden="true"></div>
 
+    <header class="page-header">
+        <div class="page-brand">
+            <span>behind wall</span>
+            <strong>Diposium</strong>
+        </div>
+        <nav class="page-nav" aria-label="Main navigation">
+            <a class="page-nav__link" href="index.html">Lobby</a>
+            <a class="page-nav__link" href="01-wall.html">Wall</a>
+            <a class="page-nav__link" href="02-comment.html" aria-current="page">Comments</a>
+            <a class="page-nav__link" href="03-contributors.html">Contributors</a>
+            <a class="page-nav__link" href="04-artworks.html">Artworks</a>
+        </nav>
+    </header>
 
-<body>
-    <div class="ellipse">
-    <svg viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
-        <path d="M227 120C227 142.091 178.871 160 119.5 160C60.1294 160 12 142.091 12 120C12 97.9086 60.1294 80 119.5 80C178.871 80 227 97.9086 227 120Z" fill="none" />
-    </svg>
-    </div>
+    <main class="page-wrapper">
+        <section class="section-heading">
+            <h1>Live Comment Hub</h1>
+            <p>
+                QR 코드를 통해 관람객이 남긴 텍스트, 이모지, 반응을 실시간으로 모니터링합니다. 대형 빔 프로젝션 환경에서 한눈에 읽힐 수 있도록 입력 시간과 작품 연결 정보를 명확하게 배치했습니다.
+            </p>
+            <div class="meta-row">
+                <span class="meta-chip">real-time feed</span>
+                <span class="meta-chip">emoji + text</span>
+                <span class="meta-chip">qr sync</span>
+            </div>
+        </section>
 
-    <h1>Comments</h1>
+        <section class="section-block light">
+            <div class="status-indicator">Live sync active</div>
 
+            <div class="comment-grid">
+                <div class="comment-stream" aria-live="polite">
+                    <article class="comment-card">
+                        <div class="comment-meta">
+                            <span>2025-09-14 · 19:42</span>
+                            <span>Artwork · SPECTRAL LOOP</span>
+                        </div>
+                        <p class="comment-body">
+                            “음향과 빛의 흐름이 정말 몰입감 있어요. 다음 루프에서 어떤 변화가 나올지 기대돼요!”
+                        </p>
+                        <div class="reaction-pills">
+                            <span class="reaction-pill">💡 12</span>
+                            <span class="reaction-pill">👏 26</span>
+                        </div>
+                    </article>
 
+                    <article class="comment-card">
+                        <div class="comment-meta">
+                            <span>2025-09-14 · 19:37</span>
+                            <span>Artwork · MEMORY PATCH</span>
+                        </div>
+                        <p class="comment-body">
+                            “UX 플로우가 직관적이라서 시퀀스를 따라가기 좋아요. 터치 인터랙션 버전도 궁금합니다.”
+                        </p>
+                        <div class="reaction-pills">
+                            <span class="reaction-pill">✨ 18</span>
+                            <span class="reaction-pill">❤️ 33</span>
+                        </div>
+                    </article>
+
+                    <article class="comment-card">
+                        <div class="comment-meta">
+                            <span>2025-09-14 · 19:31</span>
+                            <span>Artwork · TIDAL DREAM</span>
+                        </div>
+                        <p class="comment-body">
+                            “3D 파티클이 물결처럼 살아 움직여요. 프로젝션 색감이 공간 자체를 바꿔놓네요.”
+                        </p>
+                        <div class="reaction-pills">
+                            <span class="reaction-pill">🌊 22</span>
+                            <span class="reaction-pill">🔥 15</span>
+                        </div>
+                    </article>
+
+                    <article class="comment-card">
+                        <div class="comment-meta">
+                            <span>2025-09-14 · 19:24</span>
+                            <span>Artwork · ORBITAL CITY</span>
+                        </div>
+                        <p class="comment-body">
+                            “게임 섹션의 시네머틱 컷이 장난 아니에요. 컨트롤러 체험존과 연결되면 더 완벽할 듯!”
+                        </p>
+                        <div class="reaction-pills">
+                            <span class="reaction-pill">🕹️ 19</span>
+                            <span class="reaction-pill">🚀 27</span>
+                        </div>
+                    </article>
+                </div>
+
+                <aside class="comment-sidebar">
+                    <h3>QR Access Map</h3>
+                    <p class="qr-info">
+                        각 작품 카드 옆에 배치될 QR 코드는 고유 ID와 연결됩니다. 테스트 중에는 아래 자리표에 맞춰 출력물을 제작하세요.
+                    </p>
+
+                    <div class="qr-card">
+                        <header>
+                            <h4>Zone A · Entrance</h4>
+                            <span class="qr-info">카드형 작품 3종</span>
+                        </header>
+                        <div class="qr-grid">
+                            <div class="qr-block" data-label="A01"></div>
+                            <div class="qr-block" data-label="A02"></div>
+                            <div class="qr-block" data-label="A03"></div>
+                        </div>
+                    </div>
+
+                    <div class="qr-card">
+                        <header>
+                            <h4>Zone B · Main Wall</h4>
+                            <span class="qr-info">대형 프로젝션 4종</span>
+                        </header>
+                        <div class="qr-grid">
+                            <div class="qr-block" data-label="B01"></div>
+                            <div class="qr-block" data-label="B02"></div>
+                            <div class="qr-block" data-label="B03"></div>
+                            <div class="qr-block" data-label="B04"></div>
+                        </div>
+                    </div>
+
+                    <div class="qr-card">
+                        <header>
+                            <h4>Zone C · Interaction</h4>
+                            <span class="qr-info">컨트롤러 체험 2종</span>
+                        </header>
+                        <div class="qr-grid">
+                            <div class="qr-block" data-label="C01"></div>
+                            <div class="qr-block" data-label="C02"></div>
+                        </div>
+                    </div>
+
+                    <div class="note-box">
+                        ▸ QR 코드 생성 시 작품 ID와 slug를 동일하게 유지하면 댓글 데이터 매칭이 자동화됩니다. 
+                        ▸ 감상 중 입력된 이모지는 컬러 채널이 다른 반응과 겹치지 않도록 디자인 시스템에서 지정한 팔레트를 활용하세요.
+                    </div>
+                </aside>
+            </div>
+        </section>
+    </main>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.11.7/dayjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.3/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.3/ScrollTrigger.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.3/ScrollToPlugin.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.3/EasePack.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.0/lottie.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="script.js"></script>
 </body>
-
-        <!-- 스크립트 -->
-        <!-- 편의 -->
-        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.11.7/dayjs.min.js"></script>
-        <!-- 애니메이션 -->
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.3/gsap.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.3/ScrollTrigger.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.3/ScrollToPlugin.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.3/EasePack.min.js"></script>
-        <!-- 부트스트랩 -->
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-        <!-- 그래픽 -->
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.0/lottie.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-        <!-- My -->
-        <script src="script.js"></script>
-
 </html>

@@ -312,3 +312,506 @@ body {
   vector-effect: non-scaling-stroke;   /* 크기 변경해도 선두께 유지 */
 }
 
+/* === Interior page scaffolding === */
+html.page {
+  overflow-x: hidden;
+  overflow-y: auto;
+  height: auto;
+  min-height: 100%;
+}
+
+html.page body {
+  height: auto;
+  min-height: 100vh;
+}
+
+body.page {
+  display: block;
+  width: 100%;
+  min-height: 100vh;
+  background: radial-gradient(circle at top right, rgba(255, 255, 255, 0.06) 0%, rgba(14, 15, 15, 0) 48%),
+              radial-gradient(circle at bottom left, rgba(255, 255, 255, 0.045) 0%, rgba(14, 15, 15, 0) 52%),
+              var(--color-bg);
+  color: var(--color-text);
+  font-family: 'DM Sans', sans-serif;
+  line-height: 1.6;
+  letter-spacing: 0.015em;
+  padding: clamp(1.5rem, 4vw, 3rem) 0 clamp(6rem, 10vw, 8rem);
+}
+
+body.page #mosaic {
+  opacity: 0.55;
+}
+
+body.page main {
+  width: 100%;
+}
+
+.page-backdrop {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.65;
+  background: radial-gradient(60% 60% at 20% 20%, rgba(148, 163, 184, 0.25) 0%, transparent 100%);
+  mix-blend-mode: screen;
+  z-index: 0;
+}
+
+.page-header {
+  position: sticky;
+  top: clamp(0.5rem, 2vw, 1.75rem);
+  z-index: 5;
+  width: min(120rem, 92vw);
+  margin: 0 auto clamp(2rem, 5vw, 4rem);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: clamp(1rem, 2vw, 2rem);
+  padding: clamp(1rem, 2.5vw, 1.6rem);
+  border: 1px solid var(--color-text-border-opacity01);
+  background: rgba(14, 15, 15, 0.72);
+  backdrop-filter: blur(12px);
+  border-radius: 18px;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.28);
+}
+
+.page-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  text-transform: uppercase;
+  font-size: clamp(0.75rem, 1.1vw, 0.95rem);
+  letter-spacing: 0.3em;
+  color: var(--color-text-border);
+}
+
+.page-brand strong {
+  font-family: 'TheGoodMonolith', 'RoundedFixedsys', monospace;
+  font-size: clamp(1.2rem, 2.4vw, 2rem);
+  letter-spacing: 0.2em;
+}
+
+.page-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(0.6rem, 1vw, 1rem);
+  align-items: center;
+}
+
+.page-nav__link {
+  position: relative;
+  padding: 0.65rem 1.1rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--color-text);
+  text-decoration: none;
+  font-size: clamp(0.8rem, 1vw, 0.95rem);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: border-color 0.3s ease, background 0.3s ease, color 0.3s ease;
+}
+
+.page-nav__link:hover,
+.page-nav__link:focus-visible {
+  border-color: var(--color-text-border-opacity04);
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.page-nav__link[aria-current="page"] {
+  border-color: var(--color-text-border);
+  color: #fff;
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.08);
+}
+
+.page-wrapper {
+  position: relative;
+  z-index: 1;
+  width: min(120rem, 92vw);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(2.5rem, 4vw, 4.5rem);
+}
+
+.section-heading {
+  display: grid;
+  gap: clamp(1rem, 2vw, 1.5rem);
+}
+
+.section-heading h1,
+.section-heading h2 {
+  font-family: 'TheGoodMonolith', 'RoundedFixedsys', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  line-height: 1.2;
+  font-size: clamp(2.2rem, 4vw, 3.7rem);
+  color: #fff;
+}
+
+.section-heading p {
+  max-width: 72ch;
+  font-size: clamp(1rem, 1.5vw, 1.2rem);
+  color: rgba(226, 232, 240, 0.86);
+}
+
+.meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.meta-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-text-border-opacity04);
+  background: rgba(15, 23, 42, 0.45);
+  font-size: clamp(0.75rem, 1vw, 0.9rem);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.meta-chip::before {
+  content: '';
+  inline-size: 0.55rem;
+  block-size: 0.55rem;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.65;
+}
+
+.section-block {
+  display: grid;
+  gap: clamp(1.8rem, 2.5vw, 2.8rem);
+  padding: clamp(1.8rem, 3vw, 2.6rem);
+  border-radius: 24px;
+  border: 1px solid var(--color-text-border-opacity01);
+  background: rgba(10, 11, 12, 0.78);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.3);
+}
+
+.section-block.light {
+  background: rgba(15, 16, 18, 0.86);
+}
+
+.process-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  gap: clamp(1.5rem, 3vw, 3rem);
+}
+
+.process-card {
+  display: grid;
+  gap: clamp(0.8rem, 1.4vw, 1.3rem);
+  padding: clamp(1.4rem, 2vw, 1.8rem);
+  border-radius: 18px;
+  border: 1px solid var(--color-text-border-opacity04);
+  background: rgba(18, 20, 24, 0.7);
+}
+
+.process-card h3 {
+  font-family: 'TheGoodMonolith', 'RoundedFixedsys', monospace;
+  font-size: clamp(1.1rem, 1.6vw, 1.4rem);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #f4f4f4;
+}
+
+.process-card p {
+  font-size: clamp(0.95rem, 1.3vw, 1.05rem);
+  color: rgba(226, 232, 240, 0.85);
+}
+
+.media-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: clamp(0.8rem, 1.5vw, 1.4rem);
+}
+
+.media-slot {
+  position: relative;
+  padding: clamp(1rem, 1.8vw, 1.4rem);
+  aspect-ratio: 3 / 2;
+  border-radius: 16px;
+  border: 1px dashed rgba(148, 163, 184, 0.45);
+  background: rgba(30, 41, 59, 0.45);
+  display: grid;
+  place-items: center;
+  text-align: center;
+  font-size: clamp(0.75rem, 1vw, 0.9rem);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgba(226, 232, 240, 0.72);
+}
+
+.media-slot::after {
+  content: attr(data-label);
+}
+
+.note-box {
+  border-radius: 18px;
+  border: 1px solid rgba(251, 191, 36, 0.4);
+  background: rgba(120, 53, 15, 0.15);
+  padding: clamp(1.1rem, 1.9vw, 1.6rem);
+  font-size: clamp(0.9rem, 1.2vw, 1rem);
+  letter-spacing: 0.04em;
+}
+
+.comment-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.8fr) minmax(0, 1fr);
+  gap: clamp(1.8rem, 3vw, 3.2rem);
+}
+
+@media (max-width: 1024px) {
+  .comment-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.comment-stream {
+  display: grid;
+  gap: clamp(1rem, 2vw, 1.6rem);
+}
+
+.comment-card {
+  display: grid;
+  gap: 0.75rem;
+  padding: clamp(1rem, 1.8vw, 1.4rem);
+  border-radius: 16px;
+  border: 1px solid var(--color-text-border-opacity04);
+  background: rgba(14, 20, 27, 0.78);
+}
+
+.comment-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  font-size: clamp(0.8rem, 1vw, 0.9rem);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(148, 163, 184, 0.9);
+}
+
+.comment-body {
+  font-size: clamp(1rem, 1.3vw, 1.1rem);
+  color: rgba(226, 232, 240, 0.92);
+}
+
+.reaction-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.reaction-pill {
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(59, 130, 246, 0.2);
+  font-size: clamp(0.8rem, 1vw, 0.95rem);
+  letter-spacing: 0.06em;
+}
+
+.comment-sidebar {
+  display: grid;
+  gap: clamp(1.2rem, 2vw, 1.8rem);
+}
+
+.comment-sidebar h3 {
+  font-family: 'TheGoodMonolith', 'RoundedFixedsys', monospace;
+  font-size: clamp(1.1rem, 1.6vw, 1.3rem);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.qr-card {
+  display: grid;
+  gap: 0.75rem;
+  padding: clamp(1rem, 1.5vw, 1.4rem);
+  border-radius: 16px;
+  border: 1px solid var(--color-text-border-opacity04);
+  background: rgba(14, 20, 27, 0.78);
+}
+
+.qr-card header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.qr-card h4 {
+  font-family: 'TheGoodMonolith', 'RoundedFixedsys', monospace;
+  font-size: clamp(0.95rem, 1.2vw, 1.15rem);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: #f8fafc;
+}
+
+.qr-info {
+  font-size: clamp(0.8rem, 1vw, 0.9rem);
+  color: rgba(148, 163, 184, 0.9);
+}
+
+.qr-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: 0.8rem;
+}
+
+.qr-block {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  border-radius: 12px;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.14) 1px, transparent 1px) 0 0 / 12px 12px,
+    linear-gradient(rgba(255, 255, 255, 0.14) 1px, transparent 1px) 0 0 / 12px 12px,
+    rgba(10, 15, 25, 0.92);
+  display: grid;
+  place-items: center;
+  color: rgba(226, 232, 240, 0.78);
+  font-size: clamp(0.65rem, 0.9vw, 0.8rem);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.qr-block::after {
+  content: attr(data-label);
+}
+
+.status-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: clamp(0.75rem, 0.9vw, 0.85rem);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(165, 243, 252, 0.9);
+}
+
+.status-indicator::before {
+  content: '';
+  inline-size: 0.55rem;
+  block-size: 0.55rem;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0 6px rgba(165, 243, 252, 0.12);
+}
+
+.contrib-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  gap: clamp(1.5rem, 2.5vw, 2.5rem);
+}
+
+.contrib-group {
+  display: grid;
+  gap: 0.9rem;
+  padding: clamp(1.1rem, 1.8vw, 1.6rem);
+  border-radius: 18px;
+  border: 1px solid var(--color-text-border-opacity04);
+  background: rgba(13, 20, 28, 0.78);
+}
+
+.contrib-group h3 {
+  font-family: 'TheGoodMonolith', 'RoundedFixedsys', monospace;
+  font-size: clamp(1rem, 1.5vw, 1.2rem);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: #f8fafc;
+}
+
+.name-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: 0.45rem 1rem;
+  font-size: clamp(0.85rem, 1.1vw, 0.95rem);
+  letter-spacing: 0.04em;
+  color: rgba(226, 232, 240, 0.88);
+}
+
+.staff-note {
+  font-size: clamp(0.85rem, 1vw, 0.95rem);
+  color: rgba(148, 163, 184, 0.85);
+}
+
+.artwork-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  gap: clamp(1.5rem, 2.8vw, 3rem);
+}
+
+.artwork-card {
+  display: grid;
+  gap: 0.9rem;
+  padding: clamp(1.2rem, 1.8vw, 1.9rem);
+  border-radius: 20px;
+  border: 1px solid var(--color-text-border-opacity04);
+  background: rgba(14, 20, 27, 0.78);
+  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.12);
+}
+
+.poster-frame {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  border-radius: 16px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.14), transparent 60%),
+    rgba(8, 11, 14, 0.85);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  display: grid;
+  place-items: center;
+  color: rgba(226, 232, 240, 0.68);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: clamp(0.75rem, 1vw, 0.9rem);
+}
+
+.poster-frame::after {
+  content: attr(data-label);
+}
+
+.artwork-card h3 {
+  font-family: 'TheGoodMonolith', 'RoundedFixedsys', monospace;
+  font-size: clamp(1.05rem, 1.5vw, 1.3rem);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #f8fafc;
+}
+
+.artwork-meta {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.meta-list {
+  display: grid;
+  gap: 0.4rem;
+  font-size: clamp(0.85rem, 1vw, 0.95rem);
+  color: rgba(226, 232, 240, 0.85);
+}
+
+.meta-list dt {
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(148, 163, 184, 0.9);
+}
+
+.meta-list dd {
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .page-nav {
+    width: 100%;
+  }
+}

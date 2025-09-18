@@ -1,40 +1,154 @@
-<!DOCTYPE html>
-<html lang="ko">
+﻿<!DOCTYPE html>
+<html lang="ko" class="page">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>contributors</title>
+    <title>Behind Wall · Contributors</title>
     <link rel="stylesheet" href="styles.css">
 </head>
+<body class="page page-contributors">
+    <div id="mosaic"></div>
+    <div class="page-backdrop" aria-hidden="true"></div>
 
+    <header class="page-header">
+        <div class="page-brand">
+            <span>behind wall</span>
+            <strong>Diposium</strong>
+        </div>
+        <nav class="page-nav" aria-label="Main navigation">
+            <a class="page-nav__link" href="index.html">Lobby</a>
+            <a class="page-nav__link" href="01-wall.html">Wall</a>
+            <a class="page-nav__link" href="02-comment.html">Comments</a>
+            <a class="page-nav__link" href="03-contributors.html" aria-current="page">Contributors</a>
+            <a class="page-nav__link" href="04-artworks.html">Artworks</a>
+        </nav>
+    </header>
 
-<body>
-    <div class="ellipse">
-    <svg viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
-        <path d="M227 120C227 142.091 178.871 160 119.5 160C60.1294 160 12 142.091 12 120C12 97.9086 60.1294 80 119.5 80C178.871 80 227 97.9086 227 120Z" fill="none" />
-    </svg>
-    </div>
+    <main class="page-wrapper">
+        <section class="section-heading">
+            <h1>Contributors</h1>
+            <p>
+                네 개 분야(2D, 3D, UX/UI, Game)와 전시 운영진의 인력 구성을 투명하게 공개합니다. 대형 투사에서도 선명하게 읽히도록 그룹별로 카드화했습니다.
+            </p>
+            <div class="meta-row">
+                <span class="meta-chip">2d</span>
+                <span class="meta-chip">3d</span>
+                <span class="meta-chip">ux/ui</span>
+                <span class="meta-chip">game</span>
+                <span class="meta-chip">operations</span>
+            </div>
+        </section>
 
-    <h1>Contributors</h1>
+        <section class="section-block light">
+            <div class="section-heading">
+                <h2>Creative Teams</h2>
+                <p>
+                    각 그룹은 전시중 실시간으로 업데이트가 가능하며, 명단 순서는 알파벳/가나다 순으로 정렬했습니다.
+                </p>
+            </div>
 
+            <div class="contrib-grid">
+                <article class="contrib-group">
+                    <h3>2D Design</h3>
+                    <ul class="name-grid">
+                        <li>강민정</li>
+                        <li>김서윤</li>
+                        <li>박지후</li>
+                        <li>서민재</li>
+                        <li>이도겸</li>
+                        <li>정우림</li>
+                    </ul>
+                </article>
 
+                <article class="contrib-group">
+                    <h3>3D / Motion</h3>
+                    <ul class="name-grid">
+                        <li>강태유</li>
+                        <li>나현서</li>
+                        <li>유태준</li>
+                        <li>임채린</li>
+                        <li>조은결</li>
+                    </ul>
+                </article>
+
+                <article class="contrib-group">
+                    <h3>UX / UI</h3>
+                    <ul class="name-grid">
+                        <li>김세라</li>
+                        <li>문아인</li>
+                        <li>신다율</li>
+                        <li>양도윤</li>
+                        <li>주연호</li>
+                    </ul>
+                </article>
+
+                <article class="contrib-group">
+                    <h3>Game Dev</h3>
+                    <ul class="name-grid">
+                        <li>권민호</li>
+                        <li>박요한</li>
+                        <li>오세린</li>
+                        <li>이채운</li>
+                        <li>정도윤</li>
+                    </ul>
+                </article>
+            </div>
+        </section>
+
+        <section class="section-block">
+            <div class="section-heading">
+                <h2>Operations Crew</h2>
+                <p>
+                    관람객 동선부터 기기 유지 보수까지 전시 운영을 담당하는 스텝 명단입니다. 역할과 연락 창구를 함께 표기했습니다.
+                </p>
+            </div>
+
+            <div class="contrib-grid">
+                <article class="contrib-group">
+                    <h3>프로듀싱</h3>
+                    <ul class="name-grid">
+                        <li>최하린 · Executive Producer</li>
+                        <li>김도현 · Technical Producer</li>
+                        <li>윤서빈 · Scheduling</li>
+                    </ul>
+                </article>
+
+                <article class="contrib-group">
+                    <h3>공간 / 장비</h3>
+                    <ul class="name-grid">
+                        <li>배준혁 · Stage Manager</li>
+                        <li>이한별 · Lighting</li>
+                        <li>오지은 · AV Support</li>
+                        <li>장현수 · Safety Lead</li>
+                    </ul>
+                </article>
+
+                <article class="contrib-group">
+                    <h3>커뮤니케이션</h3>
+                    <ul class="name-grid">
+                        <li>이세나 · Visitor Guide</li>
+                        <li>정하온 · Social Live</li>
+                        <li>최예담 · Press</li>
+                        <li>박태경 · Archive Photo</li>
+                    </ul>
+                </article>
+            </div>
+
+            <div class="note-box staff-note">
+                ▸ 운영진 명단은 현장 스케줄에 따라 교대 인원이 추가될 수 있으므로 교체 시 즉시 업데이트하세요.
+            </div>
+        </section>
+    </main>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.11.7/dayjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.3/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.3/ScrollTrigger.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.3/ScrollToPlugin.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.3/EasePack.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.0/lottie.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="script.js"></script>
 </body>
-
-        <!-- 스크립트 -->
-        <!-- 편의 -->
-        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.11.7/dayjs.min.js"></script>
-        <!-- 애니메이션 -->
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.3/gsap.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.3/ScrollTrigger.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.3/ScrollToPlugin.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.3/EasePack.min.js"></script>
-        <!-- 부트스트랩 -->
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-        <!-- 그래픽 -->
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.0/lottie.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-        <!-- My -->
-        <script src="script.js"></script>
-
 </html>
