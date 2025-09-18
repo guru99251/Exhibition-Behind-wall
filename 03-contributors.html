@@ -6,51 +6,45 @@
     <title>Behind Wall · Contributors</title>
     <link rel="stylesheet" href="styles.css">
 </head>
+
 <body class="page page-contributors">
+    <!-- fixed sidebar -->
+    <aside class="wall-sidebar" aria-label="Site navigation">
+        <nav class="wall-sidebar__nav">
+            <ul class="wall-sidebar__list">
+                <li><a href="index.html" class="home-nav">Lobby</a></li>
+                <li><a href="01-wall.html">Wall</a></li>
+                <li><a href="02-comment.html">Comments</a></li>
+                <li><a href="03-contributors.html" aria-current="page">Contributors</a></li>
+                <li><a href="04-artworks.html">Artworks</a></li>
+            </ul>
+        </nav>
+    </aside>
     <div id="mosaic"></div>
     <div class="page-backdrop" aria-hidden="true"></div>
 
     <div class="page-shell">
-        <header class="page-header" data-page-header="primary">
-            <div class="page-header__inner">
-                <button class="page-header__toggle" type="button" data-page-header-toggle aria-expanded="true" aria-label="사이드 패널 접기">
-                    <span aria-hidden="true" class="page-header__toggle-icon">&lt;</span>
-                    <span class="page-header__toggle-text">Collapse</span>
-                </button>
-
-                <div class="page-header__brand">
-                    <div class="page-brand">
-                        <span>behind wall</span>
-                        <strong>Diposium</strong>
-                    </div>
-                    <nav class="page-nav" aria-label="Main navigation">
-                        <a class="page-nav__link page-nav__link--home" href="index.html">Lobby</a>
-                        <a class="page-nav__link" href="01-wall.html">Wall</a>
-                        <a class="page-nav__link" href="02-comment.html">Comments</a>
-                        <a class="page-nav__link" href="03-contributors.html" aria-current="page">Contributors</a>
-                        <a class="page-nav__link" href="04-artworks.html">Artworks</a>
-                    </nav>
-                </div>
-
-                <div class="page-header__heading">
-                    <div class="section-heading">
-                        <h1>Contributors</h1>
-                        <p>
-                            Diposium 제작에 참여한 전 분야의 팀과 운영 스태프를 층별 도면처럼 컬럼형으로 배열했습니다.
-                        </p>
-                    </div>
-                    <div class="meta-row">
-                        <span class="meta-chip">2d</span>
-                        <span class="meta-chip">3d</span>
-                        <span class="meta-chip">ux/ui</span>
-                        <span class="meta-chip">game</span>
-                        <span class="meta-chip">operations</span>
-                    </div>
-                </div>
-            </div>
-        </header>
-
         <main class="page-main contributors-main">
+            <header class="page-header" data-page-header="primary">
+                <div class="page-header__inner">
+                    <div class="page-header__heading">
+                        <div class="section-heading">
+                            <h1>Contributors</h1>
+                            <p>
+                                Diposium 제작에 참여한 전 분야의 팀과 운영 스태프를 층별 도면처럼 컬럼형으로 배열했습니다.
+                            </p>
+                        </div>
+                        <div class="meta-row">
+                            <span class="meta-chip">2d</span>
+                            <span class="meta-chip">3d</span>
+                            <span class="meta-chip">ux/ui</span>
+                            <span class="meta-chip">game</span>
+                            <span class="meta-chip">operations</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
             <div class="contributors-board">
                 <section class="contributors-column" aria-labelledby="creativeColumnTitle">
                     <header class="contributors-column__heading">
@@ -147,10 +141,6 @@
             </div>
         </main>
     </div>
-
-    <button class="page-header__floating" hidden type="button" data-page-header-floating="primary" aria-expanded="false" aria-controls="wallSidebar" aria-label="사이드 패널 열기">
-        메뉴 열기
-    </button>
 
     <!-- Disc overlay (inside <body>, before scripts) -->
     <div class="ellipse" aria-hidden="true">

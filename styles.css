@@ -385,10 +385,6 @@ body.page #mosaic {
   gap: clamp(1rem, 2vw, 2rem);
 }
 
-.page-shell--header-collapsed > .page-header {
-  pointer-events: none;
-}
-
 
 .page-main {
   display: flex;
@@ -400,14 +396,13 @@ body.page #mosaic {
 .page-header {
   position: sticky;
   top: clamp(1rem, 3vw, 2rem);
-  align-self: start;
-  display: flex;
-  border: 1px solid var(--color-text-border-opacity01);
+  align-self: stretch;
+  width: 100%;
   background: rgba(14, 15, 15, 0.82);
   backdrop-filter: blur(12px);
-  border-radius: 22px;
   box-shadow: 0 20px 48px rgba(0, 0, 0, 0.32);
   transition: transform 0.45s ease, opacity 0.45s ease;
+  font-family: "TheGoodMonolith", 'RoundedFixedsys', monospace;
 }
 
 .page-header__inner {
@@ -442,68 +437,6 @@ body.page #mosaic {
   gap: clamp(1rem, 1.8vw, 1.6rem);
 }
 
-.page-header__toggle {
-  justify-self: end;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.45rem 0.65rem;
-  border-radius: 999px;
-  border: 1px solid rgba(148, 163, 184, 0.35);
-  background: rgba(30, 41, 59, 0.45);
-  color: rgba(226, 232, 240, 0.85);
-  font-size: 0.8rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: border-color 0.3s ease, background 0.3s ease;
-}
-
-.page-header__toggle:hover,
-.page-header__toggle:focus-visible {
-  border-color: rgba(125, 211, 252, 0.6);
-  background: rgba(56, 189, 248, 0.2);
-  color: #fff;
-}
-
-
-
-.page-header__toggle-text {
-  font-size: 0.75rem;
-}
-
-.page-header__toggle-icon {
-  display: inline-block;
-  font-size: 0.85rem;
-  line-height: 1;
-}
-
-.page-header.is-collapsed {
-  transform: translateX(calc(-100% - clamp(1.5rem, 3vw, 2.5rem)));
-  opacity: 0;
-  pointer-events: none;
-}
-
-.page-header__floating {
-  position: fixed;
-  left: clamp(1.5rem, 4vw, 2.6rem);
-  bottom: clamp(1.5rem, 4vw, 2.6rem);
-  z-index: 15;
-  padding: 0.85rem 1.4rem;
-  border-radius: 999px;
-  border: 1px solid rgba(148, 163, 184, 0.45);
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.85), rgba(14, 165, 233, 0.85));
-  color: #fff;
-  font-size: 0.85rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  cursor: pointer;
-  box-shadow: 0 18px 42px rgba(14, 165, 233, 0.28);
-}
-
-.page-header__floating[hidden] {
-  display: none;
-}
 
 @media (max-width: 1100px) {
   .page-shell {
@@ -1349,11 +1282,6 @@ body.page.page-wall {
     opacity: 1;
 }
 
-/* Adjust wall-stage to account for sidebar */
-.wall-stage {
-    padding-left: 180px; /* Add space for fixed sidebar */
-}
-
 /* === WALL SIDEBAR: 홈(특수 동작) 강조 스타일 === */
 .wall-sidebar__list a.home-nav{
   position: relative;
@@ -1367,7 +1295,7 @@ body.page.page-wall {
   font-weight: 800;
   letter-spacing: .14em;
   text-transform: uppercase;
-  opacity: 1;                                /* 다른 링크(0.8)보다 선명 */
+  opacity: 1;
   box-shadow: 0 8px 19px rgba(56,189,248,.36), inset 0 0 0 1px rgba(255,255,255,.12);
   text-decoration: none;
 }
@@ -1381,43 +1309,76 @@ body.page.page-wall {
   transform: translateY(-50%);
   font-size: .95rem;
   line-height: 1;
-  filter: drop-shadow(0 1px 0 rgba(0,0,0,.35));
 }
 
 
 /* 상호작용 강화 */
 .wall-sidebar__list a.home-nav:hover,
 .wall-sidebar__list a.home-nav:focus-visible{
-  filter: brightness(1.05);
-  box-shadow: 0 18px 44px rgba(56,189,248,.44);
-  outline: none;
-}
-.wall-sidebar__list a.home-nav:focus-visible{
   outline: 2px solid rgba(125,211,252,.9);
   outline-offset: 2px;
 }
 
+/* === Wall sidebar corner decorations === */
+.wall-sidebar__list a:not(.home-nav) {
+  position: relative;
+  display: block;
+  padding: 0.6rem 1rem;
+}
 
-@media (max-width: 720px) {
-    .wall-sidebar {
-        top: auto;
-        bottom: 2rem;
-        left: 50%;
-        transform: translateX(-50%);
-        padding: 0.75rem 1.25rem;
-    }
-    
-    .wall-sidebar__list {
-        display: flex;
-        gap: 1rem;
-    }
-    
-    .wall-sidebar__list li + li {
-        margin-top: 0;
-    }
+.wall-sidebar__list a:not(.home-nav)::before,
+.wall-sidebar__list a:not(.home-nav)::after {
+  content: "";
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
 
-    .wall-stage {
-        padding-left: 0;
-        padding-bottom: 80px;
-    }
+/* Top-left corner */
+.wall-sidebar__list a:not(.home-nav)::before {
+  top: 0;
+  left: 0;
+  border-top: 1px solid var(--color-text);
+  border-left: 1px solid var(--color-text);
+}
+
+/* Bottom-right corner */
+.wall-sidebar__list a:not(.home-nav)::after {
+  bottom: 0;
+  right: 0;
+  border-bottom: 1px solid var(--color-text);
+  border-right: 1px solid var(--color-text);
+}
+
+/* Show corners on hover/focus */
+.wall-sidebar__list a:not(.home-nav):hover::before,
+.wall-sidebar__list a:not(.home-nav):hover::after,
+.wall-sidebar__list a:not(.home-nav):focus::before,
+.wall-sidebar__list a:not(.home-nav):focus::after {
+  opacity: 1;
+}
+
+/* Active state corners */
+.wall-sidebar__list a[aria-current="page"]:not(.home-nav)::before,
+.wall-sidebar__list a[aria-current="page"]:not(.home-nav)::after {
+  opacity: 1;
+  border-color: rgba(125, 211, 252, 0.8);
+}
+
+/* Add to styles.css */
+/* Wall sidebar layout adjustments */
+.page-wall .wall-stage,
+.page-comment .page-main,
+.page-contributors .page-main,
+.page-artworks .page-main {
+    margin-left: 200px; /* Match sidebar width */
+    margin-right: 160px; /* Extra space for sidebar */
+}
+
+/* Ensure header is at the top */
+.page-header__heading {
+    order: -1; /* Move to top of flex container */
+    margin-bottom: 2rem;
 }
