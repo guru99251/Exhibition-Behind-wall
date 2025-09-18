@@ -24,19 +24,18 @@
         </header>
 
         <main class="page-main wall-main">
-            <!-- Minimal drawer (bullet & line) -->
-            <div class="wall-drawer" id="wallDrawer" aria-hidden="true">
-            <div class="wall-drawer__handle" role="button" tabindex="0" aria-expanded="false">• Menu</div>
-                <nav class="wall-drawer__panel" aria-label="Site navigation">
-                    <ul class="wall-drawer__list">
-                    <li><a href="index.html">Lobby</a></li>
-                    <li><a href="01-wall.html" aria-current="page">Wall</a></li>
-                    <li><a href="02-comment.html">Comments</a></li>
-                    <li><a href="03-contributors.html">Contributors</a></li>
-                    <li><a href="04-artworks.html">Artworks</a></li>
+            <!-- Change from drawer to fixed sidebar -->
+            <aside class="wall-sidebar" aria-label="Site navigation">
+                <nav class="wall-sidebar__nav">
+                    <ul class="wall-sidebar__list">
+                        <li><a href="index.html" class="home-nav">Lobby</a></li>
+                        <li><a href="01-wall.html" aria-current="page">Wall</a></li>
+                        <li><a href="02-comment.html">Comments</a></li>
+                        <li><a href="03-contributors.html">Contributors</a></li>
+                        <li><a href="04-artworks.html">Artworks</a></li>
                     </ul>
                 </nav>
-            </div>
+            </aside>
 
             <div class="wall-stage">
                 <div class="floor-stack">
@@ -340,13 +339,6 @@
     <button class="page-header__floating" hidden type="button" data-page-header-floating="primary" aria-expanded="false" aria-controls="wallSidebar" aria-label="사이드 패널 열기">
         메뉴 열기
     </button>
-
-    <!-- Disc overlay (inside <body>, before scripts) -->
-    <div class="ellipse" aria-hidden="true">
-        <svg viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
-        <path d="M227 120C227 142.091 178.871 160 119.5 160C60.1294 160 12 142.091 12 120C12 97.9086 60.1294 80 119.5 80C178.871 80 227 97.9086 227 120Z" fill="none" />
-        </svg>
-    </div>
 
     <!-- GSAP (single version only; required by script.js) -->
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>

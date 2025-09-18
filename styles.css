@@ -233,6 +233,8 @@ body {
   pointer-events: none;
 }
 
+
+
 .select-menu .menu-item .corner svg {
   width: 100%;
   height: 100%;
@@ -1307,4 +1309,115 @@ body.page.page-wall {
   position: fixed;       /* 화면 고정 */
   inset: 0;              /* 상하좌우 꽉 채움 */
   overflow: hidden !important;
+}
+
+/* Replace existing wall-drawer styles with new wall-sidebar styles */
+.wall-sidebar {
+    position: fixed;
+    top: 2rem;
+    left: 2rem;
+    width: auto;
+    padding: 1rem;
+    z-index: 100;
+}
+
+.wall-sidebar__nav {
+    display: flex;
+    flex-direction: column;
+}
+
+.wall-sidebar__list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    font-family: "TheGoodMonolith", 'RoundedFixedsys', monospace;
+}
+
+.wall-sidebar__list li + li {
+    margin-top: 0.5rem;
+}
+
+.wall-sidebar__list a {
+    color: var(--color-text);
+    text-decoration: none;
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+.wall-sidebar__list a:hover,
+.wall-sidebar__list a[aria-current="page"] {
+    opacity: 1;
+}
+
+/* Adjust wall-stage to account for sidebar */
+.wall-stage {
+    padding-left: 180px; /* Add space for fixed sidebar */
+}
+
+/* === WALL SIDEBAR: 홈(특수 동작) 강조 스타일 === */
+.wall-sidebar__list a.home-nav{
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: .55rem;
+  padding: .6rem 3rem .6rem 2.25rem;         /* 왼쪽 아이콘 공간 */
+  border: 1px solid rgba(148,163,184,.55);
+  background: linear-gradient(135deg, rgba(88, 136, 214, 0.394), rgba(105, 168, 197, 0.641));
+  color: #fff;
+  font-weight: 800;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  opacity: 1;                                /* 다른 링크(0.8)보다 선명 */
+  box-shadow: 0 8px 19px rgba(56,189,248,.36), inset 0 0 0 1px rgba(255,255,255,.12);
+  text-decoration: none;
+}
+
+/* 홈 아이콘(텍스트 기호) */
+.wall-sidebar__list a.home-nav::before{
+  content: "⌂";                               /* 집 아이콘 기호 */
+  position: absolute;
+  left: .8rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: .95rem;
+  line-height: 1;
+  filter: drop-shadow(0 1px 0 rgba(0,0,0,.35));
+}
+
+
+/* 상호작용 강화 */
+.wall-sidebar__list a.home-nav:hover,
+.wall-sidebar__list a.home-nav:focus-visible{
+  filter: brightness(1.05);
+  box-shadow: 0 18px 44px rgba(56,189,248,.44);
+  outline: none;
+}
+.wall-sidebar__list a.home-nav:focus-visible{
+  outline: 2px solid rgba(125,211,252,.9);
+  outline-offset: 2px;
+}
+
+
+@media (max-width: 720px) {
+    .wall-sidebar {
+        top: auto;
+        bottom: 2rem;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 0.75rem 1.25rem;
+    }
+    
+    .wall-sidebar__list {
+        display: flex;
+        gap: 1rem;
+    }
+    
+    .wall-sidebar__list li + li {
+        margin-top: 0;
+    }
+
+    .wall-stage {
+        padding-left: 0;
+        padding-bottom: 80px;
+    }
 }
