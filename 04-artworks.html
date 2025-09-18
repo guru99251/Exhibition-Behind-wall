@@ -10,174 +10,191 @@
     <div id="mosaic"></div>
     <div class="page-backdrop" aria-hidden="true"></div>
 
-    <header class="page-header">
-        <div class="page-brand">
-            <span>behind wall</span>
-            <strong>Diposium</strong>
-        </div>
-        <nav class="page-nav" aria-label="Main navigation">
-            <a class="page-nav__link page-nav__link--home" href="index.html">Lobby</a>
-            <a class="page-nav__link" href="01-wall.html">Wall</a>
-            <a class="page-nav__link" href="02-comment.html">Comments</a>
-            <a class="page-nav__link" href="03-contributors.html">Contributors</a>
-            <a class="page-nav__link" href="04-artworks.html" aria-current="page">Artworks</a>
-        </nav>
-    </header>
+    <div class="page-shell">
+        <header class="page-header" data-page-header="primary">
+            <div class="page-header__inner">
+                <button class="page-header__toggle" type="button" data-page-header-toggle aria-expanded="true" aria-label="사이드 패널 접기">
+                    <span aria-hidden="true" class="page-header__toggle-icon">&lt;</span>
+                    <span class="page-header__toggle-text">Collapse</span>
+                </button>
 
-    <main class="page-wrapper">
-        <section class="section-heading">
-            <h1>Artworks</h1>
-            <p>
-                Diposium 전시에 소개될 모든 작품을 카드 UI로 배열했습니다. 뷰포트 폭에 따라 자동으로 열 수가 조정되어 빔 프로젝션 벽면에서도 균형이 유지됩니다.
-            </p>
-            <div class="meta-row">
-                <span class="meta-chip">immersive media</span>
-                <span class="meta-chip">interactive</span>
-                <span class="meta-chip">narrative</span>
+                <div class="page-header__brand">
+                    <div class="page-brand">
+                        <span>behind wall</span>
+                        <strong>Diposium</strong>
+                    </div>
+                    <nav class="page-nav" aria-label="Main navigation">
+                        <a class="page-nav__link page-nav__link--home" href="index.html">Lobby</a>
+                        <a class="page-nav__link" href="01-wall.html">Wall</a>
+                        <a class="page-nav__link" href="02-comment.html">Comments</a>
+                        <a class="page-nav__link" href="03-contributors.html">Contributors</a>
+                        <a class="page-nav__link" href="04-artworks.html" aria-current="page">Artworks</a>
+                    </nav>
+                </div>
+
+                <div class="page-header__heading">
+                    <div class="section-heading">
+                        <h1>Artworks</h1>
+                        <p>
+                            Diposium 전시에 소개될 작품 정보를 카드 UI로 정렬했습니다. 뷰포트 폭에 따라 컬럼 수가 유동적으로 조정됩니다.
+                        </p>
+                    </div>
+                    <div class="meta-row">
+                        <span class="meta-chip">immersive media</span>
+                        <span class="meta-chip">interactive</span>
+                        <span class="meta-chip">narrative</span>
+                    </div>
+                </div>
             </div>
-        </section>
+        </header>
 
-        <section class="section-block light">
-            <div class="artwork-grid">
-                <article class="artwork-card">
-                    <div class="poster-frame" data-label="Spectral Loop Poster"></div>
-                    <h3>Spectral Loop</h3>
-                    <p>
-                        사운드 파형을 입체 패턴으로 시각화한 몰입형 미디어. 관람자의 위치에 따라 파동이 변조됩니다.
-                    </p>
-                    <div class="artwork-meta">
-                        <div class="meta-row">
-                            <span class="meta-chip">3D Motion</span>
-                            <span class="meta-chip">Reactive Sound</span>
+        <main class="page-main">
+            <section class="section-block light">
+                <div class="artwork-grid">
+                    <article class="artwork-card">
+                        <div class="poster-frame" data-label="Spectral Loop Poster"></div>
+                        <h3>Spectral Loop</h3>
+                        <p>
+                            사운드 파형을 입체 패턴으로 시각화한 몰입형 미디어. 관람자의 위치에 따라 파동이 변조됩니다.
+                        </p>
+                        <div class="artwork-meta">
+                            <div class="meta-row">
+                                <span class="meta-chip">3D Motion</span>
+                                <span class="meta-chip">Reactive Sound</span>
+                            </div>
+                            <dl class="meta-list">
+                                <dt>Creators</dt>
+                                <dd>나현서 · 유태준</dd>
+                                <dt>Tools</dt>
+                                <dd>Houdini · Unreal Engine · DaVinci Resolve</dd>
+                                <dt>Description</dt>
+                                <dd>파티클 필드와 라이트 맵핑으로 사운드-비주얼 싱크를 완성.</dd>
+                            </dl>
                         </div>
-                        <dl class="meta-list">
-                            <dt>Creators</dt>
-                            <dd>나현서 · 유태준</dd>
-                            <dt>Tools</dt>
-                            <dd>Houdini · Unreal Engine · DaVinci Resolve</dd>
-                            <dt>Description</dt>
-                            <dd>파티클 필드와 라이트 맵핑으로 사운드-비주얼 싱크를 완성.</dd>
-                        </dl>
-                    </div>
-                </article>
+                    </article>
 
-                <article class="artwork-card">
-                    <div class="poster-frame" data-label="Memory Patch Poster"></div>
-                    <h3>Memory Patch</h3>
-                    <p>
-                        사용자가 QR을 통해 남긴 메시지를 레이어드 패널로 재조합하는 인터랙티브 UI 설치물.
-                    </p>
-                    <div class="artwork-meta">
-                        <div class="meta-row">
-                            <span class="meta-chip">UX / UI</span>
-                            <span class="meta-chip">Interactive Narrative</span>
+                    <article class="artwork-card">
+                        <div class="poster-frame" data-label="Memory Patch Poster"></div>
+                        <h3>Memory Patch</h3>
+                        <p>
+                            사용자가 QR을 통해 남긴 메시지를 레이어드 패널로 재조합하는 인터랙티브 UI 설치물.
+                        </p>
+                        <div class="artwork-meta">
+                            <div class="meta-row">
+                                <span class="meta-chip">UX / UI</span>
+                                <span class="meta-chip">Interactive Narrative</span>
+                            </div>
+                            <dl class="meta-list">
+                                <dt>Creators</dt>
+                                <dd>김세라 · 신다율 · 양도윤</dd>
+                                <dt>Tools</dt>
+                                <dd>Figma · After Effects · TouchDesigner</dd>
+                                <dt>Description</dt>
+                                <dd>관객 데이터 흐름을 시각적으로 누적하여 새로운 기억 지도를 형성.</dd>
+                            </dl>
                         </div>
-                        <dl class="meta-list">
-                            <dt>Creators</dt>
-                            <dd>김세라 · 신다율 · 양도윤</dd>
-                            <dt>Tools</dt>
-                            <dd>Figma · After Effects · TouchDesigner</dd>
-                            <dt>Description</dt>
-                            <dd>관객 데이터 흐름을 시각적으로 누적하여 새로운 기억 지도를 형성.</dd>
-                        </dl>
-                    </div>
-                </article>
+                    </article>
 
-                <article class="artwork-card">
-                    <div class="poster-frame" data-label="Tidal Dream Poster"></div>
-                    <h3>Tidal Dream</h3>
-                    <p>
-                        해양 생태계를 모티브로 한 실시간 시뮬레이션. 파도, 플랑크톤, 빛줄기가 반응형으로 등장합니다.
-                    </p>
-                    <div class="artwork-meta">
-                        <div class="meta-row">
-                            <span class="meta-chip">3D Motion</span>
-                            <span class="meta-chip">Generative</span>
+                    <article class="artwork-card">
+                        <div class="poster-frame" data-label="Tidal Dream Poster"></div>
+                        <h3>Tidal Dream</h3>
+                        <p>
+                            해양 생태계를 모티브로 한 실시간 시뮬레이션. 파도, 플랑크톤, 빛줄기가 반응형으로 등장합니다.
+                        </p>
+                        <div class="artwork-meta">
+                            <div class="meta-row">
+                                <span class="meta-chip">3D Motion</span>
+                                <span class="meta-chip">Generative</span>
+                            </div>
+                            <dl class="meta-list">
+                                <dt>Creators</dt>
+                                <dd>임채린 · 조은결</dd>
+                                <dt>Tools</dt>
+                                <dd>Cinema 4D · Redshift · Unreal Engine</dd>
+                                <dt>Description</dt>
+                                <dd>실시간 파티클과 포그 렌더링으로 대규모 수면을 표현.</dd>
+                            </dl>
                         </div>
-                        <dl class="meta-list">
-                            <dt>Creators</dt>
-                            <dd>임채린 · 조은결</dd>
-                            <dt>Tools</dt>
-                            <dd>Cinema 4D · Redshift · Unreal Engine</dd>
-                            <dt>Description</dt>
-                            <dd>실시간 파티클과 포그 렌더링으로 대규모 수면을 표현.</dd>
-                        </dl>
-                    </div>
-                </article>
+                    </article>
 
-                <article class="artwork-card">
-                    <div class="poster-frame" data-label="Orbital City Poster"></div>
-                    <h3>Orbital City</h3>
-                    <p>
-                        게임 엔진 기반의 인터랙티브 시네머틱. 플레이어 선택에 따라 도시의 궤도가 변합니다.
-                    </p>
-                    <div class="artwork-meta">
-                        <div class="meta-row">
-                            <span class="meta-chip">Game</span>
-                            <span class="meta-chip">Interactive Cinema</span>
+                    <article class="artwork-card">
+                        <div class="poster-frame" data-label="Orbital City Poster"></div>
+                        <h3>Orbital City</h3>
+                        <p>
+                            게임 엔진 기반의 인터랙티브 시네머틱. 플레이어 선택에 따라 도시의 궤도가 변합니다.
+                        </p>
+                        <div class="artwork-meta">
+                            <div class="meta-row">
+                                <span class="meta-chip">Game</span>
+                                <span class="meta-chip">Interactive Cinema</span>
+                            </div>
+                            <dl class="meta-list">
+                                <dt>Creators</dt>
+                                <dd>권민호 · 박요한 · 오세린</dd>
+                                <dt>Tools</dt>
+                                <dd>Unity · Blender · FMOD</dd>
+                                <dt>Description</dt>
+                                <dd>멀티 엔딩 구조와 사운드 스케이프가 결합된 체험형 작품.</dd>
+                            </dl>
                         </div>
-                        <dl class="meta-list">
-                            <dt>Creators</dt>
-                            <dd>권민호 · 박요한 · 오세린</dd>
-                            <dt>Tools</dt>
-                            <dd>Unity · Blender · FMOD</dd>
-                            <dt>Description</dt>
-                            <dd>멀티 엔딩 구조와 사운드 스케이프가 결합된 체험형 작품.</dd>
-                        </dl>
-                    </div>
-                </article>
+                    </article>
 
-                <article class="artwork-card">
-                    <div class="poster-frame" data-label="Flora Signal Poster"></div>
-                    <h3>Flora Signal</h3>
-                    <p>
-                        식물의 생체 데이터를 파형으로 변환해 시각과 청각 모두로 전달하는 2D 그래픽 설치물.
-                    </p>
-                    <div class="artwork-meta">
-                        <div class="meta-row">
-                            <span class="meta-chip">2D Visual</span>
-                            <span class="meta-chip">Data Art</span>
+                    <article class="artwork-card">
+                        <div class="poster-frame" data-label="Flora Signal Poster"></div>
+                        <h3>Flora Signal</h3>
+                        <p>
+                            식물의 생체 데이터를 파형으로 변환해 시각과 청각 모두로 전달하는 2D 그래픽 설치물.
+                        </p>
+                        <div class="artwork-meta">
+                            <div class="meta-row">
+                                <span class="meta-chip">2D Visual</span>
+                                <span class="meta-chip">Data Art</span>
+                            </div>
+                            <dl class="meta-list">
+                                <dt>Creators</dt>
+                                <dd>강민정 · 정우림</dd>
+                                <dt>Tools</dt>
+                                <dd>Procreate · After Effects · Processing</dd>
+                                <dt>Description</dt>
+                                <dd>실시간 센서값을 그래픽 모듈에 매핑하여 생명 신호를 시각화.</dd>
+                            </dl>
                         </div>
-                        <dl class="meta-list">
-                            <dt>Creators</dt>
-                            <dd>강민정 · 정우림</dd>
-                            <dt>Tools</dt>
-                            <dd>Procreate · After Effects · Processing</dd>
-                            <dt>Description</dt>
-                            <dd>실시간 센서값을 그래픽 모듈에 매핑하여 생명 신호를 시각화.</dd>
-                        </dl>
-                    </div>
-                </article>
+                    </article>
 
-                <article class="artwork-card">
-                    <div class="poster-frame" data-label="Sunken Echo Poster"></div>
-                    <h3>Sunken Echo</h3>
-                    <p>
-                        잠수함 내부에서 수집한 필드 레코딩을 기반으로 구성된 음향-비주얼 퍼포먼스.
-                    </p>
-                    <div class="artwork-meta">
-                        <div class="meta-row">
-                            <span class="meta-chip">Soundscape</span>
-                            <span class="meta-chip">Immersive</span>
+                    <article class="artwork-card">
+                        <div class="poster-frame" data-label="Sunken Echo Poster"></div>
+                        <h3>Sunken Echo</h3>
+                        <p>
+                            잠수함 내부에서 수집한 필드 레코딩을 기반으로 구성된 음향-비주얼 퍼포먼스.
+                        </p>
+                        <div class="artwork-meta">
+                            <div class="meta-row">
+                                <span class="meta-chip">Soundscape</span>
+                                <span class="meta-chip">Immersive</span>
+                            </div>
+                            <dl class="meta-list">
+                                <dt>Creators</dt>
+                                <dd>최예담 · 박태경</dd>
+                                <dt>Tools</dt>
+                                <dd>Ableton Live · TouchDesigner · Resolume</dd>
+                                <dt>Description</dt>
+                                <dd>다채널 사운드와 하프톤 빔을 사용해 수중 공간감을 재현.</dd>
+                            </dl>
                         </div>
-                        <dl class="meta-list">
-                            <dt>Creators</dt>
-                            <dd>최예담 · 박태경</dd>
-                            <dt>Tools</dt>
-                            <dd>Ableton Live · TouchDesigner · Resolume</dd>
-                            <dt>Description</dt>
-                            <dd>다채널 사운드와 하프톤 빔을 사용해 수중 공간감을 재현.</dd>
-                        </dl>
-                    </div>
-                </article>
-            </div>
+                    </article>
+                </div>
 
-            <div class="note-box">
-                ▸ 작품 데이터는 JSON이나 구글 시트를 통해 자동 업데이트할 수 있으며, 카드 구조는 동일하게 유지되도록 구성했습니다. 
-                ▸ 실제 포스터가 준비되면 poster-frame 영역을 이미지 태그로 교체하면 됩니다.
-            </div>
-        </section>
-    </main>
+                <div class="note-box">
+                    ▸ 작품 데이터는 JSON이나 구글 시트를 통해 자동 업데이트할 수 있으며, 카드 구조는 동일하게 유지되도록 구성했습니다. 
+                    ▸ 실제 포스터가 준비되면 poster-frame 영역을 이미지 태그로 교체하면 됩니다.
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <button class="page-header__floating" hidden type="button" data-page-header-floating="primary" aria-expanded="false" aria-label="사이드 패널 열기">
+        메뉴 열기
+    </button>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.11.7/dayjs.min.js"></script>
@@ -191,4 +208,5 @@
     <script src="script.js"></script>
 </body>
 </html>
+
 
