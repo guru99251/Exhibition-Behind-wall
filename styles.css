@@ -1291,3 +1291,20 @@ body.page.page-wall {
 .page-wall .page-header,
 .page-wall .page-header__floating { display: none !important; }
 .page-wall .page-shell { grid-template-columns: 1fr; }
+
+
+
+/* === WALL: bounce(러버밴드) 제거 / 뷰포트 하드락 === */
+html.page,
+body.page.page-wall {
+  overflow: hidden !important;         /* 페이지 전체 스크롤 제거 */
+  overscroll-behavior: none !important;/* 러버밴드/오버스크롤 차단 */
+  -webkit-overflow-scrolling: auto;    /* iOS 모멘텀 스크롤 비활성 */
+  height: 100%;
+}
+
+.page-wall .page-main {
+  position: fixed;       /* 화면 고정 */
+  inset: 0;              /* 상하좌우 꽉 채움 */
+  overflow: hidden !important;
+}
