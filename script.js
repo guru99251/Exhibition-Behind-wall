@@ -230,12 +230,9 @@ class Pixel {
 }
 
 const canvas = document.createElement("canvas");
-const container = document.querySelector("#mosaic");
- if (!container) {
-   console.error("#mosaic not found");
- } else {
-   container.append(canvas);
- }
+// page-wall에서는 모자이크 렌더 자체를 막음
+const container = document.body.classList.contains('page-wall') ? null : document.querySelector('#mosaic');
+if (container) { container.append(canvas); }
 
 // (Optimization A) Frame timing and context setup.
 const interval = 1000 / 60;
@@ -587,237 +584,84 @@ document.addEventListener('keydown', (ev) => {
   }
   CardPixelCanvas.register(); // Register the <pixel-canvas> custom element.
 })();
-// Floor selector and tooltip interactions for the wall view.
+
+
+// === Floor selector & floor paging (instant, no scroll) ===
 (() => {
   const scroller = document.querySelector('.page-wall .page-main');
   const floorSections = Array.from(document.querySelectorAll('.page-wall .floor-section'));
-  const floorButtons = Array.from(document.querySelectorAll('.page-wall .floor-selector__button'));
-  const cards = Array.from(document.querySelectorAll('.page-wall .plan-card'));
-  if (!scroller || !floorSections.length || !floorButtons.length || !cards.length) { return; }
-  if (typeof gsap === 'undefined') { return; }
+  const floorButtons  = Array.from(document.querySelectorAll('.page-wall .floor-selector__button'));
+  if (!scroller || !floorSections.length || !floorButtons.length) { return; }
 
-  scroller.scrollTop = 0;
-
-
-  const WALL_ARTWORK_ROLLOUT = {
-    'spectral-loop': {
-      name: 'Spectral Loop',
-      summary: 'Immersive installation that syncs sound and colour.',
-      floors: [
-        { level: '1F 쨌 Reference', note: 'Grouped frequency spectra and audio samples.' },
-        { level: '2F 쨌 Storyboard', note: 'Storyboard highlighting loop acceleration and deceleration.' },
-        { level: '3F 쨌 Sketches', note: 'Hand sketches exploring wave patterns and light layers.' },
-        { level: '4F 쨌 Work Photos', note: 'Projector calibration and fog-machine setup shots.' },
-        { level: '5F 쨌 Screenshots', note: '8K final frames and colour grade results.' },
-        { level: '6F 쨌 Light Lab', note: 'Laser, fog, and sensor-response logs.' },
-        { level: '7F 쨌 Final', note: 'Final beam choreography reacting to visitor position.' }
-      ]
-    },
-    'memory-patch': {
-      name: 'Memory Patch',
-      summary: 'Interactive UI that rebuilds visitor messages into layered panels.',
-      floors: [
-        { level: '1F 쨌 Reference', note: 'Research into tone keywords and colour swatches.' },
-        { level: '2F 쨌 Storyboard', note: 'Flow from QR scan through emotion classification.' },
-        { level: '3F 쨌 Sketches', note: 'Wire sketches for card sorting and modal transitions.' },
-        { level: '4F 쨌 Work Photos', note: 'Prototype hardware collaboration shots.' },
-        { level: '5F 쨌 Screenshots', note: 'UI captures with live comment data.' },
-        { level: '6F 쨌 Light Lab', note: 'Gesture recognition and LED reaction sampling.' },
-        { level: '7F 쨌 Final', note: 'Final wall showing live comment overlays.' }
-      ]
-    },
-    'tidal-dream': {
-      name: 'Tidal Dream',
-      summary: 'Real-time projection inspired by ocean ecosystems.',
-      floors: [
-        { level: '1F 쨌 Reference', note: 'Collected references for bioluminescence and waves.' },
-        { level: '2F 쨌 Storyboard', note: 'Storyboard outlining tides and interaction timing.' },
-        { level: '3F 쨌 Sketches', note: 'Studies for particle routing and light bloom.' },
-        { level: '4F 쨌 Work Photos', note: 'Reflection tests and particle debugging shots.' },
-        { level: '5F 쨌 Screenshots', note: 'HDR stills and colour comparison frames.' },
-        { level: '6F 쨌 Light Lab', note: 'Sensor mapping with manual waveform adjustments.' },
-        { level: '7F 쨌 Final', note: 'Ocean finale responding to audience audio.' }
-      ]
-    },
-    'orbital-city': {
-      name: 'Orbital City',
-      summary: 'Game-engine driven interactive cinematic.',
-      floors: [
-        { level: '1F 쨌 Reference', note: 'Reference boards for structures and materials.' },
-        { level: '2F 쨌 Storyboard', note: 'Branching decisions and cutscene transition plans.' },
-        { level: '3F 쨌 Sketches', note: 'Perspective and camera path sketches.' },
-        { level: '4F 쨌 Work Photos', note: 'Controller experience bay setup shots.' },
-        { level: '5F 쨌 Screenshots', note: 'Cinematic frames and UI overlays.' },
-        { level: '6F 쨌 Light Lab', note: 'Controller haptics and LED integration tests.' },
-        { level: '7F 쨌 Final', note: 'Ending sequence reflecting real-time orbit changes.' }
-      ]
-    },
-    'flora-signal': {
-      name: 'Flora Signal',
-      summary: 'Installation translating plant bio-signals into visuals and audio.',
-      floors: [
-        { level: '1F 쨌 Reference', note: 'Collected plant bio-signal references.' },
-        { level: '2F 쨌 Storyboard', note: 'Interaction and data-flow diagram.' },
-        { level: '3F 쨌 Sketches', note: 'Graphic module and geometry studies.' },
-        { level: '4F 쨌 Work Photos', note: 'Sensor calibration and analogue experiments.' },
-        { level: '5F 쨌 Screenshots', note: 'Data visualisation and waveform UI captures.' },
-        { level: '6F 쨌 Light Lab', note: 'Signal normalisation and audio testing logs.' },
-        { level: '7F 쨌 Final', note: 'Final projection with live plant signals.' }
-      ]
-    }
-  };
-  const tooltip = document.createElement('div');
-  tooltip.className = 'plan-tooltip';
-  tooltip.hidden = true;
-  document.body.appendChild(tooltip);
-
-  let activeCard = null;
-  let tooltipVisible = false;
-
-  const renderTooltip = (key) => {
-    const info = WALL_ARTWORK_ROLLOUT[key];
-    if (!info) {
-          tooltip.innerHTML = '<div class="plan-tooltip__title">Data coming soon</div>';
-      return;
-    }
-    const list = info.floors.map((item) => `
-      <li>
-        <span class="plan-tooltip__floor">${item.level}</span>
-        <p class="plan-tooltip__note">${item.note}</p>
-      </li>
-    `).join('');
-    tooltip.innerHTML = `
-      <div class="plan-tooltip__title">${info.name}</div>
-      <p class="plan-tooltip__summary">${info.summary}</p>
-      <ul class="plan-tooltip__list">${list}</ul>
-    `;
-  };
-
-  const clampPosition = (x, y) => {
-    const bounds = tooltip.getBoundingClientRect();
-    let nx = x;
-    let ny = y;
-    const padding = 20;
-    if (nx + bounds.width > window.innerWidth - padding) {
-      nx = window.innerWidth - bounds.width - padding;
-    }
-    if (ny + bounds.height > window.innerHeight - padding) {
-      ny = window.innerHeight - bounds.height - padding;
-    }
-    if (ny < padding) {
-      ny = padding;
-    }
-    if (nx < padding) {
-      nx = padding;
-    }
-    tooltip.style.transform = `translate3d(${nx}px, ${ny}px, 0)`;
-  };
-
-  const anchorToCard = (card) => {
-    requestAnimationFrame(() => {
-      const rect = card.getBoundingClientRect();
-      const bounds = tooltip.getBoundingClientRect();
-      const offset = 24;
-      let x = rect.right + offset;
-      let y = rect.top + (rect.height / 2) - (bounds.height / 2);
-      if (x + bounds.width > window.innerWidth - offset) {
-        x = rect.left - bounds.width - offset;
-      }
-      clampPosition(x, y);
-    });
-  };
-
-  const showTooltip = (card) => {
-    const key = card.dataset.artwork;
-    renderTooltip(key);
-    tooltip.hidden = false;
-    tooltip.classList.add('is-visible');
-    activeCard = card;
-    tooltipVisible = true;
-    card.classList.add('is-hovered');
-    anchorToCard(card);
-  };
-
-  const hideTooltip = (card) => {
-    if (card && card !== activeCard) { return; }
-    tooltipVisible = false;
-    tooltip.classList.remove('is-visible');
-    tooltip.hidden = true;
-    tooltip.style.transform = 'translate3d(-9999px, -9999px, 0)';
-    activeCard?.classList.remove('is-hovered');
-    activeCard = null;
-  };
-
-  const moveTooltip = (event) => {
-    if (!tooltipVisible) { return; }
-    const offset = 24;
-    let x = event.clientX + offset;
-    let y = event.clientY + offset;
-    clampPosition(x, y);
-  };
-
-  cards.forEach((card) => {
-    const info = WALL_ARTWORK_ROLLOUT[card.dataset.artwork];
-    if (info) {
-      card.setAttribute('aria-label', `${info.name} 쨌 ${info.summary}`);
-    }
-    card.addEventListener('mouseenter', (event) => {
-      showTooltip(event.currentTarget);
-      moveTooltip(event);
-    });
-    card.addEventListener('mousemove', moveTooltip);
-    card.addEventListener('mouseleave', (event) => {
-      hideTooltip(event.currentTarget);
-    });
-    card.addEventListener('focus', (event) => {
-      showTooltip(event.currentTarget);
-    });
-    card.addEventListener('blur', (event) => {
-      hideTooltip(event.currentTarget);
-    });
-  });
-
-  const setActiveFloor = (floor) => {
+  // 활성층 표시 헬퍼
+  const setActiveFloor = (floorVal) => {
     floorButtons.forEach((button) => {
-      const isActive = button.dataset.floor === floor;
+      const isActive = button.dataset.floor === String(floorVal);
       button.classList.toggle('is-active', isActive);
-      if (isActive) {
-        button.setAttribute('aria-current', 'true');
-      } else {
-        button.removeAttribute('aria-current');
-      }
+      if (isActive) button.setAttribute('aria-current', 'true');
+      else button.removeAttribute('aria-current');
     });
   };
 
+  // 한 번에 하나의 층만 보이도록 제어
+  let index = 0;
+  const clamp = (v,min,max)=>Math.max(min,Math.min(max,v));
+  const showByIndex = (i) => {
+    index = clamp(i, 0, floorSections.length - 1);
+    floorSections.forEach((sec, idx) => {
+      sec.classList.toggle('is-active', idx === index);
+    });
+    setActiveFloor(floorSections[index].dataset.floor);
+  };
+
+  // 초기 1F
+  showByIndex(0);
+
+  // 1) 층 버튼: 즉시 전환 (스크롤 제거)
   floorButtons.forEach((button) => {
-    button.addEventListener('click', () => {
+    button.addEventListener('click', (e) => {
+      e.preventDefault();
       const target = document.querySelector(button.dataset.target);
-      if (target) {
-        scroller.scrollTo({ top: target.offsetTop, behavior: 'smooth' });
-      }
+      const i = floorSections.indexOf(target);
+      if (i >= 0) showByIndex(i);
     });
   });
 
-  const highlightObserver = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      const section = entry.target;
-      if (entry.isIntersecting) {
-        setActiveFloor(section.dataset.floor);
-        gsap.to(section, { autoAlpha: 1, y: 0, duration: 0.6, ease: 'power2.out' });
-      } else {
-        const direction = entry.boundingClientRect.top > 0 ? 60 : -60;
-        gsap.to(section, { autoAlpha: 0, y: direction, duration: 0.45, ease: 'power1.out' });
-      }
-    });
-  }, { root: scroller, threshold: 0.75 });
+  // 2) 휠/터치: 화면 이동 없이 즉시 다음/이전층
+  let lock = false;
+  const step = (delta) => {
+    if (lock) return;
+    lock = true;
+    showByIndex(index + (delta > 0 ? 1 : -1));
+    setTimeout(() => { lock = false; }, 220); // 디바운스
+  };
 
-  floorSections.forEach((section, index) => {
-    gsap.set(section, { autoAlpha: index === 0 ? 1 : 0, y: index === 0 ? 0 : 60 });
-    highlightObserver.observe(section);
+  scroller.addEventListener('wheel', (ev) => {
+    ev.preventDefault();                 // 스크롤 자체 제거
+    if (Math.abs(ev.deltaY) < 8) return; // 미세 제스처 무시
+    step(ev.deltaY);
+  }, { passive: false });
+
+  // 터치 대응
+  let startY = 0;
+  scroller.addEventListener('touchstart', (e) => { startY = e.touches[0].clientY; }, { passive: true });
+  scroller.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    const dy = startY - e.touches[0].clientY;
+    if (Math.abs(dy) > 24) { step(dy); startY = e.touches[0].clientY; }
+  }, { passive: false });
+
+  // 키보드(상/하, PageUp/Down)도 페이지 방식으로
+  scroller.addEventListener('keydown', (e) => {
+    const k = e.key;
+    if (k === 'ArrowDown' || k === 'PageDown') { e.preventDefault(); step(1); }
+    if (k === 'ArrowUp'   || k === 'PageUp')   { e.preventDefault(); step(-1); }
   });
 
-  setActiveFloor(floorSections[0].dataset.floor);
+  // 어떤 이유로 스크롤이 발생해도 즉시 원위치
+  scroller.addEventListener('scroll', () => { scroller.scrollTop = 0; });
 })();
+
 
 (() => {
   const headers = document.querySelectorAll('[data-page-header]');
@@ -966,3 +810,27 @@ document.addEventListener('keydown', (ev) => {
 
 
 
+// Minimal drawer toggle (text-based handle)
+(() => {
+  const drawer = document.getElementById('wallDrawer');
+  if (!drawer) return;
+  const handle = drawer.querySelector('.wall-drawer__handle');
+
+  const setOpen = (open) => {
+    drawer.classList.toggle('is-open', open);
+    drawer.setAttribute('aria-hidden', String(!open));
+    handle.setAttribute('aria-expanded', String(open));
+  };
+
+  setOpen(false);
+
+  const toggle = (e) => {
+    if (e.type === 'keydown' && !(e.key === 'Enter' || e.key === ' ')) return;
+    e.preventDefault();
+    setOpen(!drawer.classList.contains('is-open'));
+  };
+
+  handle.addEventListener('click', toggle);
+  handle.addEventListener('keydown', toggle);
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setOpen(false); });
+})();

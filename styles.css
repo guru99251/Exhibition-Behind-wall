@@ -1212,5 +1212,82 @@ body.page.page-wall {
   }
 }
 
+/* ===== WALL PAGE: spec overrides ===== */
 
+/* 1. 배경: 모자이크/그라데이션 제거, 단색 */
+body.page.page-wall {
+  background: var(--color-bg) !important;
+  padding: 0;
+}
+.page-wall #mosaic,
+.page-wall .page-backdrop {
+  display: none !important;
+}
 
+/* 2. 스크롤/스냅 제거 + 한 화면에 한 층만 노출 */
+.page-wall .page-main {
+  height: 100vh;
+  overflow: hidden !important;
+  scroll-snap-type: none !important;
+  scroll-behavior: auto !important;
+}
+.page-wall .floor-stack { padding-right: 0 !important; }
+.page-wall .floor-section {
+  display: none;              /* 기본 비노출 */
+  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
+}
+.page-wall .floor-section.is-active { display: flex; } /* 활성층만 전체 화면 */
+
+/* 3. 좌상단 minimal drawer (bullet & line) */
+.wall-drawer {
+  position: fixed;
+  top: clamp(1rem, 3vw, 1.6rem);
+  left: clamp(1rem, 3vw, 1.6rem);
+  z-index: 7;
+  font-family: 'RoundedFixedsys', monospace; /* 4. 별도 폰트 */
+}
+.wall-drawer__handle {
+  padding-left: .75rem;
+  border-left: 1px solid var(--color-text-border-opacity04);
+  line-height: 1.2;
+  cursor: pointer;
+  user-select: none;
+}
+.wall-drawer__panel {
+  margin-top: .5rem;
+  padding-left: 1rem;
+  border-left: 1px solid var(--color-text-border-opacity04);
+  display: none;
+}
+.wall-drawer.is-open .wall-drawer__panel { display: block; }
+.wall-drawer__list {
+  list-style: disc;
+  margin: 0;
+  padding-left: 1rem;
+}
+.wall-drawer__list li + li { margin-top: .35rem; }
+.wall-drawer__list a {
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+/* 4. 층 셀렉터/드로어에 별도 폰트 패밀리 적용 */
+.page-wall .floor-selector__shaft {
+  font-family: 'RoundedFixedsys', monospace;
+}
+
+/* 5. 층 셀렉터는 화면 우측에 항상 fixed */
+.page-wall .floor-selector {
+  position: fixed;
+  top: 50%;
+  right: clamp(1.2rem, 4vw, 3rem);
+  transform: translateY(-50%);
+  z-index: 6;
+}
+
+/* 기존 좌측 사이드 헤더/플로팅 버튼은 본 페이지에서 숨김 */
+.page-wall .page-header,
+.page-wall .page-header__floating { display: none !important; }
+.page-wall .page-shell { grid-template-columns: 1fr; }

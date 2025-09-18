@@ -1,72 +1,46 @@
 ﻿<!DOCTYPE html>
 <html lang="ko" class="page">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Behind Wall · Floor Plan Narrative</title>
     <link rel="stylesheet" href="styles.css">
 </head>
-<body class="page page-wall">
-    <div id="mosaic"></div>
-    <div class="page-backdrop" aria-hidden="true"></div>
 
+<body class="page page-wall">
     <div class="page-shell">
         <header class="page-header" data-page-header="primary" id="wallSidebar" aria-hidden="false">
             <div class="page-header__inner">
-                <button class="page-header__toggle" type="button" data-page-header-toggle aria-expanded="true" aria-controls="wallSidebar" aria-label="사이드 패널 접기">
-                    <span aria-hidden="true" class="page-header__toggle-icon">&lt;</span>
-                    <span class="page-header__toggle-text">Collapse</span>
-                </button>
-
-                <div class="page-header__brand">
-                    <div class="page-brand">
-                        <span>behind wall</span>
-                        <strong>Diposium</strong>
-                    </div>
-                    <nav class="page-nav" aria-label="Main navigation">
-                        <a class="page-nav__link page-nav__link--home" href="index.html">Lobby</a>
-                        <a class="page-nav__link" href="01-wall.html" aria-current="page">Wall</a>
-                        <a class="page-nav__link" href="02-comment.html">Comments</a>
-                        <a class="page-nav__link" href="03-contributors.html">Contributors</a>
-                        <a class="page-nav__link" href="04-artworks.html">Artworks</a>
-                    </nav>
-                </div>
-
                 <div class="page-header__heading">
                     <div class="section-heading">
-                        <h1>Floor Plan Narrative</h1>
+                        <h1>Behind Wall Narrative</h1>
                         <p>
-                            전시장 7층을 하나의 연속 플로우로 연결한 비하인드 월 지도입니다. 실제 도면이 도착하면 동일한 좌표에 자산만 교체해도 배치가 유지되도록 설계했습니다.
+                            전시 준비 과정을 1층에서 7층으로 올라가는 것에 빗대어 하나의 연속 플로우로 연결한 비하인드 월입니다. 실제 전시장 도면을 본따 동일한 좌표에 각 참여자들을 하나의 노드로 표현하여 회로를 표현했습니다.
                         </p>
-                    </div>
-                    <div class="meta-row">
-                        <span class="meta-chip">1F reference</span>
-                        <span class="meta-chip">2F storyboard</span>
-                        <span class="meta-chip">3F sketches</span>
-                        <span class="meta-chip">4F work photos</span>
-                        <span class="meta-chip">5F screenshots</span>
-                        <span class="meta-chip">6F light lab</span>
-                        <span class="meta-chip">7F final</span>
-                    </div>
-                    <div class="note-box">
-                        현재는 전시장 1층 도면이 도착하기 전에 위치를 가늠해 볼 수 있는 샘플 격자입니다. 이후 실제 치수에 맞춰 좌표값을 업데이트하면 됩니다.
                     </div>
                 </div>
             </div>
         </header>
 
-        <!-- Floating button to reopen the header after collapse -->
-        <button class="page-header__floating" type="button"
-            data-page-header-open
-            aria-controls="wallSidebar"
-            aria-expanded="false"
-            hidden>
-            Open Panel
-        </button>
-
         <main class="page-main wall-main">
+            <!-- Minimal drawer (bullet & line) -->
+            <div class="wall-drawer" id="wallDrawer" aria-hidden="true">
+            <div class="wall-drawer__handle" role="button" tabindex="0" aria-expanded="false">• Menu</div>
+                <nav class="wall-drawer__panel" aria-label="Site navigation">
+                    <ul class="wall-drawer__list">
+                    <li><a href="index.html">Lobby</a></li>
+                    <li><a href="01-wall.html" aria-current="page">Wall</a></li>
+                    <li><a href="02-comment.html">Comments</a></li>
+                    <li><a href="03-contributors.html">Contributors</a></li>
+                    <li><a href="04-artworks.html">Artworks</a></li>
+                    </ul>
+                </nav>
+            </div>
+
             <div class="wall-stage">
                 <div class="floor-stack">
+
                     <article id="floor-1" class="floor-section" data-floor="1">
                         <header class="floor-section__head">
                             <h2>1F · Reference Library</h2>
