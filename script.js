@@ -396,10 +396,10 @@ function runIntroSequence() {
   // 2) 모자이크 페이드아웃(+루프정지)
   tl.add(() => fadeOutMosaic(), 0);
 
-  // 3) 원반 표시 → 3s 유지 → 원반 숨김
+  // 3) 원반 표시 → ?s 유지 → 원반 숨김
   tl.add(() => { if (typeof discPulse !== "undefined" && discPulse) discPulse.play(); }, "<");
   tl.to(".ellipse", { duration: DISC_FADE_IN, autoAlpha: 1, ease: "power2.out" }, "<");
-  tl.to({}, { duration: 3 }); // 3초 유지
+  tl.to({}, { duration: 2.8 }); // n초 유지 시간 설정란
   tl.to(".ellipse", {
     duration: DISC_FADE_OUT,
     autoAlpha: 0,
@@ -437,6 +437,51 @@ document.addEventListener('keydown', (ev) => {
   }
 });
 // 사용자 입력 트리거 끝
+
+
+
+// === Page transition loader (?s disc before navigating) ===
+(function setupPageTransitionLoader() {
+  const DURATION_MS = 1700; // 페이지 이동 전 디스크 등장 시간 설정)
+
+  // 안전하게 body 클릭에서 <a>만 잡기
+  document.addEventListener('click', (ev) => {
+    const a = ev.target.closest && ev.target.closest('a[href]');
+    if (!a) return;
+
+    const href = a.getAttribute('href') || '';
+    // 새 탭/윈도우, 다운로드, 해시 이동, 외부 링크 등은 제외
+    if (
+      a.target === '_blank' ||
+      a.hasAttribute('download') ||
+      href.startsWith('#') ||
+      /^https?:\/\//i.test(href) && !href.startsWith(location.origin)
+    ) {
+      return; // 기본 동작 그대로
+    }
+
+    // 현재 페이지로의 이동은 무시
+    if (href.replace(/#.*$/, '') === location.pathname.replace(/\/+$/, '')) {
+      return;
+    }
+
+    ev.preventDefault();
+
+    // 로딩 디스크 표시 (필요 시 텍스트 변경 가능)
+    if (typeof showDisc === 'function') {
+      showDisc({ withTitle: false });
+    }
+    setTimeout(() => {
+      window.location.href = href;
+    }, DURATION_MS);
+  });
+
+  // 사용자가 뒤로가기 등으로 돌아왔을 때 디스크가 보이지 않도록 보정
+  window.addEventListener('pageshow', (e) => {
+    if (e.persisted && typeof hideDisc === 'function') hideDisc();
+  });
+})();
+// 페이지 전환 로더 끝
 
 
 
