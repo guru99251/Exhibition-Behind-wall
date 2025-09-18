@@ -6,6 +6,7 @@
 
 :root {
   --color-bg: #0e0f0f;
+  --color-bg-transparent: #0e0f0fc0;
   --color-text: #d1d1d1;
   --color-text-border: #f8f8f8;
   --color-text-border-opacity01: rgba(255, 255, 255, 0.08);
@@ -117,25 +118,36 @@ body {
 
 
 .ellipse {
-  z-index: 10;
+  z-index: 1000;      /* 로딩 마크는 항상 위 */
   position: fixed;        /* 화면 기준으로 고정 */
   inset: 0;               /* 전체 화면 차지 */
   display: grid;          /* 중앙 정렬용 */
   place-items: center;    /* 수직/수평 중앙 */
   z-index: 10;            /* 로딩 마크는 항상 위 */
-  pointer-events: none;   /* 클릭 막지 않으려면 none, 모달처럼 막으려면 auto */
+  pointer-events: none;   /* 클릭 막지 않으려면 none, 모달처럼 막으려면 auto -> showDisc()에서 auto로 전환됨 */
   opacity: 0;             /* 초깃값: 숨김 */
   visibility: hidden;     /* 초깃값: 숨김 */
+}
+
+.ellipse::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background: var(--color-bg-transparent); /* 뒤 요소 어둡게 */
+  z-index: 0;                  /* SVG(원반)보다 뒤 */
 }
 
 .ellipse svg {
   transform: rotate(-40deg);
   height: auto;
   width: min(25vw, 25vh);
+  position: relative;
+  z-index: 1;                  /* 배경보다 위, 텍스트보다 아래 */
 }
 .ellipse svg text {
   fill: var(--color-text);
 }
+
 
 
 

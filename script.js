@@ -440,48 +440,48 @@ document.addEventListener('keydown', (ev) => {
 
 
 
-// === Page transition loader (?s disc before navigating) ===
-(function setupPageTransitionLoader() {
-  const DURATION_MS = 1700; // 페이지 이동 전 디스크 등장 시간 설정)
+// // === Page transition loader (?s disc before navigating) ===
+// (function setupPageTransitionLoader() {
+//   const DURATION_MS = 2200; // 페이지 이동 전 디스크 등장 시간 설정)
 
-  // 안전하게 body 클릭에서 <a>만 잡기
-  document.addEventListener('click', (ev) => {
-    const a = ev.target.closest && ev.target.closest('a[href]');
-    if (!a) return;
+//   // 안전하게 body 클릭에서 <a>만 잡기
+//   document.addEventListener('click', (ev) => {
+//     const a = ev.target.closest && ev.target.closest('a[href]');
+//     if (!a) return;
 
-    const href = a.getAttribute('href') || '';
-    // 새 탭/윈도우, 다운로드, 해시 이동, 외부 링크 등은 제외
-    if (
-      a.target === '_blank' ||
-      a.hasAttribute('download') ||
-      href.startsWith('#') ||
-      /^https?:\/\//i.test(href) && !href.startsWith(location.origin)
-    ) {
-      return; // 기본 동작 그대로
-    }
+//     const href = a.getAttribute('href') || '';
+//     // 새 탭/윈도우, 다운로드, 해시 이동, 외부 링크 등은 제외
+//     if (
+//       a.target === '_blank' ||
+//       a.hasAttribute('download') ||
+//       href.startsWith('#') ||
+//       /^https?:\/\//i.test(href) && !href.startsWith(location.origin)
+//     ) {
+//       return; // 기본 동작 그대로
+//     }
 
-    // 현재 페이지로의 이동은 무시
-    if (href.replace(/#.*$/, '') === location.pathname.replace(/\/+$/, '')) {
-      return;
-    }
+//     // 현재 페이지로의 이동은 무시
+//     if (href.replace(/#.*$/, '') === location.pathname.replace(/\/+$/, '')) {
+//       return;
+//     }
 
-    ev.preventDefault();
+//     ev.preventDefault();
 
-    // 로딩 디스크 표시 (필요 시 텍스트 변경 가능)
-    if (typeof showDisc === 'function') {
-      showDisc({ withTitle: false });
-    }
-    setTimeout(() => {
-      window.location.href = href;
-    }, DURATION_MS);
-  });
+//     // 로딩 디스크 표시 (필요 시 텍스트 변경 가능)
+//     if (typeof showDisc === 'function') {
+//       showDisc({ withTitle: false });
+//     }
+//     setTimeout(() => {
+//       window.location.href = href;
+//     }, DURATION_MS);
+//   });
 
-  // 사용자가 뒤로가기 등으로 돌아왔을 때 디스크가 보이지 않도록 보정
-  window.addEventListener('pageshow', (e) => {
-    if (e.persisted && typeof hideDisc === 'function') hideDisc();
-  });
-})();
-// 페이지 전환 로더 끝
+//   // 사용자가 뒤로가기 등으로 돌아왔을 때 디스크가 보이지 않도록 보정
+//   window.addEventListener('pageshow', (e) => {
+//     if (e.persisted && typeof hideDisc === 'function') hideDisc();
+//   });
+// })();
+// // 페이지 전환 로더 끝
 
 
 
