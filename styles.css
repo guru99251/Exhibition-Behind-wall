@@ -1,4 +1,17 @@
-﻿@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap');
+/* UTF-8 safe comments: converted from Korean.
+   Shared layout, header, nav, and section styles below. */
+
+@charset "UTF-8";
+/* Icon stroke-only mode */
+.menu-icon.svg-icon.stroke svg{
+  fill: none;
+  stroke: currentColor;
+  stroke-width: var(--icon-stroke, 2);
+  vector-effect: non-scaling-stroke;
+}
+
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap');
 @import url("https://fonts.cdnfonts.com/css/thegoodmonolith");
 
 @font-face { font-family: 'RoundedFixedsys'; src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_six@1.2/DungGeunMo.woff') format('woff'); font-weight: normal; font-display: swap; }
@@ -124,7 +137,6 @@ body {
   inset: 0;               /* Cover the entire viewport */
   display: grid;          /* Use grid to center the ellipse */
   place-items: center;    /* Center both horizontally and vertically */
-  z-index: 10;            /* Above the background but below floating UI */
   pointer-events: none;   /* Toggle to auto when interaction is required */
   opacity: 0;             /* Hidden by default */
   visibility: hidden;     /* Hidden by default */
