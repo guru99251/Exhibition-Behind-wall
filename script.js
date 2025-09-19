@@ -63,7 +63,7 @@ createAnimation({
   duration: 31,
   reversed: true,
   target: document.querySelector(".ellipse svg"),
-  text: "Diposium: 7F System is now online // We are a Node of 7F // --",
+  text: "Diposium: System 7F is now online // We are a Node of 7F //   ",
   textProperties: { fontSize: /iPhone/.test(navigator.userAgent) ? "19px" : "17px" }
 });
 
@@ -1628,20 +1628,22 @@ function renderArtworkCards(items) {
     const meta = document.createElement('div');
     meta.className = 'artwork-card__meta';
 
+    // Team label with count, e.g. "Team (2)"
     if (item.members?.length) {
       const block = document.createElement('div');
       const label = document.createElement('strong');
-      label.textContent = 'Team';
+      label.textContent = `Team (${item.members.length})`; // <-- add count
       block.appendChild(label);
-      block.appendChild(document.createTextNode(item.members.join(' / ')));
+
+      // Join names with a comma and a space for readability
+      block.appendChild(document.createTextNode('- ' + item.members.join(', ')));
       meta.appendChild(block);
     }
 
+    // Tools label with count, e.g. "Tools (3)"
     if (item.tools) {
       const block = document.createElement('div');
       const label = document.createElement('strong');
-      label.textContent = 'Tools';
-      block.appendChild(label);
 
       // Split text into multiple tools by comma, dash, or slash
       const tools = String(item.tools)
@@ -1649,6 +1651,10 @@ function renderArtworkCards(items) {
         .map(s => s.trim())
         .filter(Boolean);
 
+      label.textContent = `Tools (${tools.length})`; // <-- add count
+      block.appendChild(label);
+
+      // Render one tool per line
       const list = document.createElement('ul');
       list.className = 'artwork-card__tools';
       tools.forEach(t => {
@@ -1661,16 +1667,36 @@ function renderArtworkCards(items) {
       meta.appendChild(block);
     }
 
+      // Tools label with count is finished above, meta still open
 
-    body.appendChild(meta);
-    card.appendChild(body);
-    frag.appendChild(card);
+      // --- Build disciplines as horizontal chips WITHIN meta (unified UX) ---
+      const disciplinesWrap = document.createElement('div');
+      disciplinesWrap.className = 'artwork-card__disciplines';
 
-    const discipline = document.createElement('div');
-    discipline.className = 'artwork-card__discipline';
-    // discipline.textContent = `${item.zone} - ${item.discipline}`;
-    discipline.textContent = `${item.discipline}`;
-    body.appendChild(discipline);
+      /* Normalize disciplines to an array:
+         - If it's already an array, use it.
+         - Else split by comma, slash, or dash variations. */
+      const disciplines = Array.isArray(item.discipline)
+        ? item.discipline
+        : String(item.discipline)
+            .split(/[;,]|[\u002D\u2013\u2014]/)   // no slash as a delimiter // -, –, —
+            .map(s => s.trim())
+            .filter(Boolean);
+
+      disciplines.forEach(d => {
+        const chip = document.createElement('span');
+        chip.className = 'discipline';
+        chip.textContent = d;
+        disciplinesWrap.appendChild(chip);
+      });
+
+      // Put disciplines inside meta so it stays visually unified with Team/Tools
+      meta.appendChild(disciplinesWrap);
+
+      // --- finalize card assembly AFTER meta is complete ---
+      body.appendChild(meta);
+      card.appendChild(body);
+      frag.appendChild(card);
   });
   ARTWORKS_STATE.grid.appendChild(frag);
 }
