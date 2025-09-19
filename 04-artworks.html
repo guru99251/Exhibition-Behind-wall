@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ko" class="page">
 <head>
     <meta charset="UTF-8">
@@ -8,31 +8,33 @@
 </head>
 
 <body class="page page-artworks">
-    <!-- fixed sidebar -->
     <aside class="wall-sidebar" aria-label="Site navigation">
         <nav class="wall-sidebar__nav">
             <ul class="wall-sidebar__list">
                 <li><a href="index.html" class="home-nav">Lobby</a></li>
-                <li><a href="01-wall.html">Wall</a></li>
-                <li><a href="02-comment.html">Comments</a></li>
-                <li><a href="03-contributors.html">Contributors</a></li>
-                <li><a href="04-artworks.html" aria-current="page">Artworks</a></li>
+                <li><a href="01-wall.html">> Wall</a></li>
+                <li><a href="02-comment.html">> Comments</a></li>
+                <li><a href="03-contributors.html">> Contributors</a></li>
+                <li><a href="04-artworks.html" aria-current="page">> Artworks</a></li>
             </ul>
         </nav>
     </aside>
+
     <div id="mosaic"></div>
     <div class="page-backdrop" aria-hidden="true"></div>
 
-    <!-- page contents -->
+    <main class="page-main artworks-main" data-artworks-root>
+        <header class="artworks-header">
+            <h1>Wall Artworks Index</h1>
+            <p>Zone filters keep the projection wall in sync with its companion pieces. Card proportions track the projection grid and remain readable at any distance.</p>
+        </header>
+        <section class="artworks-filters" data-filter-bar></section>
+        <section class="artworks-grid" data-artworks-grid aria-live="polite"></section>
+    </main>
 
-    <!-- GSAP (single version only; required by script.js) -->
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollToPlugin.min.js"></script>
-
-    <!-- Shared app script (load once) -->
     <script defer src="./script.js"></script>
 </body>
 </html>
-
-
