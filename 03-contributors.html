@@ -23,28 +23,24 @@
     <div id="mosaic"></div>
     <div class="page-backdrop" aria-hidden="true"></div>
 
-    <main class="page-main contributors-main" data-contributors-root>
-        <header class="contributors-header">
-            <h1>Team Behind Wall</h1>
-            <p>Discipline clusters line up with the physical wall zones. Participants and staff are organised horizontally so every badge remains visible beside the fixed sidebar.</p>
-        </header>
+    <main class="page-main contributors-main contributors-layout" data-contributors-root>
+    <section class="contributors-section" data-section="participants" aria-labelledby="contributors-participants-h2">
+        <div class="contributors-section__head">
+        <h2 id="contributors-participants-h2">Participants</h2>
+        <p>Students delivering wall-ready assets</p>
+        </div>
+        <div class="contributors-columns" data-participants-grid></div>
+    </section>
 
-        <section class="contributors-section" data-section="participants">
-            <div class="contributors-section__head">
-                <h2>Participants</h2>
-                <p>Students delivering wall-ready assets</p>
-            </div>
-            <div class="contributors-columns" data-participants-grid></div>
-        </section>
-
-        <section class="contributors-section" data-section="staff">
-            <div class="contributors-section__head">
-                <h2>Staff</h2>
-                <p>Production support crew</p>
-            </div>
-            <div class="contributors-columns" data-staff-grid></div>
-        </section>
+    <section class="contributors-section" data-section="staff" aria-labelledby="contributors-staff-h2">
+        <div class="contributors-section__head">
+        <h2 id="contributors-staff-h2">Staff</h2>
+        <p>Production support crew</p>
+        </div>
+        <div class="contributors-columns" data-staff-grid></div>
+    </section>
     </main>
+
 
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>

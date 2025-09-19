@@ -1274,44 +1274,44 @@ const CONTRIBUTORS_STATE = {
   data: {
     participants: {
       '2D': [
-        { name: 'Eunseo Kim', studentId: '20231201' },
-        { name: 'Minjae Lee', studentId: '20231202' },
-        { name: 'Jihyun Park', studentId: '20231203' },
-        { name: 'Dohee Choi', studentId: '20231204' },
-        { name: 'Hayoon Ahn', studentId: '20231205' },
-        { name: 'Garam Yoon', studentId: '20231206' },
-        { name: 'Yerin Song', studentId: '20231207' },
-        { name: 'Sena Jung', studentId: '20231208' }
+        { name: '김은서', studentId: '23' },
+        { name: '이민재', studentId: '23' },
+        { name: '박지현', studentId: '23' },
+        { name: '최도희', studentId: '23' },
+        { name: '안하윤', studentId: '23' },
+        { name: '윤가람', studentId: '23' },
+        { name: '송예린', studentId: '23' },
+        { name: '정세나', studentId: '23' }
       ],
       '3D': [
-        { name: 'Jisoo Han', studentId: '20231221' },
-        { name: 'Jungmin Seo', studentId: '20231222' },
-        { name: 'Harin Kwon', studentId: '20231223' },
-        { name: 'Yechan Moon', studentId: '20231224' },
-        { name: 'Suhyeok Lim', studentId: '20231225' },
-        { name: 'Yuna Lee', studentId: '20231226' },
-        { name: 'Hyesu Park', studentId: '20231227' },
-        { name: 'Dongyeon Baek', studentId: '20231228' },
-        { name: 'Minsung Kang', studentId: '20231229' },
-        { name: 'Areum Jang', studentId: '20231230' },
-        { name: 'Bitna Shin', studentId: '20231231' },
-        { name: 'Subin Jo', studentId: '20231232' },
-        { name: 'Hyejin Yu', studentId: '20231233' },
-        { name: 'Sion Kim', studentId: '20231234' },
-        { name: 'Yejun Ryu', studentId: '20231235' },
-        { name: 'Jaehee Koo', studentId: '20231236' }
+        { name: '한지수', studentId: '23' },
+        { name: '서정민', studentId: '23' },
+        { name: '권하린', studentId: '23' },
+        { name: '문예찬', studentId: '23' },
+        { name: '임수혁', studentId: '23' },
+        { name: '이유나', studentId: '23' },
+        { name: '박혜수', studentId: '23' },
+        { name: '백동연', studentId: '23' },
+        { name: '강민성', studentId: '23' },
+        { name: '장아름', studentId: '23' },
+        { name: '신빛나', studentId: '23' },
+        { name: '조수빈', studentId: '23' },
+        { name: '유혜진', studentId: '23' },
+        { name: '김시온', studentId: '23' },
+        { name: '류예준', studentId: '23' },
+        { name: '구재희', studentId: '23' }
       ],
       'UX/UI': [
-        { name: 'Siyeon Hwang', studentId: '20231251' },
-        { name: 'Harin Kim', studentId: '20231252' },
-        { name: 'Juwon Lee', studentId: '20231253' },
-        { name: 'Sojin Park', studentId: '20231254' }
+        { name: '황시연', studentId: '23' },
+        { name: '김하린', studentId: '23' },
+        { name: '이주원', studentId: '23' },
+        { name: '박소진', studentId: '23' }
       ],
       'Game': [
-        { name: 'Sehun Bae', studentId: '20231261' },
-        { name: 'Iseul Cho', studentId: '20231262' },
-        { name: 'Joon Park', studentId: '20231263' },
-        { name: 'Dain Yu', studentId: '20231264' }
+        { name: '배세훈', studentId: '23' },
+        { name: '조이슬', studentId: '23' },
+        { name: '박준', studentId: '23' },
+        { name: '유다인', studentId: '23' }
       ]
     },
     staff: {

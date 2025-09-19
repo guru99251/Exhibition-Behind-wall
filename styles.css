@@ -936,82 +936,6 @@ body.page #mosaic {
   }
 }
 
-/* === Contributors column layout === */
-.contributors-board {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: minmax(22rem, 1fr);
-  gap: clamp(1.6rem, 3vw, 2.6rem);
-  overflow-x: auto;
-  padding-bottom: 0.5rem;
-}
-
-.contributors-board::-webkit-scrollbar {
-  height: 6px;
-}
-
-.contributors-board::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.45);
-  border-radius: 999px;
-}
-
-.contributors-column {
-  display: flex;
-  flex-direction: column;
-  gap: clamp(1.2rem, 2vw, 1.8rem);
-}
-
-.contributors-column__heading {
-  display: grid;
-  gap: 0.6rem;
-}
-
-.contributors-column__heading h2 {
-  font-family: 'TheGoodMonolith', 'RoundedFixedsys', monospace;
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
-  font-size: clamp(1.2rem, 1.8vw, 1.5rem);
-  color: #f8fafc;
-}
-
-.contributors-column__heading p {
-  font-size: clamp(0.85rem, 1.1vw, 0.95rem);
-  color: rgba(226, 232, 240, 0.8);
-}
-
-.contributors-column__grid {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: minmax(16rem, 1fr);
-  gap: clamp(1.2rem, 2vw, 1.8rem);
-  overflow-x: auto;
-  padding-bottom: 0.5rem;
-}
-
-.contributors-column__grid::-webkit-scrollbar {
-  height: 6px;
-}
-
-.contributors-column__grid::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.45);
-  border-radius: 999px;
-}
-
-.contributors-column__grid .contrib-group {
-  min-width: 16rem;
-}
-
-@media (max-width: 1100px) {
-  .contributors-board {
-    grid-auto-flow: row;
-    grid-auto-columns: unset;
-  }
-  .contributors-column__grid {
-    grid-auto-flow: row;
-    overflow: visible;
-  }
-}
-
 
 /* === Wall full-screen layout === */
 
@@ -1565,87 +1489,6 @@ body.page.page-wall {
   filter: saturate(95%);
 }
 
-/* === Contributors page layout === */
-.page-contributors .contributors-main {
-  --sidebar-safe: calc(12rem + 6vw);
-  position: relative;
-  min-height: 100vh;
-  padding: clamp(1.5rem, 3vw, 2.5rem) clamp(1.5rem, 4vw, 3rem);
-  padding-left: calc(var(--sidebar-safe) + clamp(1rem, 3vw, 2rem));
-  display: flex;
-  flex-direction: column;
-  gap: clamp(1.75rem, 3vw, 2.75rem);
-}
-
-.contributors-header h1 {
-  font-size: clamp(1.6rem, 3vw, 2.4rem);
-  letter-spacing: 0.1em;
-}
-
-.contributors-header p {
-  margin-top: 0.5rem;
-  max-width: 38rem;
-  font-size: 0.95rem;
-  line-height: 1.6;
-}
-
-.contributors-section {
-  display: flex;
-  flex-direction: column;
-  gap: 1.4rem;
-}
-
-.contributors-section__head h2 {
-  font-size: 1.2rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-}
-
-.contributors-section__head p {
-  margin-top: 0.35rem;
-  font-size: 0.8rem;
-  opacity: 0.7;
-}
-
-.contributors-columns {
-  display: grid;
-  gap: clamp(1rem, 2vw, 1.75rem);
-  grid-template-columns: repeat(auto-fit, minmax(var(--contributors-column-width, 220px), 1fr));
-}
-
-.contributors-column {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  border: 1px solid rgba(148, 163, 184, 0.2);
-  border-radius: 1rem;
-  padding: clamp(0.9rem, 1.6vw, 1.4rem);
-  background: rgba(15, 23, 42, 0.55);
-  backdrop-filter: blur(10px);
-}
-
-.contributors-column__title {
-  font-size: 0.95rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-
-.contributors-list {
-  list-style: none;
-  display: grid;
-  gap: 0.55rem;
-  font-size: 0.9rem;
-}
-
-.contributors-list li {
-  padding-bottom: 0.35rem;
-  border-bottom: 1px dashed rgba(148, 163, 184, 0.2);
-}
-
-.contributors-list li:last-child {
-  border-bottom: none;
-  padding-bottom: 0;
-}
 
 /* === Artworks page layout === */
 .page-artworks .artworks-main {
@@ -1844,6 +1687,7 @@ body.page.page-artworks {
 }
 
 
+
 @media (max-width: 900px) {
   .page-comment .comment-main {
     height: auto;
@@ -1890,4 +1734,145 @@ body.page.page-artworks {
 .page-contributors .page-main,
 .page-artworks .page-main {
   margin: 0;
+}
+
+/* === Contributors: 2-column page layout next to sidebar === */
+/* 페이지 전체를 '사이드바 | 본문' 2단 그리드로 구성 */
+body.page.page-contributors {
+  display: grid;
+  grid-template-columns: clamp(200px, 18vw, 260px) 1fr; /* sidebar | content */
+  gap: clamp(1.2rem, 2.6vw, 2rem);
+  align-items: start;
+}
+
+/* 사이드바는 첫 번째 컬럼에 고정; 메인은 두 번째 컬럼에 */
+body.page.page-contributors .wall-sidebar {
+  position: sticky;
+  top: clamp(1rem, 3vw, 2rem);
+  align-self: start;
+  z-index: 2;
+}
+body.page.page-contributors .contributors-layout {
+  grid-column: 2 / 3;
+}
+
+/* === 섹션을 2개의 '큰 블록'으로 배치 (Participants | Staff) === */
+.contributors-layout {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(2rem, 3.2vw, 3rem);
+}
+
+/* 카드/박스 배경 제거: 텍스트만 보이도록 */
+.contributors-section {
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0;
+}
+
+/* 섹션 헤드 타이포 위계 */
+.contributors-section__head {
+  margin-bottom: clamp(1rem, 1.6vw, 1.4rem);
+}
+.contributors-section__head h2 {
+  font-family: 'TheGoodMonolith', 'RoundedFixedsys', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: clamp(1.2rem, 2vw, 1.6rem);
+  color: #f8fafc;
+}
+.contributors-section__head p {
+  font-size: clamp(0.85rem, 1vw, 0.95rem);
+  color: rgba(226,232,240,0.8);
+}
+
+/* === 섹션 내부: '텍스트만' 다단(멀티컬럼) === */
+/* JS가 data-*-grid 내부에 하위섹션(그룹)을 주입한다고 가정하고,
+   각 그룹이 하나의 블록으로 다단 흐름에서 끊기지 않도록 설정 */
+.contributors-columns {
+  /* 다단: viewport/내용 폭에 따라 자동 칼럼 */
+  column-width: 18rem;           /* 최소 칼럼 폭 */
+  column-gap: clamp(1.2rem, 2vw, 1.6rem);
+}
+
+/* 하위섹션(분야/파트) 컨테이너 */
+.contributors-group {
+  break-inside: avoid;
+  margin: 0 0 1.2rem 0;          /* 칼럼 내 블록 간격 */
+  padding: 0;
+  list-style: none;
+}
+
+/* 하위섹션 제목 (텍스트 위계) */
+.contributors-group__title {
+  font-family: 'TheGoodMonolith', 'RoundedFixedsys', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: clamp(0.9rem, 1.1vw, 1rem);
+  color: #e2e8f0;
+  margin: 0 0 0.5rem 0;
+}
+
+/* 이름 리스트 (텍스트만, 줄간 여백 + 밑줄 구분) */
+.contributors-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* 각 이름 항목: 밑줄(구분선) */
+.contributors-list li {
+  padding: 0.35rem 0 0.4rem 0;
+  border-bottom: 1px solid var(--color-text-border-opacity04);
+  line-height: 1.5;
+  color: var(--color-text);
+}
+
+/* 이름을 강조하고, 보조정보(소속/역할)가 있으면 가볍게 */
+.contributor-name {
+  font-weight: 600;
+}
+.contributor-meta {
+  font-size: 0.9em;
+  opacity: 0.85;
+}
+
+/* 반응형: 좁은 화면에서는 섹션 블록을 1열로 */
+@media (max-width: 980px) {
+  .contributors-layout {
+    grid-template-columns: 1fr;
+  }
+  body.page.page-contributors {
+    grid-template-columns: 1fr; /* 모바일: 사이드바 위/아래 정렬이 필요하면 여기를 조정 */
+  }
+  body.page.page-contributors .wall-sidebar {
+    position: static;
+  }
+}
+
+/* === FIX: Align 03 (Contributors) sidebar with 01/02/04 === */
+.page-contributors .page-main { margin: 0 !important; }
+
+/* Use the same fixed sidebar pattern as other pages */
+body.page.page-contributors { display: block !important; }
+body.page.page-contributors .wall-sidebar {
+  position: fixed !important;
+  top: 0; left: 0;
+  height: 100vh;
+  padding: 35vh 2.3rem 1rem 1.2rem; /* match global .wall-sidebar */
+  z-index: 100;
+  background: var(--color-bg-sidebar);
+}
+
+/* Offset the main content like 02/04 */
+.page-contributors .contributors-main {
+  --sidebar-safe: calc(12rem + 6vw);
+  position: relative;
+  min-height: 100vh;
+  padding: clamp(1.5rem, 3vw, 2.5rem) clamp(1.5rem, 4vw, 3.25rem);
+  padding-left: calc(var(--sidebar-safe) + clamp(1rem, 3vw, 2rem));
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr)); /* Participants | Staff */
+  gap: clamp(2rem, 3.2vw, 3rem);
 }
