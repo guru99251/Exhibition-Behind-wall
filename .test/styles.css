@@ -1,8 +1,18 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap');
+@import url("https://fonts.cdnfonts.com/css/thegoodmonolith");
+
+@font-face { font-family: 'RoundedFixedsys'; src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_six@1.2/DungGeunMo.woff') format('woff'); font-weight: normal; font-display: swap; }
+
 
 :root {
-  --color-bg: #1D1E22;
-  --color-text: #fff;
+  --color-bg: #0e0f0f;
+  --color-bg-transparent: #0e0f0fc0;
+  --color-text: #d1d1d1;
+  --color-text-border: #f8f8f8;
+  --color-text-border-opacity01: rgba(255, 255, 255, 0.08);
+  --color-text-border-opacity04: rgba(255, 255, 255, 0.38);
+  --color-text-border-hover: rgba(255, 255, 255, 0.45);
+  --color-test: #fd0000;
 }
 
 html,
@@ -25,7 +35,102 @@ body {
   gap: 0px;
 }
 
-#container {
-  width: 100vw;
-  height: 100vh;
+
+/* Select Menu (landing cards) === */
+.select-menu{
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  z-index: 5;
+  pointer-events: none;
+}
+
+
+
+/* Menu card */
+.select-menu .menu-item{
+  width: min(33vmin, 330px); /* Responsive width cap */
+  aspect-ratio: 3/4; /* Maintain a poster aspect ratio */
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  border: 1px solid var(--color-text-border-opacity01);
+  text-align: center;
+  text-transform: uppercase; 
+  letter-spacing: 0.12em; 
+  font-weight: 700;
+  text-decoration: none;
+  color: var(--color-text);
+  backdrop-filter: blur(6px);
+  transition: border-color .3s ease;
+  
+  /* === Select menu corner decoration === */
+  position: relative;      /* Anchor for positioning the corner nodes */
+  overflow: visible;       /* Allow the corner decorations to extend out */
+  isolation: isolate;
+
+}
+.select-menu .menu-item:hover{
+  border-color: var(--color-text-border-hover);
+  background: rgba(255,255,255,0.04);
+}
+
+
+/* Corner decoration */
+.select-menu .menu-item .corner {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  color: #fff;
+  opacity: 0;              /* Hidden by default */
+  z-index: 3;           /* Above the card artwork */
+  pointer-events: none;
+}
+
+
+
+.select-menu .menu-item .corner svg {
+  width: 100%;
+  height: 100%;
+}
+/* Corner placement and rotation */
+.select-menu .menu-item .corner.top-left     { top: -8px;  left: -8px; }
+.select-menu .menu-item .corner.top-right    { top: -8px;  right: -8px;  transform: rotate(90deg); }
+.select-menu .menu-item .corner.bottom-left  { bottom: -8px; left: -8px;  transform: rotate(-90deg); }
+.select-menu .menu-item .corner.bottom-right { bottom: -8px; right: -8px; transform: rotate(180deg); }
+
+/* Menu titles */
+.menu-title{
+  position: relative;
+  font-size: 12px;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+  opacity: .9;
+  margin-bottom: 14px;
+  z-index: 1;
+}
+  /* Decorative underline */
+.menu-title::after{
+  content:"";
+  display:block;
+  width: 60%;
+  margin: 8px auto 0;
+  border-bottom: 1px solid var(--color-text-border-opacity04);
+}
+
+/* Icon container */
+.menu-icon{ 
+  position: absolute;
+  z-index: 1;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%); 
+  width: 50%;
+  height: auto;
+  width: min(72%, 160px);
+  height: min(72%, 160px);
+  display:grid;
+  place-items:center;
 }

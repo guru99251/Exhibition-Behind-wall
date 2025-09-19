@@ -191,7 +191,7 @@ body {
   .select-menu .menu-row{ flex-wrap: wrap; } /* Allow wrapping on narrow viewports */
 }
 
-/* Menu card sizing */
+/* Menu card */
 .select-menu .menu-item{
   width: min(33vmin, 330px); /* Responsive width cap */
   aspect-ratio: 3/4; /* Maintain a poster aspect ratio */
