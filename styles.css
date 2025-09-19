@@ -1837,10 +1837,8 @@ body.page.page-wall {
   padding: 0.3rem 0.7rem;
   border-radius: 20px;
   width: fit-content;
-  align: center;
   margin-top: 0.5rem;
 }
-
 
 @media (max-width: 900px) {
   .page-comment .comment-main {
