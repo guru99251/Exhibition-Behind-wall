@@ -1,4 +1,4 @@
-﻿# Behind Wall 프로젝트 구조
+# Behind Wall 프로젝트 구조
 
 ```
 Behind Wall/
@@ -21,8 +21,6 @@ Behind Wall/
 
 Diposium이라는 전시회에서 빔프로젝트로 한쪽 벽면을 가로로 길게 채울 웹을 제작하고 있어. 아직 가로 길이가 확정이 나질 않았어. 따라서 모든 요소의 크기를 반응형(가로기준)으로 만들어줘.
 
-# 페이지별 웹 instruction
-
 ## index.html
 전시 오프닝(시작) 화면, 메뉴 선택
 
@@ -38,3 +36,92 @@ websocket 통신이 필요해.
 
 ## 04-artworks.html
 모든 전시 작품의 정보(작품이름, 포스터, 제작 인원, 작품 설명, 분야, 사용 프로그램)를 카드 UI로 한눈에 볼 수 있게 할꺼야. 그리드 형태로 배치해서 스크롤을 내려서 한눈에 볼 수 있게끔.
+
+
+# 02~04.html 페이지별 Task & Instruction
+
+---
+
+## 02 — 02-comment.html
+
+### Task
+- Layout:  
+  - Sidebar remains fixed on the left; allocate a **safe margin** so content never overlaps.  
+  - Divide the main area into **4 vertical columns** (`Zone A`, `Zone B`, `Zone C`, `All`), always visible without vertical scrolling.  
+  - Columns must resize responsively based on viewport width.  
+
+- Interaction:  
+  - Integrate **WebSocket** connection to receive comments, emoji reactions, and likes.  
+  - Render incoming items **newest-first** in each column.  
+  - Route messages by `zone` or global `All`.  
+  - Show author identity (anonymous, or `name / department / studentId`).  
+  - If a comment references a specific artwork, display its **poster thumbnail** on the right side of the message card.  
+
+- Styling:  
+  - Use `.page-comment` namespace.  
+  - Place all CSS in `styles.css` and JS in `script.js`.  
+
+### Functions
+- `initCommentPage(container)` — bootstrap layout, calculate sidebar-safe gutters.  
+- `connectCommentsWS(url)` — handle WebSocket connection, reconnection, heartbeats.  
+- `mapIncomingToZone(event)` — resolve which zone column to use.  
+- `upsertMessage(store, zone, item)` — de-duplicate and keep newest-first order.  
+- `renderColumn(zone, items)` — render the column efficiently.  
+- `renderCommentCard(item)` — build card with text, reactions, optional artwork image.  
+- `updateConnectionBadge(state)` — toggle online/offline UI indicator.  
+- `fitToWidth()` — resize typography/layout to keep all four columns visible.  
+
+---
+
+## 03 — 03-contributors.html
+
+### Task
+- Layout:  
+  - Reserve safe margin so content does not overlap the sidebar.  
+  - Two top-level sections: **Participants** and **Staff**.  
+  - Participants (32 total) split into four **sub-columns**: 2D(8), 3D(16), UX/UI(4), Game(4).  
+  - Staff (12 total) split into **four sub-columns**: Planning(5), Design(3), Operations(3), Chair(1).  
+
+- Presentation:  
+  - Participants: render as `Name(StudentID)`.  
+  - Staff: render as `Name — Role`.  
+  - No extra styling beyond consistent typography and spacing.  
+  - Use `.page-contributors` namespace.  
+
+### Functions
+- `initContributorsPage(container)` — mount layout with sidebar gutter.  
+- `renderParticipants(groups)` — print each discipline in its own column.  
+- `renderStaff(groups)` — print each staff group in its own column.  
+- `createListItem(person, type)` — generate DOM node in correct format.  
+- `applyHorizontalLayout()` — enforce horizontal-first responsive grid.  
+
+---
+
+## 04 — 04-artworks.html
+
+### Task
+- Layout:  
+  - Sidebar safe margin must be applied.  
+  - Main content scrolls vertically (only this page allows vertical scroll).  
+  - Display artworks as **cards** inside a **responsive grid**.  
+
+- Card Content:  
+  - Each card includes: { Title, Poster Image, Team Members, Description, Discipline, Tools }.  
+
+- Features:  
+  - Default view = **All artworks**.  
+  - Add filter bar at the top to toggle by zone (All | Zone A | Zone B | Zone C).  
+  - Use responsive grid: `repeat(auto-fit, minmax(clamp(260px, 22vw, 420px), 1fr))`.  
+  - Poster images maintain 3:4 aspect ratio with proper object-fit.  
+
+- Styling:  
+  - Use `.page-artworks` namespace.  
+  - Place all CSS in `styles.css` and JS in `script.js`.  
+
+### Functions
+- `initArtworksPage(container)` — initialize filters, grid, sidebar gutter.  
+- `renderFilterBar(zones, onChange)` — create filter controls.  
+- `applyZoneFilter(zone)` — filter dataset and update grid.  
+- `renderArtworkCards(items)` — render responsive grid of cards.  
+- `computeColumnsByWidth()` — calculate card width dynamically using `clamp()`.  
+- `hydratePoster(img, lqipSrc)` — swap LQIP placeholder with final image smoothly.  

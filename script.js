@@ -1,4 +1,4 @@
-﻿// Execute after third-party libraries load (deferred).
+// Execute after third-party libraries load (deferred).
 gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
 // Basic fade-in animation for elements tagged with .fade-in.
 gsap.to(".fade-in", {
