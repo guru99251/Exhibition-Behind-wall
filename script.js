@@ -1315,25 +1315,25 @@ const CONTRIBUTORS_STATE = {
       ]
     },
     staff: {
+      Chair: [
+        { name: '박지영', role: '위원장' }
+      ],
       Planning: [
-        { name: 'Heewon Jung', role: 'Planning Lead' },
-        { name: 'Mina Rho', role: 'Programmer' },
-        { name: 'Seojin Park', role: 'Archivist' },
-        { name: 'Yeji Jeon', role: 'Copywriter' },
-        { name: 'Joonseo Lee', role: 'Logistics' }
+        { name: '김채영', role: '기획 팀장' },
+        { name: '권민주', role: '포토존/이벤트' },
+        { name: '최주성', role: '전시구역' },
+        { name: '명진영', role: '미디어아트' },
+        { name: '김태윤', role: '인터랙션/비하인드월' }
       ],
       Design: [
-        { name: 'Hyejin Kang', role: 'Design Director' },
-        { name: 'Yerin Koo', role: 'Visual Designer' },
-        { name: 'Taeyang Kim', role: 'Motion Designer' }
+        { name: '권미진', role: '디자인 팀장' },
+        { name: '노서진', role: '디자인' },
+        { name: '이성민', role: '디자인' }
       ],
       Operations: [
-        { name: 'Suhyun Bae', role: 'Show Caller' },
-        { name: 'Minsu Chae', role: 'Technical Operator' },
-        { name: 'Yunseo Lee', role: 'Stage Manager' }
-      ],
-      Chair: [
-        { name: 'Prof. Myungho Park', role: 'Dept. Chair' }
+        { name: '진가언', role: '운영' },
+        { name: '이유경', role: '운영' },
+        { name: '이시현', role: '운영' }
       ]
     }
   }
