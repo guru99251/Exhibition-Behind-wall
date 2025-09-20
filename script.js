@@ -607,73 +607,235 @@ document.addEventListener('keydown', (ev) => {
   const floorButtons  = Array.from(document.querySelectorAll('.page-wall .floor-selector__button'));
   if (!scroller || !floorSections.length || !floorButtons.length) { return; }
 
-  // ?쒖꽦痢??쒖떆 ?ы띁
+  const baseSection = floorSections[0];
+  if (!baseSection) { return; }
+  const baseHeader = baseSection.querySelector('.floor-section__head');
+  const baseCards  = Array.from(baseSection.querySelectorAll('.plan-card'));
+
+  const floorData = floorSections.map((section) => {
+    const header = section.querySelector('.floor-section__head');
+    const cards = Array.from(section.querySelectorAll('.plan-card')).map((card) => {
+      const photo = card.querySelector('.plan-card__photo');
+      const nameEl = card.querySelector('.plan-card__name');
+      return {
+        artwork: card.dataset.artwork || '',
+        label: photo?.dataset.label || '',
+        name: nameEl?.textContent || ''
+      };
+    });
+
+    return {
+      floor: section.dataset.floor || '',
+      headerHTML: header?.innerHTML || '',
+      cards
+    };
+  });
+
+  floorSections.forEach((section, idx) => {
+    if (idx === 0) {
+      section.classList.add('is-active');
+      section.removeAttribute('hidden');
+      section.removeAttribute('aria-hidden');
+    } else {
+      section.classList.remove('is-active');
+      section.setAttribute('hidden', 'true');
+      section.setAttribute('aria-hidden', 'true');
+    }
+  });
+
+  const applyFloor = (floorIndex) => {
+    const data = floorData[floorIndex];
+    if (!data) { return; }
+
+    baseSection.dataset.floor = data.floor || '';
+
+    if (baseHeader) {
+      baseHeader.innerHTML = data.headerHTML;
+    }
+
+    baseCards.forEach((card, idx) => {
+      const cardData = data.cards[idx];
+      if (!cardData) {
+        card.setAttribute('hidden', 'true');
+        return;
+      }
+
+      card.removeAttribute('hidden');
+      card.dataset.artwork = cardData.artwork || '';
+      card.dataset.floor = data.floor || '';
+
+      const photo = card.querySelector('.plan-card__photo');
+      if (photo) {
+        photo.dataset.label = cardData.label || '';
+      }
+
+      const nameNode = card.querySelector('.plan-card__name');
+      if (nameNode) {
+        nameNode.textContent = cardData.name || '';
+      }
+    });
+  };
+
   const setActiveFloor = (floorVal) => {
     floorButtons.forEach((button) => {
       const isActive = button.dataset.floor === String(floorVal);
       button.classList.toggle('is-active', isActive);
-      if (isActive) button.setAttribute('aria-current', 'true');
-      else button.removeAttribute('aria-current');
+      if (isActive) {
+        button.setAttribute('aria-current', 'true');
+      } else {
+        button.removeAttribute('aria-current');
+      }
     });
   };
 
-  // ??踰덉뿉 ?섎굹??痢듬쭔 蹂댁씠?꾨줉 ?쒖뼱
   let index = 0;
-  const clamp = (v,min,max)=>Math.max(min,Math.min(max,v));
-  const showByIndex = (i) => {
-    index = clamp(i, 0, floorSections.length - 1);
-    floorSections.forEach((sec, idx) => {
-      sec.classList.toggle('is-active', idx === index);
-    });
-    setActiveFloor(floorSections[index].dataset.floor);
+  const floorCount = floorData.length;
+  const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+
+  const INACTIVITY_DELAY = 60_000;
+  const AUTO_ADVANCE_DELAY = 5_000;
+  let inactivityTimer = null;
+  let autoTimer = null;
+  let autoCycling = false;
+
+  const autoPrompt = (() => {
+    const existing = document.querySelector('.floor-auto-prompt');
+    if (existing) { return existing; }
+    const node = document.createElement('div');
+    node.className = 'floor-auto-prompt';
+    node.setAttribute('role', 'status');
+    node.setAttribute('aria-hidden', 'true');
+    node.textContent = 'Spacebar를 눌러 시작하기';
+    if (document.body) {
+      document.body.appendChild(node);
+    } else {
+      document.addEventListener('DOMContentLoaded', () => { document.body?.appendChild(node); }, { once: true });
+    }
+    return node;
+  })();
+
+  function showAutoPrompt() {
+    if (!autoPrompt) { return; }
+    autoPrompt.classList.add('is-visible');
+    autoPrompt.setAttribute('aria-hidden', 'false');
+  }
+  function hideAutoPrompt() {
+    if (!autoPrompt) { return; }
+    autoPrompt.classList.remove('is-visible');
+    autoPrompt.setAttribute('aria-hidden', 'true');
+  }
+
+  function startAutoCycle() {
+    if (autoCycling || floorCount <= 1) { return; }
+    autoCycling = true;
+    showAutoPrompt();
+    showByIndex(0, { fromAuto: true });
+    autoTimer = window.setInterval(() => {
+      const nextIndex = (index + 1) % floorCount;
+      showByIndex(nextIndex, { fromAuto: true });
+    }, AUTO_ADVANCE_DELAY);
+  }
+
+  function stopAutoCycle() {
+    if (!autoCycling) { return; }
+    autoCycling = false;
+    hideAutoPrompt();
+    window.clearInterval(autoTimer);
+    autoTimer = null;
+  }
+
+  function resetInactivityTimer() {
+    window.clearTimeout(inactivityTimer);
+    if (floorCount <= 1) { return; }
+    inactivityTimer = window.setTimeout(startAutoCycle, INACTIVITY_DELAY);
+  }
+
+  function handleUserActivity() {
+    if (autoCycling) {
+      stopAutoCycle();
+    }
+    resetInactivityTimer();
+  }
+
+  const showByIndex = (i, { fromAuto = false } = {}) => {
+    index = clamp(i, 0, floorCount - 1);
+    applyFloor(index);
+    setActiveFloor(floorData[index]?.floor ?? '');
+    if (!fromAuto) {
+      handleUserActivity();
+    }
   };
 
-  // 珥덇린 1F
   showByIndex(0);
 
-  // 1) 痢?踰꾪듉: 利됱떆 ?꾪솚 (?ㅽ겕濡??쒓굅)
   floorButtons.forEach((button) => {
-    button.addEventListener('click', (e) => {
-      e.preventDefault();
+    button.addEventListener('click', (event) => {
+      event.preventDefault();
       const target = document.querySelector(button.dataset.target);
-      const i = floorSections.indexOf(target);
-      if (i >= 0) showByIndex(i);
+      const targetIndex = floorSections.indexOf(target);
+      if (targetIndex >= 0) {
+        showByIndex(targetIndex);
+      }
     });
   });
 
-  // 2) ???곗튂: ?붾㈃ ?대룞 ?놁씠 利됱떆 ?ㅼ쓬/?댁쟾痢?
   let lock = false;
   const step = (delta) => {
-    if (lock) return;
+    if (lock) { return; }
     lock = true;
     showByIndex(index + (delta > 0 ? 1 : -1));
-    setTimeout(() => { lock = false; }, 220); // ?붾컮?댁뒪
+    window.setTimeout(() => { lock = false; }, 220);
   };
 
-  scroller.addEventListener('wheel', (ev) => {
-    ev.preventDefault();                 // ?ㅽ겕濡??먯껜 ?쒓굅
-    if (Math.abs(ev.deltaY) < 8) return; // 誘몄꽭 ?쒖뒪泥?臾댁떆
-    step(ev.deltaY);
+  scroller.addEventListener('wheel', (event) => {
+    event.preventDefault();
+    if (Math.abs(event.deltaY) < 8) { return; }
+    step(event.deltaY);
   }, { passive: false });
 
-  // ?곗튂 ???
   let startY = 0;
-  scroller.addEventListener('touchstart', (e) => { startY = e.touches[0].clientY; }, { passive: true });
-  scroller.addEventListener('touchmove', (e) => {
-    e.preventDefault();
-    const dy = startY - e.touches[0].clientY;
-    if (Math.abs(dy) > 24) { step(dy); startY = e.touches[0].clientY; }
+  scroller.addEventListener('touchstart', (event) => {
+    startY = event.touches[0].clientY;
+  }, { passive: true });
+  scroller.addEventListener('touchmove', (event) => {
+    event.preventDefault();
+    const dy = startY - event.touches[0].clientY;
+    if (Math.abs(dy) > 24) {
+      step(dy);
+      startY = event.touches[0].clientY;
+    }
   }, { passive: false });
 
-  // ?ㅻ낫?????? PageUp/Down)???섏씠吏 諛⑹떇?쇰줈
-  scroller.addEventListener('keydown', (e) => {
-    const k = e.key;
-    if (k === 'ArrowDown' || k === 'PageDown') { e.preventDefault(); step(1); }
-    if (k === 'ArrowUp'   || k === 'PageUp')   { e.preventDefault(); step(-1); }
+  scroller.addEventListener('keydown', (event) => {
+    const key = event.key;
+    if (key === 'ArrowDown' || key === 'PageDown') {
+      event.preventDefault();
+      step(1);
+    }
+    if (key === 'ArrowUp' || key === 'PageUp') {
+      event.preventDefault();
+      step(-1);
+    }
   });
 
-  // ?대뼡 ?댁쑀濡??ㅽ겕濡ㅼ씠 諛쒖깮?대룄 利됱떆 ?먯쐞移?
   scroller.addEventListener('scroll', () => { scroller.scrollTop = 0; });
+
+  const activityEvents = ['pointerdown', 'pointermove', 'mousemove', 'keydown', 'wheel', 'touchstart', 'touchmove'];
+  const passiveEvents = new Set(['wheel', 'touchstart', 'touchmove', 'pointermove', 'mousemove']);
+  activityEvents.forEach((type) => {
+    const options = passiveEvents.has(type) ? { passive: true } : undefined;
+    document.addEventListener(type, handleUserActivity, options);
+  });
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      stopAutoCycle();
+      window.clearTimeout(inactivityTimer);
+      inactivityTimer = null;
+    } else {
+      resetInactivityTimer();
+    }
+  });
 })();
 
 
@@ -1938,6 +2100,7 @@ function hydratePoster(img, lqipSrc = DEFAULT_LQIP) {
     let previousValue = '';
     let promptTimer = null;
     let promptActive = false;
+    let scrollTween = null;
     const PROMPT_TEXT = 'start typing';
 
     function updateSvgBounds() {
@@ -1956,6 +2119,31 @@ function hydratePoster(img, lqipSrc = DEFAULT_LQIP) {
         index += 1;
       }
       return index;
+    }
+
+    function ensureLatestVisible() {
+      if (!demo) { return; }
+      if (demo.scrollHeight <= demo.clientHeight + 4) { return; }
+      const target = demo.scrollHeight;
+      const scrollNow = () => {
+        if (window.gsap) {
+          scrollTween?.kill();
+          scrollTween = gsap.to(demo, {
+            scrollTop: target,
+            duration: 0.25,
+            ease: 'power2.out',
+            onComplete: () => { scrollTween = null; }
+          });
+        } else {
+          demo.scrollTop = target;
+          scrollTween = null;
+        }
+      };
+      if (typeof window.requestAnimationFrame === 'function') {
+        window.requestAnimationFrame(scrollNow);
+      } else {
+        scrollNow();
+      }
     }
 
     function render(value) {
@@ -1982,6 +2170,7 @@ function hydratePoster(img, lqipSrc = DEFAULT_LQIP) {
       }
 
       previousValue = safeValue;
+      ensureLatestVisible();
     }
 
     function addLetter(char, index) {
