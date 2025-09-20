@@ -125,3 +125,7 @@ websocket 통신이 필요해.
 - `renderArtworkCards(items)` — render responsive grid of cards.  
 - `computeColumnsByWidth()` — calculate card width dynamically using `clamp()`.  
 - `hydratePoster(img, lqipSrc)` — swap LQIP placeholder with final image smoothly.  
+
+
+----
+

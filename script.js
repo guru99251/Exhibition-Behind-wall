@@ -1754,6 +1754,182 @@ function hydratePoster(img, lqipSrc = DEFAULT_LQIP) {
 })();
 
 
+/* ===== 02-comment: realtime chat, composer, typing mini ===== */
+(function(){
+  const root    = document.querySelector('[data-comment-columns]');
+  const stream  = root?.querySelector('[data-livechat-stream]');
+  const openBtn = root?.querySelector('[data-open-composer]');
+  const modal   = root?.querySelector('[data-composer]');
+  const closeEls= root?.querySelectorAll('[data-close-composer]');
+  const form    = root?.querySelector('[data-composer-form]');
+  const selCode = form?.querySelector('.select-code');
+  const selZone = form?.querySelector('.select-zone');
+
+  if (!root || !stream || !form) return;
+
+  /* --- demo dataset for codes (replace with real) --- */
+  const ARTWORK_CODES = ["A-101","A-102","B-201","C-301","I-901","Z-777"];
+  selCode?.insertAdjacentHTML('beforeend',
+    ARTWORK_CODES.map(c=>`<option>${c}</option>`).join('')
+  );
+
+  /* --- typing mini (from typing animation.md: simplified & GSAP3) --- */
+  const typingSvg = document.getElementById('ta-svg');
+  function burstTyping(){ // 간이 데코 파티클
+    if (!typingSvg || !window.gsap) return;
+    const W = typingSvg.clientWidth || 300;
+    const H = typingSvg.clientHeight || 90;
+    const n = 12;
+    for(let i=0;i<n;i++){
+      const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
+      const r = Math.random()*3+1;
+      c.setAttribute('r', r);
+      c.setAttribute('cx', W/2);
+      c.setAttribute('cy', H/2);
+      c.style.fill = ['#f8fafc','#a5b4fc','#93c5fd','#86efac'][i%4];
+      typingSvg.appendChild(c);
+      const ang = Math.random()*Math.PI*2, dist = 40+Math.random()*80;
+      gsap.fromTo(c,{opacity:1,x:0,y:0},{duration:.6,opacity:0,
+        x: Math.cos(ang)*dist, y: Math.sin(ang)*dist, onComplete:()=>c.remove(), ease:'power1.out'});
+    }
+  }
+
+  form.querySelector('.message-input')?.addEventListener('input', ()=>{
+    burstTyping();
+  });
+
+  /* --- composer modal open/close --- */
+  const openModal = ()=> { modal.setAttribute('aria-hidden','false'); };
+  const closeModal= ()=> { modal.setAttribute('aria-hidden','true');  };
+  openBtn?.addEventListener('click', openModal);
+  closeEls.forEach(el=>el.addEventListener('click', closeModal));
+
+  /* --- color/tag helper --- */
+  function tagClass({code, zone}){
+    if (code) return '--code';
+    if (!zone) return '--all';
+    return `--zone-${String(zone).toUpperCase()}`;
+  }
+  function tagLabel({code, zone}){
+    if (code) return code;
+    return zone ? String(zone).toUpperCase() : 'All';
+  }
+
+  /* --- render a chat row --- */
+  function renderRow(item){
+    const li = document.createElement('li');
+    li.className = 'chat-row';
+    li.setAttribute('role','article');
+    li.setAttribute('aria-roledescription','chat message');
+
+    const _class = tagClass(item);
+    const _label = tagLabel(item);
+    const time   = new Date(item.ts || Date.now()).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+
+    li.innerHTML = `
+      <span class="chat-tag ${_class}">${_label}</span>
+      <div class="chat-content">${item.message}</div>
+      <time class="chat-time" datetime="${new Date(item.ts).toISOString()}">${time}</time>
+      <button type="button" class="chat-like" aria-label="좋아요">
+        <span class="icon">❤</span><span class="count">${item.likes||0}</span>
+      </button>
+      ${item.artworkPoster ? `<img class="chat-artwork" alt="" src="${item.artworkPoster}">` : ``}
+    `;
+
+    // 좋아요
+    li.querySelector('.chat-like')?.addEventListener('click', (ev)=>{
+      const countEl = ev.currentTarget.querySelector('.count');
+      const v = parseInt(countEl.textContent||'0')+1;
+      countEl.textContent = v;
+      // TODO: 서버 반영 fetch/post
+    });
+
+    return li;
+  }
+
+  /* --- prepend newest-first with small pop animation --- */
+  function prependRow(item){
+    const li = renderRow(item);
+    stream.prepend(li);
+    // gsap pop (이미 CSS keyframes로도 적용되지만 보강)
+    if (window.gsap){
+      gsap.fromTo(li, {y:-6, autoAlpha:0}, {duration:.25, y:0, autoAlpha:1, ease:'power2.out'});
+    }
+  }
+
+  /* --- WebSocket --- */
+  const WS_URL = (window.COMMENT_WS_URL || 'wss://example.com/live'); // 실제 URL로 교체
+  let ws, retry=0, timer;
+
+  function connect(){
+    try{
+      ws = new WebSocket(WS_URL);
+      ws.addEventListener('open', ()=>{
+        retry=0;
+        // 상태 뱃지 업데이트 등 (기존 헤더 UI와 연동 시)
+        // updateConnectionBadge('online')
+      });
+      ws.addEventListener('message', (e)=>{
+        // 서버 포맷에 맞게 파싱
+        // 예시 payload: {id, message, ts, zone, code, artworkPoster, likes}
+        const data = JSON.parse(e.data);
+        prependRow(data);
+      });
+      ws.addEventListener('close', ()=>retryConnect());
+      ws.addEventListener('error', ()=>{ try{ ws.close(); }catch(e){} });
+    }catch(err){
+      retryConnect();
+    }
+  }
+  function retryConnect(){
+    if (retry>6) return;
+    clearTimeout(timer);
+    const wait = Math.min(2000*(retry+1), 8000);
+    timer = setTimeout(connect, wait);
+    retry++;
+  }
+  connect();
+
+  /* --- demo fallback (no ws) for local dev --- */
+  if (location.hostname==='localhost' || location.protocol==='file:'){
+    setInterval(()=>{
+      prependRow({
+        id: crypto.randomUUID(),
+        message: ['멋져요!','Incredible','Wow 🤯','Love the color','🔥🔥🔥'][Math.floor(Math.random()*5)],
+        ts: Date.now(),
+        zone: ['A','B','C',null][Math.floor(Math.random()*4)],
+        code: Math.random()>.7 ? ARTWORK_CODES[Math.floor(Math.random()*ARTWORK_CODES.length)] : '',
+        artworkPoster: Math.random()>.6 ? 'https://picsum.photos/400/600?grayscale&random='+Math.floor(Math.random()*1000) : '',
+        likes: Math.floor(Math.random()*5)
+      });
+    }, 2500);
+  }
+
+  /* --- submit from composer -> prepend + 서버 전송 --- */
+  form.addEventListener('submit', (e)=>{
+    e.preventDefault();
+    const fd = new FormData(form);
+    const msg = (fd.get('message')||'').toString().trim();
+    if (!msg) return;
+
+    const payload = {
+      id: crypto.randomUUID(),
+      message: msg,
+      ts: Date.now(),
+      zone: (fd.get('zone')||'').toString().trim().toUpperCase(),
+      code: (fd.get('artworkCode')||'').toString().trim(),
+      likes: 0
+      // artworkPoster: 선택/코드 매핑 시 채워넣기
+    };
+    prependRow(payload);
+
+    // 서버 업링크(예시)
+    try { ws?.readyState===1 && ws.send(JSON.stringify(payload)); } catch(_){}
+    closeModal();
+    form.reset();
+  });
+
+})();
 
 
 

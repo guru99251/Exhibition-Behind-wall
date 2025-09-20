@@ -26,8 +26,8 @@
     <main class="page-main comment-main" data-comment-root>
         <header class="comment-header">
             <div class="comment-header__title">
-                <h1>Live Visitor Reactions</h1>
-                <p>Four simultaneous channels capture zone specific feedback in real time. Cards arrive newest first and glow when a linked artwork responds.</p>
+                <h1>Live Comment</h1>
+                <p>전시장에 방문한 관람객들의 응원, 반응, 이모지를 확인할 수 있는 페이지입니다. 자유롭게 남겨보세요!</p>
             </div>
             <div class="comment-header__status">
                 <span class="connection-badge" data-connection-badge>Offline</span>
@@ -36,34 +36,99 @@
         </header>
 
         <section class="comment-columns" data-comment-columns>
-            <article class="comment-column" data-zone="A">
-                <header class="comment-column__head">
-                    <h2>Zone A</h2>
-                    <p>Projection spine arrival</p>
-                </header>
-                <div class="comment-stream" data-comment-stream="A" role="feed" aria-live="polite"></div>
-            </article>
-            <article class="comment-column" data-zone="B">
-                <header class="comment-column__head">
-                    <h2>Zone B</h2>
-                    <p>Immersion alcove</p>
-                </header>
-                <div class="comment-stream" data-comment-stream="B" role="feed" aria-live="polite"></div>
-            </article>
-            <article class="comment-column" data-zone="C">
-                <header class="comment-column__head">
-                    <h2>Zone C</h2>
-                    <p>Backstage window</p>
-                </header>
-                <div class="comment-stream" data-comment-stream="C" role="feed" aria-live="polite"></div>
-            </article>
-            <article class="comment-column" data-zone="ALL">
-                <header class="comment-column__head">
-                    <h2>All</h2>
-                    <p>Cross zone resonance</p>
-                </header>
-                <div class="comment-stream" data-comment-stream="ALL" role="feed" aria-live="polite"></div>
-            </article>
+        <!-- LEFT: Live chat main pane -->
+        <div class="livechat-pane" data-livechat>
+            <header class="livechat-head">
+            <h2>실시간 방명록</h2>
+            <p>참여자와 스태프릃 향한 응원메시지 남겨주시면 아주 큰 힘이 됩니다!</p>
+            </header>
+
+            <ol class="livechat-stream" data-livechat-stream role="feed" aria-live="polite"></ol>
+        </div>
+
+        <!-- RIGHT: Narrow aside (QR + compose trigger) -->
+        <aside class="comment-aside" data-comment-aside>
+            <header class="comment-aside__head">
+                나도 한마디하러 가기!
+            </header>
+            <div class="qr-card">
+            <figure class="qr-figure">
+                <!-- 전시 참여용 QR 이미지 경로로 교체 -->
+                <img src="assets/qr-join-chat.png" alt="스캔하고 참여하기" />
+                <figcaption>참여 QR</figcaption>
+            </figure>
+            </div>
+
+            <button type="button" class="open-composer" data-open-composer>
+            > 응원 남기기
+            </button>
+        </aside>
+
+        <!-- COMPOSER MODAL (typing animation.md 간이 포트) -->
+        <div class="composer-modal" data-composer aria-hidden="true">
+            <div class="composer-backdrop" data-close-composer></div>
+            <div class="composer-dialog" role="dialog" aria-modal="true" aria-labelledby="composer-title">
+            <header class="composer-head">
+                <h3 id="composer-title">메시지 작성</h3>
+                <button type="button" class="composer-close" data-close-composer aria-label="닫기">×</button>
+            </header>
+
+            <form class="composer-form" data-composer-form>
+                <div class="composer-body">
+                <!-- typing animation.md 참고: 입력 전/중 효과 미니 프리뷰 -->
+                <div class="typing-demo" data-typing-demo>
+                    <svg id="ta-svg" class="typing-svg" aria-hidden="true"></svg>
+                    <p id="ta-text" class="typing-text" aria-hidden="true"></p>
+                </div>
+
+                <label class="field">
+                    <span class="label">메시지</span>
+                    <textarea class="input message-input" name="message" rows="3" placeholder="텍스트/이모지 입력"></textarea>
+                </label>
+
+                <div class="quick-picks">
+                    <div class="emoji-row" role="group" aria-label="빠른 이모지">
+                    <button type="button" class="emoji">👏</button>
+                    <button type="button" class="emoji">😍</button>
+                    <button type="button" class="emoji">🔥</button>
+                    <button type="button" class="emoji">🤯</button>
+                    <button type="button" class="emoji">🙌</button>
+                    </div>
+                    <div class="phrase-row" role="group" aria-label="지정 멘트">
+                    <button type="button" class="phrase">Awesome!</button>
+                    <button type="button" class="phrase">So immersive</button>
+                    <button type="button" class="phrase">Love the motion</button>
+                    </div>
+                </div>
+
+                <div class="meta-selects">
+                    <label class="field">
+                    <span class="label">전시 작품(고유코드)</span>
+                    <select name="artworkCode" class="select select-code">
+                        <option value="">(선택 안 함)</option>
+                        <!-- 고유코드 목록을 서버/JS에서 주입 -->
+                    </select>
+                    </label>
+
+                    <label class="field">
+                    <span class="label">전시 구역</span>
+                    <select name="zone" class="select select-zone">
+                        <option value="">All</option>
+                        <option>A</option><option>B</option><option>C</option>
+                        <option>D</option><option>E</option><option>F</option>
+                        <option>G</option><option>H</option><option>I</option>
+                    </select>
+                    </label>
+                </div>
+                </div>
+
+                <footer class="composer-foot">
+                <button type="button" class="btn ghost" data-close-composer>취소</button>
+                <button type="submit" class="btn primary">보내기</button>
+                </footer>
+            </form>
+            </div>
+        </div>
         </section>
     </main>
 
