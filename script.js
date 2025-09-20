@@ -1,5 +1,19 @@
 // Execute after third-party libraries load (deferred).
 gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
+
+document.addEventListener('keydown', (event) => {
+  if (event.defaultPrevented) { return; }
+  if (!(event.code === 'Space' || event.key === ' ' || event.key === 'Spacebar')) { return; }
+  const activeElement = (event.target instanceof Element) ? event.target : document.activeElement;
+  const tagName = activeElement?.tagName?.toLowerCase();
+  const blocked = tagName && ['input', 'textarea', 'select', 'button'].includes(tagName);
+  const editable = activeElement?.isContentEditable;
+  if (blocked || editable) { return; }
+  if (event.ctrlKey || event.altKey || event.metaKey || event.shiftKey) { return; }
+  event.preventDefault();
+  window.location.href = 'index.html';
+});
+
 // Basic fade-in animation for elements tagged with .fade-in.
 gsap.to(".fade-in", {
   opacity: 1,
@@ -1764,172 +1778,463 @@ function hydratePoster(img, lqipSrc = DEFAULT_LQIP) {
   const form    = root?.querySelector('[data-composer-form]');
   const selCode = form?.querySelector('.select-code');
   const selZone = form?.querySelector('.select-zone');
+  const messageInput = form?.querySelector('.message-input');
 
-  if (!root || !stream || !form) return;
+  if (!root || !stream || !form) { return; }
 
-  /* --- demo dataset for codes (replace with real) --- */
   const ARTWORK_CODES = ["A-101","A-102","B-201","C-301","I-901","Z-777"];
-  selCode?.insertAdjacentHTML('beforeend',
-    ARTWORK_CODES.map(c=>`<option>${c}</option>`).join('')
+  selCode?.insertAdjacentHTML(
+    'beforeend',
+    ARTWORK_CODES.map((code) => `<option>${code}</option>`).join('')
   );
 
-  /* --- typing mini (from typing animation.md: simplified & GSAP3) --- */
-  const typingSvg = document.getElementById('ta-svg');
-  function burstTyping(){ // 간이 데코 파티클
-    if (!typingSvg || !window.gsap) return;
-    const W = typingSvg.clientWidth || 300;
-    const H = typingSvg.clientHeight || 90;
-    const n = 12;
-    for(let i=0;i<n;i++){
-      const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
-      const r = Math.random()*3+1;
-      c.setAttribute('r', r);
-      c.setAttribute('cx', W/2);
-      c.setAttribute('cy', H/2);
-      c.style.fill = ['#f8fafc','#a5b4fc','#93c5fd','#86efac'][i%4];
-      typingSvg.appendChild(c);
-      const ang = Math.random()*Math.PI*2, dist = 40+Math.random()*80;
-      gsap.fromTo(c,{opacity:1,x:0,y:0},{duration:.6,opacity:0,
-        x: Math.cos(ang)*dist, y: Math.sin(ang)*dist, onComplete:()=>c.remove(), ease:'power1.out'});
-    }
-  }
-
-  form.querySelector('.message-input')?.addEventListener('input', ()=>{
-    burstTyping();
+  const typingControls = initTypingMini({
+    demo: root.querySelector('[data-typing-demo]'),
+    input: messageInput,
+    form
   });
 
-  /* --- composer modal open/close --- */
-  const openModal = ()=> { modal.setAttribute('aria-hidden','false'); };
-  const closeModal= ()=> { modal.setAttribute('aria-hidden','true');  };
-  openBtn?.addEventListener('click', openModal);
-  closeEls.forEach(el=>el.addEventListener('click', closeModal));
+  const openModal = () => {
+    modal?.setAttribute('aria-hidden', 'false');
+    typingControls?.syncFromInput();
+    typingControls?.ensurePrompt();
+    requestAnimationFrame(() => messageInput?.focus({ preventScroll: true }));
+  };
 
-  /* --- color/tag helper --- */
-  function tagClass({code, zone}){
-    if (code) return '--code';
-    if (!zone) return '--all';
+  const closeModal = () => {
+    modal?.setAttribute('aria-hidden', 'true');
+    messageInput?.blur();
+    if (!messageInput?.value.length) {
+      typingControls?.ensurePrompt();
+    } else {
+      typingControls?.stopPrompt();
+    }
+  };
+
+  openBtn?.addEventListener('click', openModal);
+  closeEls.forEach((el) => el.addEventListener('click', closeModal));
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && modal?.getAttribute('aria-hidden') === 'false') {
+      closeModal();
+    }
+  });
+
+  function tagClass({ code, zone }) {
+    if (code) { return '--code'; }
+    if (!zone) { return '--all'; }
     return `--zone-${String(zone).toUpperCase()}`;
   }
-  function tagLabel({code, zone}){
-    if (code) return code;
+
+  function tagLabel({ code, zone }) {
+    if (code) { return code; }
     return zone ? String(zone).toUpperCase() : 'All';
   }
 
-  /* --- render a chat row --- */
-  function renderRow(item){
+  function renderRow(item) {
     const li = document.createElement('li');
     li.className = 'chat-row';
-    li.setAttribute('role','article');
-    li.setAttribute('aria-roledescription','chat message');
+    li.setAttribute('role', 'article');
+    li.setAttribute('aria-roledescription', 'comment');
 
-    const _class = tagClass(item);
-    const _label = tagLabel(item);
-    const time   = new Date(item.ts || Date.now()).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+    const timestampSource = item.ts ?? Date.now();
+    let timestamp = new Date(timestampSource);
+    if (Number.isNaN(timestamp.getTime())) {
+      timestamp = new Date();
+    }
+    const timeLabel = timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-    li.innerHTML = `
-      <span class="chat-tag ${_class}">${_label}</span>
-      <div class="chat-content">${item.message}</div>
-      <time class="chat-time" datetime="${new Date(item.ts).toISOString()}">${time}</time>
-      <button type="button" class="chat-like" aria-label="좋아요">
-        <span class="icon">❤</span><span class="count">${item.likes||0}</span>
-      </button>
-      ${item.artworkPoster ? `<img class="chat-artwork" alt="" src="${item.artworkPoster}">` : ``}
-    `;
+    const meta = document.createElement('div');
+    meta.className = 'chat-row__meta';
 
-    // 좋아요
-    li.querySelector('.chat-like')?.addEventListener('click', (ev)=>{
-      const countEl = ev.currentTarget.querySelector('.count');
-      const v = parseInt(countEl.textContent||'0')+1;
-      countEl.textContent = v;
-      // TODO: 서버 반영 fetch/post
+    const tag = document.createElement('span');
+    tag.className = `chat-tag ${tagClass(item)}`;
+    tag.textContent = tagLabel(item);
+
+    const track = document.createElement('div');
+    track.className = 'chat-row__track';
+
+    const timeEl = document.createElement('time');
+    timeEl.className = 'chat-time';
+    try {
+      timeEl.dateTime = timestamp.toISOString();
+    } catch (err) {
+      timeEl.dateTime = new Date().toISOString();
+    }
+    timeEl.textContent = timeLabel;
+
+    const likeBtn = document.createElement('button');
+    likeBtn.type = 'button';
+    likeBtn.className = 'chat-like';
+    const initialLikes = Number.isFinite(item.likes) ? Number(item.likes) : 0;
+    likeBtn.setAttribute('aria-label', `??? ${initialLikes}?`);
+
+    const likeCount = document.createElement('span');
+    likeCount.className = 'chat-like__count';
+    likeCount.textContent = String(initialLikes);
+    likeBtn.appendChild(likeCount);
+
+    likeBtn.addEventListener('click', () => {
+      const nextValue = parseInt(likeCount.textContent || '0', 10) + 1;
+      likeCount.textContent = String(nextValue);
+      likeBtn.setAttribute('aria-label', `??? ${nextValue}?`);
     });
+
+    track.append(timeEl, likeBtn);
+    meta.append(tag, track);
+
+    const message = document.createElement('p');
+    message.className = 'chat-row__message';
+    message.textContent = (item.message ?? '').toString();
+
+    li.append(meta, message);
+
+    if (item.artworkPoster) {
+      const figure = document.createElement('figure');
+      figure.className = 'chat-row__media';
+      const img = document.createElement('img');
+      img.className = 'chat-row__media-img';
+      img.alt = '';
+      img.src = item.artworkPoster;
+      figure.appendChild(img);
+      li.appendChild(figure);
+    }
 
     return li;
   }
 
-  /* --- prepend newest-first with small pop animation --- */
-  function prependRow(item){
-    const li = renderRow(item);
-    stream.prepend(li);
-    // gsap pop (이미 CSS keyframes로도 적용되지만 보강)
-    if (window.gsap){
-      gsap.fromTo(li, {y:-6, autoAlpha:0}, {duration:.25, y:0, autoAlpha:1, ease:'power2.out'});
+  function prependRow(item) {
+    const row = renderRow(item);
+    stream.prepend(row);
+    if (window.gsap) {
+      gsap.fromTo(row, { y: -6, autoAlpha: 0 }, { duration: 0.25, y: 0, autoAlpha: 1, ease: 'power2.out' });
     }
+  }
+
+  function initTypingMini({ demo, input, form } = {}) {
+    if (!demo || !input || !window.gsap) { return null; }
+
+    const svg = demo.querySelector('svg');
+    const hiddenText = demo.querySelector('.typing-text');
+    if (!svg || !hiddenText) { return null; }
+
+    demo.querySelectorAll('.typing-display').forEach((node) => node.remove());
+
+    const display = document.createElement('div');
+    display.className = 'typing-display';
+    demo.appendChild(display);
+
+    const SVG_NS = 'http://www.w3.org/2000/svg';
+    const colors = [
+      { main: '#FBDB4A', shades: ['#FAE073', '#FCE790', '#FADD65', '#E4C650'] },
+      { main: '#F3934A', shades: ['#F7B989', '#F9CDAA', '#DD8644', '#F39C59'] },
+      { main: '#EB547D', shades: ['#EE7293', '#F191AB', '#D64D72', '#C04567'] },
+      { main: '#9F6AA7', shades: ['#B084B6', '#C19FC7', '#916198', '#82588A'] },
+      { main: '#5476B3', shades: ['#6382B9', '#829BC7', '#4D6CA3', '#3E5782'] },
+      { main: '#2BB19B', shades: ['#4DBFAD', '#73CDBF', '#27A18D', '#1F8171'] },
+      { main: '#70B984', shades: ['#7FBE90', '#98CBA6', '#68A87A', '#5E976E'] }
+    ];
+
+    const letters = [];
+    let previousValue = '';
+    let promptTimer = null;
+    let promptActive = false;
+    const PROMPT_TEXT = 'start typing';
+
+    function updateSvgBounds() {
+      const rect = demo.getBoundingClientRect();
+      const width = Math.max(rect.width, 1);
+      const height = Math.max(rect.height, 1);
+      svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+      svg.setAttribute('width', width);
+      svg.setAttribute('height', height);
+    }
+
+    function sharedPrefix(oldChars, newChars) {
+      const limit = Math.min(oldChars.length, newChars.length);
+      let index = 0;
+      while (index < limit && oldChars[index] === newChars[index]) {
+        index += 1;
+      }
+      return index;
+    }
+
+    function render(value) {
+      const safeValue = value ?? '';
+      hiddenText.textContent = safeValue;
+      const newChars = Array.from(safeValue);
+      const oldChars = Array.from(previousValue);
+      const keep = sharedPrefix(oldChars, newChars);
+
+      while (letters.length > keep) {
+        const entry = letters.pop();
+        if (!entry) { continue; }
+        gsap.to(entry.node, {
+          duration: 0.2,
+          y: -6,
+          opacity: 0,
+          ease: 'power1.in',
+          onComplete: () => entry.node.remove()
+        });
+      }
+
+      for (let index = keep; index < newChars.length; index += 1) {
+        addLetter(newChars[index], index);
+      }
+
+      previousValue = safeValue;
+    }
+
+    function addLetter(char, index) {
+      const palette = colors[index % colors.length];
+      const span = document.createElement('span');
+      span.className = 'typing-letter';
+
+      const isBreak = char === ' ';
+      const isSpace = char === ' ';
+
+      if (isBreak) {
+        span.classList.add('typing-letter--break');
+      } else {
+        if (isSpace) {
+          span.classList.add('typing-letter--space');
+        }
+        span.style.setProperty('--typing-color', palette.main);
+        span.textContent = isSpace ? ' ' : char;
+      }
+
+      display.appendChild(span);
+      letters[index] = { node: span, palette, char };
+
+      if (isBreak) {
+        gsap.set(span, { opacity: 0 });
+        return;
+      }
+
+      gsap.fromTo(
+        span,
+        { scale: 0.6, opacity: 0, y: 4 },
+        { duration: 0.25, scale: 1, opacity: 1, y: 0, ease: 'back.out(2)' }
+      );
+
+      if (!isSpace) {
+        spawnBurst(span, palette);
+      }
+    }
+
+    function spawnBurst(target, palette) {
+      if (!palette) { return; }
+      const hostRect = demo.getBoundingClientRect();
+      const targetRect = target.getBoundingClientRect();
+      const originX = targetRect.left + targetRect.width / 2 - hostRect.left;
+      const originY = targetRect.top + targetRect.height / 2 - hostRect.top;
+
+      for (let i = 0; i < 6; i += 1) {
+        spawnCircle(originX, originY, palette.shades[i % palette.shades.length]);
+      }
+      for (let i = 0; i < 4; i += 1) {
+        spawnTriangle(originX, originY, palette.shades[(i + 2) % palette.shades.length]);
+      }
+    }
+
+    function spawnCircle(x, y, fill) {
+      const radius = 1 + Math.random() * 2.6;
+      const circle = document.createElementNS(SVG_NS, 'circle');
+      circle.setAttribute('cx', x);
+      circle.setAttribute('cy', y);
+      circle.setAttribute('r', radius);
+      circle.setAttribute('fill', fill);
+      svg.appendChild(circle);
+
+      const angle = Math.random() * Math.PI * 2;
+      const distance = 24 + Math.random() * 36;
+
+      gsap.fromTo(circle, { opacity: 1 }, {
+        duration: 0.6,
+        opacity: 0,
+        x: Math.cos(angle) * distance,
+        y: Math.sin(angle) * distance,
+        ease: 'power1.out',
+        onComplete: () => circle.remove()
+      });
+    }
+
+    function spawnTriangle(x, y, fill) {
+      const size = 5 + Math.random() * 5;
+      const tri = document.createElementNS(SVG_NS, 'polygon');
+      tri.setAttribute('points', `0,${size} ${size / 2},0 ${size},${size}`);
+      tri.setAttribute('fill', fill);
+      svg.appendChild(tri);
+
+      const angle = Math.random() * Math.PI * 2;
+      const distance = 20 + Math.random() * 34;
+      const startX = x - size / 2;
+      const startY = y - size / 2;
+
+      gsap.fromTo(tri, { opacity: 1, x: startX, y: startY, rotation: Math.random() * 180 }, {
+        duration: 0.55,
+        opacity: 0,
+        x: startX + Math.cos(angle) * distance,
+        y: startY + Math.sin(angle) * distance,
+        rotation: '+=120',
+        ease: 'power1.inOut',
+        onComplete: () => tri.remove()
+      });
+    }
+
+    function stopPromptCycle() {
+      if (!promptActive) { return; }
+      promptActive = false;
+      window.clearTimeout(promptTimer);
+      promptTimer = null;
+    }
+
+    function startPromptCycle() {
+      if (promptActive) { return; }
+      promptActive = true;
+      window.clearTimeout(promptTimer);
+      runPrompt(0);
+    }
+
+    function runPrompt(step) {
+      if (!promptActive) { return; }
+      if (step <= PROMPT_TEXT.length) {
+        render(PROMPT_TEXT.slice(0, step));
+        promptTimer = window.setTimeout(() => runPrompt(step + 1), 140 + step * 8);
+      } else {
+        promptTimer = window.setTimeout(() => {
+          if (!promptActive) { return; }
+          render('');
+          runPrompt(0);
+        }, 1200);
+      }
+    }
+
+    function syncFromInput() {
+      const value = input.value;
+      stopPromptCycle();
+      render(value);
+      if (!value.length) {
+        startPromptCycle();
+      }
+    }
+
+    input.addEventListener('input', () => {
+      const value = input.value;
+      stopPromptCycle();
+      render(value);
+      if (!value.length) {
+        startPromptCycle();
+      }
+    });
+
+    input.addEventListener('focus', () => {
+      if (!input.value.length) {
+        startPromptCycle();
+      } else {
+        stopPromptCycle();
+        render(input.value);
+      }
+    });
+
+    input.addEventListener('blur', () => {
+      if (!input.value.length) {
+        startPromptCycle();
+      }
+    });
+
+    form?.addEventListener('reset', () => {
+      window.requestAnimationFrame(() => {
+        render('');
+        startPromptCycle();
+      });
+    });
+
+    updateSvgBounds();
+    window.addEventListener('resize', () => {
+      requestAnimationFrame(updateSvgBounds);
+    });
+
+    render('');
+    startPromptCycle();
+
+    return {
+      syncFromInput,
+      ensurePrompt: () => { if (!input.value.length) { startPromptCycle(); } },
+      stopPrompt: stopPromptCycle
+    };
   }
 
   /* --- WebSocket --- */
-  const WS_URL = (window.COMMENT_WS_URL || 'wss://example.com/live'); // 실제 URL로 교체
-  let ws, retry=0, timer;
+  const WS_URL = (window.COMMENT_WS_URL || 'wss://example.com/live');
+  let ws; let retry = 0; let timer;
 
   function connect(){
-    try{
+    try {
       ws = new WebSocket(WS_URL);
-      ws.addEventListener('open', ()=>{
-        retry=0;
-        // 상태 뱃지 업데이트 등 (기존 헤더 UI와 연동 시)
-        // updateConnectionBadge('online')
+      ws.addEventListener('open', () => {
+        retry = 0;
       });
-      ws.addEventListener('message', (e)=>{
-        // 서버 포맷에 맞게 파싱
-        // 예시 payload: {id, message, ts, zone, code, artworkPoster, likes}
+      ws.addEventListener('message', (e) => {
         const data = JSON.parse(e.data);
         prependRow(data);
       });
-      ws.addEventListener('close', ()=>retryConnect());
-      ws.addEventListener('error', ()=>{ try{ ws.close(); }catch(e){} });
-    }catch(err){
+      ws.addEventListener('close', () => retryConnect());
+      ws.addEventListener('error', () => {
+        try { ws.close(); } catch (_) {}
+      });
+    } catch (err) {
       retryConnect();
     }
   }
+
   function retryConnect(){
-    if (retry>6) return;
+    if (retry > 6) { return; }
     clearTimeout(timer);
-    const wait = Math.min(2000*(retry+1), 8000);
+    const wait = Math.min(2000 * (retry + 1), 8000);
     timer = setTimeout(connect, wait);
-    retry++;
+    retry += 1;
   }
   connect();
 
-  /* --- demo fallback (no ws) for local dev --- */
-  if (location.hostname==='localhost' || location.protocol==='file:'){
-    setInterval(()=>{
+  if (location.hostname === 'localhost' || location.protocol === 'file:') {
+    setInterval(() => {
       prependRow({
         id: crypto.randomUUID(),
-        message: ['멋져요!','Incredible','Wow 🤯','Love the color','🔥🔥🔥'][Math.floor(Math.random()*5)],
+        message: ['Amazing','Incredible','Wow!','Love the color','Super vibrant'][Math.floor(Math.random() * 5)],
         ts: Date.now(),
-        zone: ['A','B','C',null][Math.floor(Math.random()*4)],
-        code: Math.random()>.7 ? ARTWORK_CODES[Math.floor(Math.random()*ARTWORK_CODES.length)] : '',
-        artworkPoster: Math.random()>.6 ? 'https://picsum.photos/400/600?grayscale&random='+Math.floor(Math.random()*1000) : '',
-        likes: Math.floor(Math.random()*5)
+        zone: ['A','B','C',null][Math.floor(Math.random() * 4)],
+        code: Math.random() > .7 ? ARTWORK_CODES[Math.floor(Math.random() * ARTWORK_CODES.length)] : '',
+        artworkPoster: Math.random() > .6 ? 'https://picsum.photos/400/600?grayscale&random=' + Math.floor(Math.random() * 1000) : '',
+        likes: Math.floor(Math.random() * 5)
       });
     }, 2500);
   }
 
-  /* --- submit from composer -> prepend + 서버 전송 --- */
-  form.addEventListener('submit', (e)=>{
+  form.addEventListener('submit', (e) => {
     e.preventDefault();
     const fd = new FormData(form);
-    const msg = (fd.get('message')||'').toString().trim();
-    if (!msg) return;
+    const msg = (fd.get('message') || '').toString().trim();
+    if (!msg) { return; }
 
     const payload = {
       id: crypto.randomUUID(),
       message: msg,
       ts: Date.now(),
-      zone: (fd.get('zone')||'').toString().trim().toUpperCase(),
-      code: (fd.get('artworkCode')||'').toString().trim(),
+      zone: (fd.get('zone') || '').toString().trim().toUpperCase(),
+      code: (fd.get('artworkCode') || '').toString().trim(),
       likes: 0
-      // artworkPoster: 선택/코드 매핑 시 채워넣기
     };
     prependRow(payload);
 
-    // 서버 업링크(예시)
-    try { ws?.readyState===1 && ws.send(JSON.stringify(payload)); } catch(_){}
+    try {
+      if (ws?.readyState === 1) { ws.send(JSON.stringify(payload)); }
+    } catch (_) {}
     closeModal();
     form.reset();
   });
 
 })();
+
 
 
 
