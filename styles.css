@@ -614,6 +614,177 @@ body.page #mosaic {
   text-align: center;
 }
 
+
+.plan-card--final-preview {
+  border-color: rgba(226, 232, 240, 0.88);
+  box-shadow: 0 26px 58px rgba(56, 189, 248, 0.33);
+}
+
+.plan-card--final-preview .plan-card__photo {
+  border-color: transparent;
+  color: #f8fafc;
+  background:
+    radial-gradient(circle at 18% 24%, rgba(255, 255, 255, 0.18), transparent 54%),
+    linear-gradient(140deg, rgba(15, 23, 42, 0.88), rgba(30, 41, 59, 0.85));
+  background-blend-mode: screen;
+  transition: background 0.4s ease;
+}
+
+.plan-card--final-preview .plan-card__photo::after {
+  color: rgba(248, 250, 252, 0.88);
+}
+
+.plan-card--final-preview .plan-card__name {
+  color: #f8fafc;
+}
+
+.plan-card.plan-card--final-preview[data-artwork="spectral-loop"] .plan-card__photo {
+  background:
+    radial-gradient(circle at 22% 32%, rgba(147, 197, 253, 0.42), transparent 60%),
+    radial-gradient(circle at 76% 18%, rgba(129, 140, 248, 0.36), transparent 58%),
+    linear-gradient(135deg, rgba(30, 64, 175, 0.9), rgba(56, 189, 248, 0.78));
+}
+
+.plan-card.plan-card--final-preview[data-artwork="memory-patch"] .plan-card__photo {
+  background:
+    radial-gradient(circle at 26% 26%, rgba(253, 224, 71, 0.36), transparent 58%),
+    radial-gradient(circle at 74% 42%, rgba(244, 114, 182, 0.32), transparent 56%),
+    linear-gradient(130deg, rgba(234, 179, 8, 0.88), rgba(249, 168, 212, 0.72));
+}
+
+.plan-card.plan-card--final-preview[data-artwork="tidal-dream"] .plan-card__photo {
+  background:
+    radial-gradient(circle at 24% 24%, rgba(45, 212, 191, 0.38), transparent 58%),
+    radial-gradient(circle at 70% 64%, rgba(56, 189, 248, 0.32), transparent 58%),
+    linear-gradient(135deg, rgba(14, 116, 144, 0.88), rgba(56, 189, 248, 0.72));
+}
+
+.plan-card.plan-card--final-preview[data-artwork="orbital-city"] .plan-card__photo {
+  background:
+    radial-gradient(circle at 30% 28%, rgba(249, 115, 22, 0.32), transparent 58%),
+    radial-gradient(circle at 78% 68%, rgba(192, 132, 252, 0.32), transparent 56%),
+    linear-gradient(135deg, rgba(79, 70, 229, 0.88), rgba(249, 115, 22, 0.68));
+}
+
+.plan-card.plan-card--final-preview[data-artwork="flora-signal"] .plan-card__photo {
+  background:
+    radial-gradient(circle at 24% 30%, rgba(74, 222, 128, 0.36), transparent 58%),
+    radial-gradient(circle at 72% 40%, rgba(52, 211, 153, 0.32), transparent 56%),
+    linear-gradient(135deg, rgba(16, 185, 129, 0.9), rgba(34, 197, 94, 0.72));
+}
+
+.plan-hover-bubble {
+  --bubble-accent: rgba(148, 163, 184, 0.9);
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: grid;
+  gap: 0.45rem;
+  min-width: clamp(200px, 26vw, 280px);
+  max-width: clamp(240px, 30vw, 320px);
+  padding: clamp(0.75rem, 1.8vw, 1.1rem) clamp(1rem, 2vw, 1.6rem);
+  border-radius: 18px;
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  background: linear-gradient(140deg, rgba(7, 12, 22, 0.96), rgba(15, 23, 42, 0.9));
+  box-shadow: 0 26px 64px rgba(7, 12, 22, 0.5);
+  color: #f8fafc;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate3d(-9999px, -9999px, 0);
+  transition: opacity 0.2s ease, transform 0.24s ease;
+  backdrop-filter: blur(18px);
+  z-index: 9;
+}
+
+.plan-hover-bubble.is-visible {
+  opacity: 1;
+}
+
+.plan-hover-bubble::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  width: 16px;
+  height: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.42);
+  background: inherit;
+  transform: translate(-50%, 60%) rotate(45deg);
+  bottom: -8px;
+  box-shadow: 0 10px 26px rgba(7, 12, 22, 0.32);
+}
+
+.plan-hover-bubble.is-flipped::after {
+  bottom: auto;
+  top: -8px;
+  transform: translate(-50%, -60%) rotate(45deg);
+}
+
+.plan-hover-bubble__title {
+  font-size: clamp(0.9rem, 1.1vw, 1.12rem);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--bubble-accent);
+}
+
+.plan-hover-bubble__meta {
+  border-top: 1px solid rgba(148, 163, 184, 0.25);
+  padding-top: 0.45rem;
+  font-size: clamp(0.72rem, 0.9vw, 0.84rem);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(226, 232, 240, 0.78);
+}
+
+.plan-hover-bubble[data-artwork="spectral-loop"] {
+  --bubble-accent: rgba(147, 197, 253, 0.92);
+  border-color: rgba(147, 197, 253, 0.5);
+  box-shadow: 0 26px 60px rgba(99, 102, 241, 0.42);
+}
+
+.plan-hover-bubble[data-artwork="memory-patch"] {
+  --bubble-accent: rgba(253, 224, 71, 0.92);
+  border-color: rgba(253, 224, 71, 0.42);
+  box-shadow: 0 26px 60px rgba(250, 204, 21, 0.36);
+}
+
+.plan-hover-bubble[data-artwork="tidal-dream"] {
+  --bubble-accent: rgba(56, 189, 248, 0.9);
+  border-color: rgba(56, 189, 248, 0.42);
+  box-shadow: 0 26px 60px rgba(56, 189, 248, 0.36);
+}
+
+.plan-hover-bubble[data-artwork="orbital-city"] {
+  --bubble-accent: rgba(192, 132, 252, 0.9);
+  border-color: rgba(192, 132, 252, 0.46);
+  box-shadow: 0 26px 60px rgba(192, 132, 252, 0.38);
+}
+
+.plan-hover-bubble[data-artwork="flora-signal"] {
+  --bubble-accent: rgba(74, 222, 128, 0.92);
+  border-color: rgba(74, 222, 128, 0.4);
+  box-shadow: 0 26px 60px rgba(34, 197, 94, 0.36);
+}
+
+.plan-hover-bubble[data-artwork="spectral-loop"]::after {
+  border-color: rgba(147, 197, 253, 0.5);
+}
+
+.plan-hover-bubble[data-artwork="memory-patch"]::after {
+  border-color: rgba(253, 224, 71, 0.42);
+}
+
+.plan-hover-bubble[data-artwork="tidal-dream"]::after {
+  border-color: rgba(56, 189, 248, 0.42);
+}
+
+.plan-hover-bubble[data-artwork="orbital-city"]::after {
+  border-color: rgba(192, 132, 252, 0.46);
+}
+
+.plan-hover-bubble[data-artwork="flora-signal"]::after {
+  border-color: rgba(74, 222, 128, 0.4);
+}
+
 .page-wall .floor-selector {
   position: fixed;
   top: 50%;
@@ -677,6 +848,8 @@ body.page #mosaic {
   opacity: 0;
   pointer-events: none;
   transition: opacity .4s ease, transform .4s ease;
+  animation: pulse 1.8s ease-in-out infinite;
+  animation-play-state: paused;
   z-index: 8;
   backdrop-filter: blur(9px);
 }
@@ -693,6 +866,7 @@ body.page #mosaic {
 .floor-auto-prompt.is-visible {
   transform: translate(-50%, 0);
   opacity: 1;
+  animation-play-state: running;
 }
 
 .floor-selector__level {
@@ -1438,7 +1612,7 @@ body.page.page-wall {
   --sidebar-safe: calc(12rem + 6vw);
   position: relative;
   min-height: 100vh;
-  padding: clamp(1.5rem, 3vw, 2.5rem) clamp(1.5rem, 4vw, 3.25rem) clamp(3rem, 6vw, 4.5rem);
+  padding: clamp(4.5rem, 5vw, 5.5rem) clamp(1.5rem, 4vw, 3.25rem) clamp(3rem, 6vw, 4.5rem);
   padding-left: calc(var(--sidebar-safe) + clamp(1rem, 3vw, 2rem));
   display: flex;
   flex-direction: column;
@@ -1466,7 +1640,7 @@ body.page.page-wall {
   gap: 0.75rem;
   align-items: center;
   position: absolute;
-  top: 10.5vh;
+  top: 14.5vh;
   right: 4vw;
 }
 

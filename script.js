@@ -631,6 +631,139 @@ document.addEventListener('keydown', (ev) => {
     };
   });
 
+  const finalCardLookup = new Map();
+  let finalFloorLabel = '';
+
+  const finalFloorEntry = floorData.find((entry) => {
+    const floorVal = entry.floor?.toString().trim();
+    if (!floorVal) { return false; }
+    return floorVal === '7' || floorVal.toUpperCase() === '7F';
+  });
+
+  if (finalFloorEntry?.cards?.length) {
+    finalFloorEntry.cards.forEach((card) => {
+      if (card.artwork) {
+        finalCardLookup.set(card.artwork, card);
+      }
+    });
+    const floorVal = finalFloorEntry.floor?.toString().trim();
+    if (floorVal) {
+      const upper = floorVal.toUpperCase();
+      finalFloorLabel = upper.endsWith('F') ? upper : `${upper}F`;
+    }
+  }
+
+  if (!finalFloorLabel) {
+    finalFloorLabel = '7F';
+  }
+
+  const planMap = baseSection.querySelector('.plan-map');
+  const hoverBubble = (() => {
+    if (!planMap) { return null; }
+    let node = planMap.querySelector('[data-plan-hover-bubble]');
+    if (!node) {
+      node = document.createElement('div');
+      node.className = 'plan-hover-bubble';
+      node.dataset.planHoverBubble = 'true';
+      node.setAttribute('aria-hidden', 'true');
+      node.innerHTML = '<p class="plan-hover-bubble__title"></p><p class="plan-hover-bubble__meta"></p>';
+      planMap.appendChild(node);
+    }
+    const titleEl = node.querySelector('.plan-hover-bubble__title');
+    const metaEl = node.querySelector('.plan-hover-bubble__meta');
+
+    const hide = () => {
+      node.classList.remove('is-visible', 'is-flipped');
+      node.style.transform = 'translate3d(-9999px, -9999px, 0)';
+      node.setAttribute('aria-hidden', 'true');
+      node.removeAttribute('data-artwork');
+    };
+
+    hide();
+
+    const show = (card, cardData) => {
+      if (!cardData || !titleEl || !metaEl) {
+        hide();
+        return;
+      }
+      titleEl.textContent = cardData.name || '';
+      const parts = [];
+      if (finalFloorLabel) { parts.push(finalFloorLabel); }
+      if (cardData.label) { parts.push(cardData.label); }
+      metaEl.textContent = parts.join(' · ');
+      node.dataset.artwork = cardData.artwork || '';
+      node.setAttribute('aria-hidden', 'false');
+      node.classList.add('is-visible');
+      node.classList.remove('is-flipped');
+      node.style.transform = 'translate3d(-9999px, -9999px, 0)';
+
+      const mapRect = planMap.getBoundingClientRect();
+      const cardRect = card.getBoundingClientRect();
+      const bubbleRect = node.getBoundingClientRect();
+
+      let left = cardRect.left - mapRect.left + (cardRect.width / 2) - (bubbleRect.width / 2);
+      const maxLeft = Math.max(16, mapRect.width - bubbleRect.width - 16);
+      left = Math.max(16, Math.min(maxLeft, left));
+
+      let top = cardRect.top - mapRect.top - bubbleRect.height - 18;
+      if (top < 12) {
+        top = cardRect.bottom - mapRect.top + 18;
+        node.classList.add('is-flipped');
+      }
+
+      node.style.transform = `translate3d(${Math.round(left)}px, ${Math.round(top)}px, 0)`;
+    };
+
+    return { show, hide };
+  })();
+
+  const revealFinalPreview = (card) => {
+    if (!card) { return; }
+    const artwork = card.dataset.artwork || '';
+    const finalData = artwork ? finalCardLookup.get(artwork) : null;
+    const photo = card.querySelector('.plan-card__photo');
+    if (!finalData || !photo) {
+      hoverBubble?.hide?.();
+      card.classList.remove('plan-card--final-preview');
+      card.removeAttribute('data-original-label');
+      return;
+    }
+    if (!card.hasAttribute('data-original-label')) {
+      card.setAttribute('data-original-label', photo.dataset.label || '');
+    }
+    photo.dataset.label = finalData.label || '';
+    card.classList.add('plan-card--final-preview');
+    hoverBubble?.show?.(card, { ...finalData, artwork });
+  };
+
+  const resetFinalPreview = (card) => {
+    if (!card) { return; }
+    const photo = card.querySelector('.plan-card__photo');
+    if (photo && card.hasAttribute('data-original-label')) {
+      photo.dataset.label = card.getAttribute('data-original-label') || '';
+    }
+    card.removeAttribute('data-original-label');
+    if (!card.matches(':hover') && !card.matches(':focus-within')) {
+      hoverBubble?.hide?.();
+    }
+    card.classList.remove('plan-card--final-preview');
+  };
+
+  baseCards.forEach((card) => {
+    card.addEventListener('mouseenter', () => revealFinalPreview(card));
+    card.addEventListener('focusin', () => revealFinalPreview(card));
+    card.addEventListener('mouseleave', () => resetFinalPreview(card));
+    card.addEventListener('focusout', () => resetFinalPreview(card));
+  });
+
+  planMap?.addEventListener('mouseleave', () => hoverBubble?.hide?.());
+
+
+
+
+
+
+
   floorSections.forEach((section, idx) => {
     if (idx === 0) {
       section.classList.add('is-active');
@@ -657,9 +790,14 @@ document.addEventListener('keydown', (ev) => {
       const cardData = data.cards[idx];
       if (!cardData) {
         card.setAttribute('hidden', 'true');
+        card.classList.remove('plan-card--final-preview');
+        card.removeAttribute('data-original-label');
+        card.dataset.artwork = '';
         return;
       }
 
+      card.classList.remove('plan-card--final-preview');
+      card.removeAttribute('data-original-label');
       card.removeAttribute('hidden');
       card.dataset.artwork = cardData.artwork || '';
       card.dataset.floor = data.floor || '';
@@ -674,6 +812,8 @@ document.addEventListener('keydown', (ev) => {
         nameNode.textContent = cardData.name || '';
       }
     });
+    hoverBubble?.hide?.();
+
   };
 
   const setActiveFloor = (floorVal) => {
