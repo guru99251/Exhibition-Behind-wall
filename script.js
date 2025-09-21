@@ -2564,11 +2564,3 @@ function hydratePoster(img, lqipSrc = DEFAULT_LQIP) {
 
 })();
 
-
-
-
-
-
-
-
-
