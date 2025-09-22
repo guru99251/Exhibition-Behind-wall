@@ -2081,45 +2081,64 @@ function hydratePoster(img, lqipSrc = DEFAULT_LQIP) {
 
 /* ===== 02-comment: realtime chat, composer, typing mini ===== */
 (function(){
-  const root    = document.querySelector('[data-comment-columns]');
+  const root    = document.querySelector('[data-comment-root]');
   const stream  = root?.querySelector('[data-livechat-stream]');
   const openBtn = root?.querySelector('[data-open-composer]');
   const modal   = root?.querySelector('[data-composer]');
   const closeEls= root?.querySelectorAll('[data-close-composer]');
   const form    = root?.querySelector('[data-composer-form]');
+
   const selCode = form?.querySelector('.select-code');
   const selZone = form?.querySelector('.select-zone');
   const messageInput = form?.querySelector('.message-input');
+  // 02-comment: 필터/정렬 컨트롤 참조 및 옵션 주입
+  const filterZoneSel = root.querySelector('[data-filter-zone]');
+  const filterCodeSel = root.querySelector('[data-filter-code]');
+  const sortSelect    = root.querySelector('[data-sort-select]');
 
   if (!root || !stream || !form) { return; }
 
-  const ARTWORK_CODES = [
-    ...Array.from({ length: 11 }, (_, i) => `C-${101 + i}`), // C-101 ~ C-111
-    ...Array.from({ length: 5 }, (_, i) => `E-${112 + i}`),  // E-112 ~ E-116
-    ...Array.from({ length: 9 }, (_, i) => `F-${117 + i}`),  // F-117 ~ F-125
-  ];
+  // [02-comment] zone→code 매핑 + 코드 셀렉트 동작 (기존 ARTWORK_CODES 주입 로직 대체)
+  const ARTWORK_BY_ZONE = Object.freeze({
+    C: Array.from({ length: 11 }, (_, i) => `C-${101 + i}`), // C-101 ~ C-111
+    E: Array.from({ length: 5  }, (_, i) => `E-${112 + i}`), // E-112 ~ E-116
+    F: Array.from({ length: 9  }, (_, i) => `F-${117 + i}`), // F-117 ~ F-125
+  });
+  // aside 필터 등 기존 코드에서 쓰는 상수 호환
+  const ARTWORK_CODES = [...ARTWORK_BY_ZONE.C, ...ARTWORK_BY_ZONE.E, ...ARTWORK_BY_ZONE.F];
+
+  // composer: 구역 선택에 따라 '작품코드' 옵션 갱신
+  function setComposerCodeOptions(zoneValue) {
+    if (!selCode) return;
+    const zone = (zoneValue || '').toUpperCase();
+    const opts = ['<option value="">(선택 안 함)</option>'];
+    if (ARTWORK_BY_ZONE[zone]) {
+      opts.push(ARTWORK_BY_ZONE[zone].map(c => `<option>${c}</option>`).join(''));
+    }
+    selCode.innerHTML = opts.join('');
+  }
+  // 초기화 & 연동
+  setComposerCodeOptions(selZone?.value || '');
+  selZone?.addEventListener('change', () => {
+    setComposerCodeOptions(selZone.value); // 4,5번 요구사항
+    selCode.value = ''; // "(선택 안 함)"로 자동 설정
+  });
+  // 코드 선택 시 구역 자동 동기화
+  selCode?.addEventListener('change', () => {
+    const m = (selCode.value || '').match(/^([A-I])/i);
+    if (m && selZone) selZone.value = m[1].toUpperCase();
+  });
 
   selCode?.insertAdjacentHTML(
     'beforeend',
     ARTWORK_CODES.map((code) => `<option>${code}</option>`).join('')
   );
 
-  // 02-comment: 필터/정렬 컨트롤 참조 및 옵션 주입
-  const filterZoneSel = root.querySelector('[data-filter-zone]');
-  const filterCodeSel = root.querySelector('[data-filter-code]');
-  const sortSelect    = root.querySelector('[data-sort-select]');
-
   filterCodeSel?.insertAdjacentHTML(
     'beforeend',
     ARTWORK_CODES.map((code) => `<option>${code}</option>`).join('')
   );
 
-  // 작성 폼: 작품 코드 선택 시 구역 자동 선택
-  selCode?.addEventListener('change', () => {
-    const m = (selCode.value || '').match(/^([A-I])/i);
-    if (m && selZone) { selZone.value = m[1].toUpperCase(); }
-  });
-  
   // 02-comment: 필터/정렬 로직
   function applyFiltersAndSort() {
     const zone = (filterZoneSel?.value || '').toUpperCase();
@@ -2160,14 +2179,57 @@ function hydratePoster(img, lqipSrc = DEFAULT_LQIP) {
     visibleRows.concat(hiddenRows).forEach(r => stream.appendChild(r));
   }
 
-  // 필터 이벤트: 코드 선택 시 구역 자동 동기화 + 재적용
-  filterCodeSel?.addEventListener('change', () => {
-    const m = (filterCodeSel.value || '').match(/^([A-I])/i);
-    if (m && filterZoneSel) { filterZoneSel.value = m[1].toUpperCase(); }
+  // 필터링(버튼 기반 정렬)
+  const sortGroup = root.querySelector('[data-sort-group]');
+  let currentSort = 'latest';
+
+  function applyFiltersAndSort() {
+    const zone = (filterZoneSel?.value || '').toUpperCase();
+    const code = filterCodeSel?.value || '';
+    const rows = Array.from(stream.children);
+
+    rows.forEach(row => {
+      const rowZone = (row.dataset.zone || '').toUpperCase();
+      const rowCode = (row.dataset.code || '');
+      let visible = true;
+      if (zone && zone !== 'ALL') visible = visible && rowZone === zone;
+      if (code) visible = visible && rowCode === code;
+      row.style.display = visible ? '' : 'none';
+    });
+
+    const order = currentSort; // <-- select 값 대신 버튼 상태 사용
+    const visibleRows = rows.filter(r => r.style.display !== 'none');
+    visibleRows.sort((a,b) => {
+      if (order === 'likes') {
+        const la = parseInt(a.querySelector('.chat-like__count')?.textContent || '0', 10);
+        const lb = parseInt(b.querySelector('.chat-like__count')?.textContent || '0', 10);
+        return lb - la;
+      }
+      if (order === 'oldest') return (Number(a.dataset.ts)||0) - (Number(b.dataset.ts)||0);
+      if (order === 'length') {
+        const la = (a.querySelector('.chat-row__message')?.textContent || '').length;
+        const lb = (b.querySelector('.chat-row__message')?.textContent || '').length;
+        return lb - la;
+      }
+      return (Number(b.dataset.ts)||0) - (Number(a.dataset.ts)||0); // latest
+    });
+
+    const hiddenRows = rows.filter(r => r.style.display === 'none');
+    stream.innerHTML = '';
+    visibleRows.concat(hiddenRows).forEach(r => stream.appendChild(r));
+  }
+
+  // 필터 버튼 클릭 → 활성화 토글 + 즉시 정렬
+  sortGroup?.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-sort]');
+    if (!btn) return;
+    currentSort = btn.dataset.sort || 'latest';
+    sortGroup.querySelectorAll('[data-sort]').forEach(b => b.classList.toggle('is-active', b === btn));
     applyFiltersAndSort();
   });
-  filterZoneSel?.addEventListener('change', applyFiltersAndSort);
-  sortSelect?.addEventListener('change', applyFiltersAndSort);
+
+  // Refresh 버튼(실시간 미반영 시 수동 재정렬 기능)
+  root.querySelector('[data-sort-refresh]')?.addEventListener('click', applyFiltersAndSort);
 
 
   const typingControls = initTypingMini({
@@ -2212,24 +2274,21 @@ function hydratePoster(img, lqipSrc = DEFAULT_LQIP) {
     return zone ? String(zone).toUpperCase() : 'All';
   }
 
+  // [02-comment] renderRow: dataset 순서 오류 해결 + 이모지 배지 출력
   function renderRow(item) {
     const li = document.createElement('li');
     li.className = 'chat-row';
     li.setAttribute('role', 'article');
     li.setAttribute('aria-roledescription', 'comment');
 
-    // 필터/정렬용 데이터 속성 부여
+    const timestampSource = item.ts ?? Date.now();
+    let timestamp = new Date(timestampSource);
+    if (Number.isNaN(timestamp.getTime())) timestamp = new Date();
+
+    // !! 타임스탬프 계산 후 dataset 부여 (오류 수정)
     li.dataset.ts   = String(timestamp.getTime());
     li.dataset.zone = (item.zone || '').toString().toUpperCase();
     li.dataset.code = (item.code || '').toString();
-
-
-    const timestampSource = item.ts ?? Date.now();
-    let timestamp = new Date(timestampSource);
-    if (Number.isNaN(timestamp.getTime())) {
-      timestamp = new Date();
-    }
-    const timeLabel = timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
     const meta = document.createElement('div');
     meta.className = 'chat-row__meta';
@@ -2238,37 +2297,41 @@ function hydratePoster(img, lqipSrc = DEFAULT_LQIP) {
     tag.className = `chat-tag ${tagClass(item)}`;
     tag.textContent = tagLabel(item);
 
+    // 선택 이모지 배지
+    let emojiWrap = null;
+    if (Array.isArray(item.emojis) && item.emojis.length) {
+      emojiWrap = document.createElement('div');
+      emojiWrap.className = 'chat-emojis';
+      item.emojis.forEach((em) => {
+        const b = document.createElement('span');
+        b.className = 'chat-emoji';
+        b.textContent = em;
+        emojiWrap.appendChild(b);
+      });
+    }
+
     const track = document.createElement('div');
     track.className = 'chat-row__track';
 
     const timeEl = document.createElement('time');
     timeEl.className = 'chat-time';
-    try {
-      timeEl.dateTime = timestamp.toISOString();
-    } catch (err) {
-      timeEl.dateTime = new Date().toISOString();
-    }
-    timeEl.textContent = timeLabel;
+    try { timeEl.dateTime = timestamp.toISOString(); } catch (_) { timeEl.dateTime = new Date().toISOString(); }
+    timeEl.textContent = timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
     const likeBtn = document.createElement('button');
     likeBtn.type = 'button';
     likeBtn.className = 'chat-like';
-    const initialLikes = Number.isFinite(item.likes) ? Number(item.likes) : 0;
-    likeBtn.setAttribute('aria-label', `??? ${initialLikes}?`);
-
     const likeCount = document.createElement('span');
     likeCount.className = 'chat-like__count';
-    likeCount.textContent = String(initialLikes);
+    likeCount.textContent = String(Number.isFinite(item.likes) ? Number(item.likes) : 0);
     likeBtn.appendChild(likeCount);
-
     likeBtn.addEventListener('click', () => {
       const nextValue = parseInt(likeCount.textContent || '0', 10) + 1;
       likeCount.textContent = String(nextValue);
-      likeBtn.setAttribute('aria-label', `??? ${nextValue}?`);
     });
 
     track.append(timeEl, likeBtn);
-    meta.append(tag, track);
+    emojiWrap ? meta.append(tag, emojiWrap, track) : meta.append(tag, track);
 
     const message = document.createElement('p');
     message.className = 'chat-row__message';
@@ -2633,11 +2696,42 @@ function hydratePoster(img, lqipSrc = DEFAULT_LQIP) {
     }, 2500);
   }
 
+  // [02-comment] 퀵픽(이모지/자동문구) 동작
+  const selectedEmojis = new Set();
+
+  form?.addEventListener('click', (e) => {
+    const t = e.target;
+    if (!(t instanceof HTMLElement)) return;
+
+    // 이모지: 선택/해제 토글(보내기 시 배지로 반영)
+    if (t.classList.contains('emoji')) {
+      const em = (t.textContent || '').trim();
+      if (!em) return;
+      if (selectedEmojis.has(em)) { selectedEmojis.delete(em); t.classList.remove('is-selected'); }
+      else { selectedEmojis.add(em); t.classList.add('is-selected'); }
+      return;
+    }
+
+    // 자동문구: 커서 위치에 바로 삽입
+    if (t.classList.contains('phrase')) {
+      const phrase = (t.textContent || '').trim();
+      if (!phrase || !messageInput) return;
+      const el = messageInput;
+      const start = el.selectionStart ?? el.value.length;
+      const end   = el.selectionEnd ?? el.value.length;
+      const joiner = (start > 0 && !/\s$/.test(el.value.slice(0, start))) ? ' ' : '';
+      el.setRangeText(joiner + phrase, start, end, 'end');
+      el.dispatchEvent(new Event('input', { bubbles: true })); // 타이핑 미니뷰 동기화
+      el.focus();
+    }
+  });
+
+  // [02-comment] 전송: 이모지 포함, 초기화 보강
   form.addEventListener('submit', (e) => {
     e.preventDefault();
     const fd = new FormData(form);
     const msg = (fd.get('message') || '').toString().trim();
-    if (!msg) { return; }
+    if (!msg) return;
 
     const payload = {
       id: crypto.randomUUID(),
@@ -2645,16 +2739,20 @@ function hydratePoster(img, lqipSrc = DEFAULT_LQIP) {
       ts: Date.now(),
       zone: (fd.get('zone') || '').toString().trim().toUpperCase(),
       code: (fd.get('artworkCode') || '').toString().trim(),
+      emojis: Array.from(selectedEmojis),
       likes: 0
     };
     prependRow(payload);
 
-    try {
-      if (ws?.readyState === 1) { ws.send(JSON.stringify(payload)); }
-    } catch (_) {}
+    try { if (ws?.readyState === 1) ws.send(JSON.stringify(payload)); } catch (_) {}
+
     closeModal();
     form.reset();
+    selectedEmojis.clear();
+    form.querySelectorAll('.emoji.is-selected').forEach(btn => btn.classList.remove('is-selected'));
   });
 
+
 })();
+
 

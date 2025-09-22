@@ -23,6 +23,7 @@
     <!-- <div id="mosaic"></div>
     <div class="page-backdrop" aria-hidden="true"></div> -->
 
+    <!-- main contents -->
     <main class="page-main comment-main" data-comment-root>
         <header class="comment-header">
             <div class="comment-header__title">
@@ -36,33 +37,32 @@
         </header>
 
         <section class="comment-columns" data-comment-columns>
-        <!-- LEFT: Live chat main pane -->
-        <div class="livechat-pane" data-livechat>
+            <!-- LEFT column: Live chat main pane -->
             <header class="livechat-head">
-            <h2>전체 게시판</h2>
-            <p>참여자와 스태프릃 향한 응원메시지 남겨주시면 아주 큰 힘이 됩니다!</p>
+                <h2>전체 게시판</h2>
+                <div class="livechat-head__row">
+                    <p>참여자와 스태프를 향한 응원메시지 남겨주시면 아주 큰 힘이 됩니다!</p>
+                    <div class="sort-control" data-sort-group>
+                        <span class="label">정렬</span>
+                        <!-- 정렬 셀렉터 -->
+                        <div class="sort-buttons">
+                            <button type="button" class="btn sort is-active" data-sort="latest">최신</button>
+                            <button type="button" class="btn sort" data-sort="likes">좋아요</button>
+                            <button type="button" class="btn sort" data-sort="oldest">오래된</button>
+                            <button type="button" class="btn sort" data-sort="length">긴 글</button>
+                            <button type="button" class="btn ghost refresh" data-sort-refresh aria-label="정렬 새로고침">⟳</button>
+                        </div>
+                    </div>
+                </div>
             </header>
 
-            <ol class="livechat-stream" data-livechat-stream role="feed" aria-live="polite"></ol>
-            <!-- 02-comment.html — .livechat-head 내부에 정렬 셀렉터 추가 -->
-            <div class="sort-control">
-            <label class="field">
-                <span class="label">정렬</span>
-                <select class="select" data-sort-select>
-                <option value="latest">최신순</option>
-                <option value="likes">좋아요순</option>
-                <option value="oldest">오래된 순</option>
-                <option value="length">긴 글 순</option>
-                </select>
-            </label>
+                <!-- 채팅 내역 -->
+                <ol class="livechat-stream" data-livechat-stream role="feed" aria-live="polite"></ol>
             </div>
-
-        </div>
-
-        <!-- RIGHT: Narrow aside (QR + compose trigger) -->
-        <aside class="comment-aside" data-comment-aside>
-            <!-- 02-comment.html — .comment-aside 최상단(헤더 위) 필터 행 추가 -->
-            <div class="filters-row" data-filters>
+        </section>
+        <!-- RIGHT column: Narrow aside (QR + compose trigger) -->
+        <!-- 필터링 공간 -->
+        <div class="filters-row" data-filters>
             <label class="field">
                 <span class="label">구역</span>
                 <select class="select" data-filter-zone>
@@ -78,21 +78,24 @@
                 <option value="">(선택 안 함)</option>
                 </select>
             </label>
-            </div>
-
+        </div>
+        
+        <!-- 사용자 참여 유도 박스 -->
+        <aside class="comment-aside" data-comment-aside>
             <header class="comment-aside__head">
                 나도 한마디 ~ !
             </header>
+            <!-- 참여 QR코드 -->
             <div class="qr-card">
-            <figure class="qr-figure">
-                <!-- 전시 참여용 QR 이미지 경로로 교체 -->
-                <img src="assets/qr-join-chat.png" alt="스캔하고 참여하기" />
-                <figcaption>참여 QR</figcaption>
-            </figure>
+                <figure class="qr-figure">
+                    <!-- 전시 참여용 QR 이미지 경로로 교체 -->
+                    <img src="assets/qr-join-chat.png" alt="스캔하고 참여하기" />
+                    <figcaption>참여 QR</figcaption>
+                </figure>
             </div>
-
+            <!-- 참여 버튼 -->
             <button type="button" class="open-composer" data-open-composer>
-            > 응원 남기기
+                > 응원 남기기
             </button>
         </aside>
 
@@ -127,15 +130,18 @@
                     <button type="button" class="emoji">🙌</button>
                     </div>
                     <div class="phrase-row" role="group" aria-label="지정 멘트">
-                    <button type="button" class="phrase">Awesome!</button>
-                    <button type="button" class="phrase">So immersive</button>
-                    <button type="button" class="phrase">Love the motion</button>
+                    <button type="button" class="phrase">정말 멋있어요!</button>
+                    <button type="button" class="phrase">잘 보고 갑니다!</button>
+                    <button type="button" class="phrase">디콘 최고!</button>
+                    <button type="button" class="phrase">내년이 기대되네요!</button>
+                    <button type="button" class="phrase">❤</button>
+                    <button type="button" class="phrase">!!!!!!!!!!!!!!!!!</button>
                     </div>
                 </div>
 
                 <div class="meta-selects">
                     <label class="field">
-                    <span class="label">전시 작품(고유코드)</span>
+                    <span class="label">전시 작품 (참여자 지정)</span>
                     <select name="artworkCode" class="select select-code">
                         <option value="">(선택 안 함)</option>
                         <!-- 고유코드 목록을 서버/JS에서 주입 -->
@@ -161,7 +167,7 @@
             </form>
             </div>
         </div>
-        </section>
+
     </main>
 
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
