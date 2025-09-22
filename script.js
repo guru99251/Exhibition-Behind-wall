@@ -1149,6 +1149,15 @@ document.addEventListener('keydown', (ev) => {
   handle.addEventListener('click', toggle);
   handle.addEventListener('keydown', toggle);
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setOpen(false); });
+
+  form?.querySelectorAll(".emoji, .phrase").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      if (!messageInput) return;
+      messageInput.value = (messageInput.value || "") + (btn.textContent || "");
+      typingControls?.syncFromInput();
+      messageInput.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+  });
 })();
 
 /* === Comment page utilities === */
@@ -2084,11 +2093,82 @@ function hydratePoster(img, lqipSrc = DEFAULT_LQIP) {
 
   if (!root || !stream || !form) { return; }
 
-  const ARTWORK_CODES = ["A-101","A-102","B-201","C-301","I-901","Z-777"];
+  const ARTWORK_CODES = [
+    ...Array.from({ length: 11 }, (_, i) => `C-${101 + i}`), // C-101 ~ C-111
+    ...Array.from({ length: 5 }, (_, i) => `E-${112 + i}`),  // E-112 ~ E-116
+    ...Array.from({ length: 9 }, (_, i) => `F-${117 + i}`),  // F-117 ~ F-125
+  ];
+
   selCode?.insertAdjacentHTML(
     'beforeend',
     ARTWORK_CODES.map((code) => `<option>${code}</option>`).join('')
   );
+
+  // 02-comment: 필터/정렬 컨트롤 참조 및 옵션 주입
+  const filterZoneSel = root.querySelector('[data-filter-zone]');
+  const filterCodeSel = root.querySelector('[data-filter-code]');
+  const sortSelect    = root.querySelector('[data-sort-select]');
+
+  filterCodeSel?.insertAdjacentHTML(
+    'beforeend',
+    ARTWORK_CODES.map((code) => `<option>${code}</option>`).join('')
+  );
+
+  // 작성 폼: 작품 코드 선택 시 구역 자동 선택
+  selCode?.addEventListener('change', () => {
+    const m = (selCode.value || '').match(/^([A-I])/i);
+    if (m && selZone) { selZone.value = m[1].toUpperCase(); }
+  });
+  
+  // 02-comment: 필터/정렬 로직
+  function applyFiltersAndSort() {
+    const zone = (filterZoneSel?.value || '').toUpperCase();
+    const code = filterCodeSel?.value || '';
+
+    const rows = Array.from(stream.children);
+    rows.forEach(row => {
+      const rowZone = (row.dataset.zone || '').toUpperCase();
+      const rowCode = (row.dataset.code || '');
+      let visible = true;
+      if (zone && zone !== 'ALL') visible = visible && rowZone === zone;
+      if (code) visible = visible && rowCode === code;
+      row.style.display = visible ? '' : 'none';
+    });
+
+    const order = sortSelect?.value || 'latest';
+    const visibleRows = rows.filter(r => r.style.display !== 'none');
+    visibleRows.sort((a,b) => {
+      if (order === 'likes') {
+        const la = parseInt(a.querySelector('.chat-like__count')?.textContent || '0', 10);
+        const lb = parseInt(b.querySelector('.chat-like__count')?.textContent || '0', 10);
+        return lb - la;
+      }
+      if (order === 'oldest') {
+        return (Number(a.dataset.ts)||0) - (Number(b.dataset.ts)||0);
+      }
+      if (order === 'length') {
+        const la = (a.querySelector('.chat-row__message')?.textContent || '').length;
+        const lb = (b.querySelector('.chat-row__message')?.textContent || '').length;
+        return lb - la;
+      }
+      // latest
+      return (Number(b.dataset.ts)||0) - (Number(a.dataset.ts)||0);
+    });
+
+    const hiddenRows = rows.filter(r => r.style.display === 'none');
+    stream.innerHTML = '';
+    visibleRows.concat(hiddenRows).forEach(r => stream.appendChild(r));
+  }
+
+  // 필터 이벤트: 코드 선택 시 구역 자동 동기화 + 재적용
+  filterCodeSel?.addEventListener('change', () => {
+    const m = (filterCodeSel.value || '').match(/^([A-I])/i);
+    if (m && filterZoneSel) { filterZoneSel.value = m[1].toUpperCase(); }
+    applyFiltersAndSort();
+  });
+  filterZoneSel?.addEventListener('change', applyFiltersAndSort);
+  sortSelect?.addEventListener('change', applyFiltersAndSort);
+
 
   const typingControls = initTypingMini({
     demo: root.querySelector('[data-typing-demo]'),
@@ -2137,6 +2217,12 @@ function hydratePoster(img, lqipSrc = DEFAULT_LQIP) {
     li.className = 'chat-row';
     li.setAttribute('role', 'article');
     li.setAttribute('aria-roledescription', 'comment');
+
+    // 필터/정렬용 데이터 속성 부여
+    li.dataset.ts   = String(timestamp.getTime());
+    li.dataset.zone = (item.zone || '').toString().toUpperCase();
+    li.dataset.code = (item.code || '').toString();
+
 
     const timestampSource = item.ts ?? Date.now();
     let timestamp = new Date(timestampSource);
@@ -2210,6 +2296,9 @@ function hydratePoster(img, lqipSrc = DEFAULT_LQIP) {
     if (window.gsap) {
       gsap.fromTo(row, { y: -6, autoAlpha: 0 }, { duration: 0.25, y: 0, autoAlpha: 1, ease: 'power2.out' });
     }
+    // prependRow(): 신규 행 추가 후 필터/정렬 재적용
+    applyFiltersAndSort(); 
+
   }
 
   function initTypingMini({ demo, input, form } = {}) {
@@ -2251,6 +2340,11 @@ function hydratePoster(img, lqipSrc = DEFAULT_LQIP) {
       svg.setAttribute('width', width);
       svg.setAttribute('height', height);
     }
+
+    // initTypingMini(): SVG 크기 동기화로 파티클 표시 보장
+    updateSvgBounds();
+    new ResizeObserver(updateSvgBounds).observe(demo);
+    window.addEventListener('resize', updateSvgBounds);
 
     function sharedPrefix(oldChars, newChars) {
       const limit = Math.min(oldChars.length, newChars.length);
