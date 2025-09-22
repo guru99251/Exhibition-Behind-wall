@@ -2847,3 +2847,86 @@ body.page-artworks::-webkit-scrollbar {
 .page-comment .btn.refresh {
   margin-left: 0.4rem;
 }
+
+
+/* contributors-column 개별 박스 너비/위치 지정 */
+[data-participants-grid],
+[data-staff-grid] { position: relative; }
+
+/* ───────────── 참가자 (Participants) ───────────── */
+#column-participants-2d {
+  position: absolute;
+  top: 12vh;
+  right: auto;
+  bottom: auto;
+  left: 1vw;
+  width: 220px;
+}
+
+#column-participants-3d {
+  position: absolute;
+  top: 3vh;
+  right: auto;
+  bottom: auto;
+  left: 14vw;
+  width: 220px;
+  height: 63vh;
+}
+
+#column-participants-ux-ui {
+  position: absolute;
+  top: 7vh;
+  right: auto;
+  bottom: auto;
+  left: 28vw;
+  width: 180px;
+}
+
+#column-participants-game {
+  position: absolute;
+  top: 36vh;
+  right: auto;
+  bottom: auto;
+  left: 22vw;
+  width: 360px;
+}
+
+/* ───────────── 운영진 (Staff) ───────────── */
+#column-staff-chair {
+  position: absolute;
+  top: 0vh;
+  right: auto;
+  bottom: auto;
+  left: 0vw;
+  width: 480px;
+}
+
+#column-staff-planning {
+  position: absolute;
+  top: 17vh;
+  right: auto;
+  bottom: auto;
+  left: 2vw;
+  width: 250px;
+  height: 60vh;
+}
+
+#column-staff-design {
+  position: absolute;
+  top: 4vh;
+  right: auto;
+  bottom: auto;
+  left: 17vw;
+  width: 400px;
+  height: 30vh;
+}
+
+#column-staff-operations {
+  position: absolute;
+  top: 45vh;
+  right: auto;
+  bottom: auto;
+  left: 6vw;
+  width: 1500px;
+}
+

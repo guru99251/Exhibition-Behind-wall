@@ -1645,10 +1645,10 @@ const CONTRIBUTORS_STATE = {
       ],
       Planning: [
         { name: '김채영', role: '기획 팀장' },
-        { name: '권민주', role: '포토존/이벤트' },
-        { name: '최주성', role: '전시구역' },
-        { name: '명진영', role: '미디어아트' },
-        { name: '김태윤', role: '인터랙션/비하인드월' }
+        { name: '권민주', role: '기획' },
+        { name: '최주성', role: '기획' },
+        { name: '명진영', role: '기획' },
+        { name: '김태윤', role: '기획' }
       ],
       Design: [
         { name: '권미진', role: '디자인 팀장' },
@@ -1683,6 +1683,16 @@ function initContributorsPage(container) {
   });
 }
 
+// 파트명을 id로 쓰기 위한 slugify 추가
+function slugifyId(text) {
+  return String(text || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+|\/+/g, '-')   // 공백/슬래시 -> 하이픈
+    .replace(/[^a-z0-9\-]/g, '') // 영문/숫자/하이픈만
+    .replace(/\-+/g, '-');
+}
+
 function renderParticipants(groups, container = CONTRIBUTORS_STATE.root) {
   if (!container) { return; }
   const grid = container.querySelector('[data-participants-grid]');
@@ -1692,6 +1702,7 @@ function renderParticipants(groups, container = CONTRIBUTORS_STATE.root) {
     const column = document.createElement('div');
     column.className = 'contributors-column';
     column.dataset.discipline = discipline;
+    column.id = `column-participants-${slugifyId(discipline)}`;
     const title = document.createElement('div');
     title.className = 'contributors-column__title';
     title.textContent = discipline;
@@ -1715,6 +1726,7 @@ function renderStaff(groups, container = CONTRIBUTORS_STATE.root) {
     const column = document.createElement('div');
     column.className = 'contributors-column';
     column.dataset.team = team;
+    column.id = `column-staff-${slugifyId(team)}`; // ← 추가
     const title = document.createElement('div');
     title.className = 'contributors-column__title';
     title.textContent = team;
@@ -2078,73 +2090,74 @@ function hydratePoster(img, lqipSrc = DEFAULT_LQIP) {
   }
 })();
 
-
-/* ===== 02-comment: realtime chat, composer, typing mini ===== */
+// ====수정된 부분====
 (function(){
   const root    = document.querySelector('[data-comment-root]');
-  const stream  = root?.querySelector('[data-livechat-stream]');
-  const openBtn = root?.querySelector('[data-open-composer]');
-  const modal   = root?.querySelector('[data-composer]');
-  const closeEls= root?.querySelectorAll('[data-close-composer]');
-  const form    = root?.querySelector('[data-composer-form]');
+  if (!root) return;
 
+  const stream  = root.querySelector('[data-livechat-stream]');
+  const openBtn = root.querySelector('[data-open-composer]');
+  const modal   = root.querySelector('[data-composer]');
+  const closeEls= root.querySelectorAll('[data-close-composer]');
+  const form    = root.querySelector('[data-composer-form]');
   const selCode = form?.querySelector('.select-code');
   const selZone = form?.querySelector('.select-zone');
   const messageInput = form?.querySelector('.message-input');
-  // 02-comment: 필터/정렬 컨트롤 참조 및 옵션 주입
+
+  // 필터/정렬 UI
   const filterZoneSel = root.querySelector('[data-filter-zone]');
   const filterCodeSel = root.querySelector('[data-filter-code]');
-  const sortSelect    = root.querySelector('[data-sort-select]');
+  const sortGroup     = root.querySelector('[data-sort-group]');
 
-  if (!root || !stream || !form) { return; }
+  if (!stream || !form) return;
 
-  // [02-comment] zone→code 매핑 + 코드 셀렉트 동작 (기존 ARTWORK_CODES 주입 로직 대체)
+  // 요구 사양: C:101~111, E:112~116, F:117~125
   const ARTWORK_BY_ZONE = Object.freeze({
-    C: Array.from({ length: 11 }, (_, i) => `C-${101 + i}`), // C-101 ~ C-111
-    E: Array.from({ length: 5  }, (_, i) => `E-${112 + i}`), // E-112 ~ E-116
-    F: Array.from({ length: 9  }, (_, i) => `F-${117 + i}`), // F-117 ~ F-125
+    C: Array.from({length:11}, (_,i)=>`C-${101+i}`),
+    E: Array.from({length:5 }, (_,i)=>`E-${112+i}`),
+    F: Array.from({length:9 }, (_,i)=>`F-${117+i}`),
   });
-  // aside 필터 등 기존 코드에서 쓰는 상수 호환
-  const ARTWORK_CODES = [...ARTWORK_BY_ZONE.C, ...ARTWORK_BY_ZONE.E, ...ARTWORK_BY_ZONE.F];
 
-  // composer: 구역 선택에 따라 '작품코드' 옵션 갱신
+  const ALL_CODES = Object.values(ARTWORK_BY_ZONE).flat();  // ['C-101',..., 'F-125']
+
+  // ----- 필터 코드 옵션 -----
+  function setFilterCodeOptions(zoneValue) {
+    if (!filterCodeSel) return;
+    const zone = (zoneValue || '').toUpperCase();
+    const opts = ['<option value="">(선택 안 함)</option>'];
+    if (ARTWORK_BY_ZONE[zone]) {
+      opts.push(ARTWORK_BY_ZONE[zone].map(c=>`<option>${c}</option>`).join(''));
+    } else {
+      // 👇 전체 목록은 ALL_CODES 사용
+      opts.push(ALL_CODES.map(c=>`<option>${c}</option>`).join(''));
+    }
+    filterCodeSel.innerHTML = opts.join('');
+  }
+  setFilterCodeOptions(filterZoneSel?.value || '');
+
+  // ----- composer 코드 옵션 -----
   function setComposerCodeOptions(zoneValue) {
     if (!selCode) return;
     const zone = (zoneValue || '').toUpperCase();
     const opts = ['<option value="">(선택 안 함)</option>'];
     if (ARTWORK_BY_ZONE[zone]) {
-      opts.push(ARTWORK_BY_ZONE[zone].map(c => `<option>${c}</option>`).join(''));
+      opts.push(ARTWORK_BY_ZONE[zone].map(c=>`<option>${c}</option>`).join(''));
+    } else {
+      // 👇 구역 미선택 시 전체 코드 보여주기
+      opts.push(ALL_CODES.map(c=>`<option>${c}</option>`).join(''));
     }
     selCode.innerHTML = opts.join('');
   }
-  // 초기화 & 연동
   setComposerCodeOptions(selZone?.value || '');
-  selZone?.addEventListener('change', () => {
-    setComposerCodeOptions(selZone.value); // 4,5번 요구사항
-    selCode.value = ''; // "(선택 안 함)"로 자동 설정
-  });
-  // 코드 선택 시 구역 자동 동기화
-  selCode?.addEventListener('change', () => {
-    const m = (selCode.value || '').match(/^([A-I])/i);
-    if (m && selZone) selZone.value = m[1].toUpperCase();
-  });
 
-  selCode?.insertAdjacentHTML(
-    'beforeend',
-    ARTWORK_CODES.map((code) => `<option>${code}</option>`).join('')
-  );
-
-  filterCodeSel?.insertAdjacentHTML(
-    'beforeend',
-    ARTWORK_CODES.map((code) => `<option>${code}</option>`).join('')
-  );
-
-  // 02-comment: 필터/정렬 로직
+  // ----- 필터 + 정렬 -----
+  let currentSort = 'latest';
   function applyFiltersAndSort() {
     const zone = (filterZoneSel?.value || '').toUpperCase();
     const code = filterCodeSel?.value || '';
-
     const rows = Array.from(stream.children);
+
+    // 필터
     rows.forEach(row => {
       const rowZone = (row.dataset.zone || '').toUpperCase();
       const rowCode = (row.dataset.code || '');
@@ -2154,18 +2167,16 @@ function hydratePoster(img, lqipSrc = DEFAULT_LQIP) {
       row.style.display = visible ? '' : 'none';
     });
 
-    const order = sortSelect?.value || 'latest';
+    // 정렬(버튼만 사용)
     const visibleRows = rows.filter(r => r.style.display !== 'none');
     visibleRows.sort((a,b) => {
-      if (order === 'likes') {
+      if (currentSort === 'likes') {
         const la = parseInt(a.querySelector('.chat-like__count')?.textContent || '0', 10);
         const lb = parseInt(b.querySelector('.chat-like__count')?.textContent || '0', 10);
         return lb - la;
       }
-      if (order === 'oldest') {
-        return (Number(a.dataset.ts)||0) - (Number(b.dataset.ts)||0);
-      }
-      if (order === 'length') {
+      if (currentSort === 'oldest') return (Number(a.dataset.ts)||0) - (Number(b.dataset.ts)||0);
+      if (currentSort === 'length') {
         const la = (a.querySelector('.chat-row__message')?.textContent || '').length;
         const lb = (b.querySelector('.chat-row__message')?.textContent || '').length;
         return lb - la;
@@ -2174,63 +2185,40 @@ function hydratePoster(img, lqipSrc = DEFAULT_LQIP) {
       return (Number(b.dataset.ts)||0) - (Number(a.dataset.ts)||0);
     });
 
+    // 붙여넣기(숨김 항목은 뒤로)
     const hiddenRows = rows.filter(r => r.style.display === 'none');
     stream.innerHTML = '';
     visibleRows.concat(hiddenRows).forEach(r => stream.appendChild(r));
   }
 
-  // 필터링(버튼 기반 정렬)
-  const sortGroup = root.querySelector('[data-sort-group]');
-  let currentSort = 'latest';
+  // 이벤트 바인딩
+  filterZoneSel?.addEventListener('change', () => {
+    setFilterCodeOptions(filterZoneSel.value);
+    applyFiltersAndSort();
+  });
+  
+  // 코드 선택 → 구역 자동 변경 + 옵션 재주입 + 필터/정렬 재적용
+  filterCodeSel?.addEventListener('change', () => {
+    const v = filterCodeSel.value || '';
+    const m = v.match(/^([A-I])-/i);     // 👈 selCode가 아니라 v를 사용
+    if (m && filterZoneSel) {
+      const z = m[1].toUpperCase();
+      filterZoneSel.value = z;
+      setFilterCodeOptions(z);           // 해당 구역 코드로 옵션 재구성
+      filterCodeSel.value = v;           // 재구성 후에도 선택 유지
+    }
+    applyFiltersAndSort();
+  });
 
-  function applyFiltersAndSort() {
-    const zone = (filterZoneSel?.value || '').toUpperCase();
-    const code = filterCodeSel?.value || '';
-    const rows = Array.from(stream.children);
-
-    rows.forEach(row => {
-      const rowZone = (row.dataset.zone || '').toUpperCase();
-      const rowCode = (row.dataset.code || '');
-      let visible = true;
-      if (zone && zone !== 'ALL') visible = visible && rowZone === zone;
-      if (code) visible = visible && rowCode === code;
-      row.style.display = visible ? '' : 'none';
-    });
-
-    const order = currentSort; // <-- select 값 대신 버튼 상태 사용
-    const visibleRows = rows.filter(r => r.style.display !== 'none');
-    visibleRows.sort((a,b) => {
-      if (order === 'likes') {
-        const la = parseInt(a.querySelector('.chat-like__count')?.textContent || '0', 10);
-        const lb = parseInt(b.querySelector('.chat-like__count')?.textContent || '0', 10);
-        return lb - la;
-      }
-      if (order === 'oldest') return (Number(a.dataset.ts)||0) - (Number(b.dataset.ts)||0);
-      if (order === 'length') {
-        const la = (a.querySelector('.chat-row__message')?.textContent || '').length;
-        const lb = (b.querySelector('.chat-row__message')?.textContent || '').length;
-        return lb - la;
-      }
-      return (Number(b.dataset.ts)||0) - (Number(a.dataset.ts)||0); // latest
-    });
-
-    const hiddenRows = rows.filter(r => r.style.display === 'none');
-    stream.innerHTML = '';
-    visibleRows.concat(hiddenRows).forEach(r => stream.appendChild(r));
-  }
-
-  // 필터 버튼 클릭 → 활성화 토글 + 즉시 정렬
   sortGroup?.addEventListener('click', (e) => {
     const btn = e.target.closest('[data-sort]');
     if (!btn) return;
     currentSort = btn.dataset.sort || 'latest';
-    sortGroup.querySelectorAll('[data-sort]').forEach(b => b.classList.toggle('is-active', b === btn));
+    sortGroup.querySelectorAll('[data-sort]')
+      .forEach(b => b.classList.toggle('is-active', b === btn));
     applyFiltersAndSort();
   });
-
-  // Refresh 버튼(실시간 미반영 시 수동 재정렬 기능)
   root.querySelector('[data-sort-refresh]')?.addEventListener('click', applyFiltersAndSort);
-
 
   const typingControls = initTypingMini({
     demo: root.querySelector('[data-typing-demo]'),
@@ -2238,22 +2226,41 @@ function hydratePoster(img, lqipSrc = DEFAULT_LQIP) {
     form
   });
 
-  const openModal = () => {
-    modal?.setAttribute('aria-hidden', 'false');
-    typingControls?.syncFromInput();
-    typingControls?.ensurePrompt();
-    requestAnimationFrame(() => messageInput?.focus({ preventScroll: true }));
-  };
-
-  const closeModal = () => {
-    modal?.setAttribute('aria-hidden', 'true');
-    messageInput?.blur();
-    if (!messageInput?.value.length) {
-      typingControls?.ensurePrompt();
-    } else {
-      typingControls?.stopPrompt();
+  // 모달: 필터 상태 프리필 후 열기
+  function openModal() {
+    modal?.setAttribute('aria-hidden','false');
+    if (selZone) {
+      selZone.value = (filterZoneSel?.value || '').toUpperCase();
+      setComposerCodeOptions(selZone.value);
     }
-  };
+    if (selCode && filterCodeSel?.value) selCode.value = filterCodeSel.value;
+    requestAnimationFrame(()=> messageInput?.focus({ preventScroll:true }));
+  }
+  function closeModal(){ modal?.setAttribute('aria-hidden','true'); }
+
+  // 모달: 코드 선택 → 구역 자동 반영
+  selCode?.addEventListener('change', () => {
+    const v = selCode.value || '';
+    const m = v.match(/^([A-I])-/i);
+    if (m && selZone) {
+      const z = m[1].toUpperCase();
+      selZone.value = z;
+      setComposerCodeOptions(z);  // 해당 구역 코드들로 목록 재구성
+      selCode.value = v;          // 재구성 후에도 선택 유지
+    }
+  });
+
+  // 모달: 구역 선택 → 코드 옵션 재주입
+  selZone?.addEventListener('change', () => {
+    setComposerCodeOptions(selZone.value);
+  });
+
+
+  openBtn?.addEventListener('click', openModal);
+  closeEls.forEach(el => el.addEventListener('click', closeModal));
+  document.addEventListener('keydown', (e)=> {
+    if (e.key === 'Escape' && modal?.getAttribute('aria-hidden') === 'false') closeModal();
+  });
 
   openBtn?.addEventListener('click', openModal);
   closeEls.forEach((el) => el.addEventListener('click', closeModal));
