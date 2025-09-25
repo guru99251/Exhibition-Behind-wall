@@ -2991,7 +2991,7 @@ function hydratePoster(imgEl, fullSrc) {
   });
 
   // [02-comment] 전송: 이모지 포함, 초기화 보강
-  form.addEventListener('submit', (e) => {
+  form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const fd = new FormData(form);
     const msg = (fd.get('message') || '').toString().trim();
@@ -3007,6 +3007,43 @@ function hydratePoster(imgEl, fullSrc) {
       likes: 0
     };
     prependRow(payload);
+
+    // [ADD] Supabase RPC로 DB에 저장 (익명)
+    try {
+      const rootEl = document.querySelector('[data-comment-root]');
+      const hasSupabase = !!(rootEl?.dataset.supabaseUrl && rootEl?.dataset.supabaseKey && window.supabase?.createClient);
+
+      if (hasSupabase && COMMENT_STATE?.connection?.supabase) {
+        const sb = COMMENT_STATE.connection.supabase;
+
+        // zones: 단일 선택이면 배열로, 미선택이면 ['ALL']
+        const z = payload.zone && /^[A-Z]$/.test(payload.zone) ? [payload.zone] : ['ALL'];
+        // artwork_code: 숫자 or null
+        const art = payload.code ? Number(payload.code) : null;
+
+        const { data, error } = await sb.rpc('add_comment', {
+          p_text: payload.message,
+          p_zones: z,
+          p_artwork_code: art,
+          p_emojis: payload.emojis || []
+        });
+
+        if (error) {
+          console.error('[Supabase] add_comment error:', error);
+          // 실패 시에도 UI는 유지하되 배지로 오프라인 표시
+          updateConnectionBadge('offline');
+        } else {
+          // 성공: 서버가 생성한 공식 row가 Realtime으로 곧바로 push됨
+          // (지금은 낙관적 UI로 이미 prepend 했으므로 추가 작업 불필요)
+          updateConnectionBadge('online');
+        }
+      } else {
+        // Supabase 환경이 아니면 기존 WS 경로 시도(이미 존재)
+      }
+    } catch (e) {
+      console.error('[Supabase] add_comment exception:', e);
+    }
+
 
     try { if (ws?.readyState === 1) ws.send(JSON.stringify(payload)); } catch (_) {}
 
@@ -3190,58 +3227,6 @@ async function _aw_fetchCardsByCodes_withFallback(codes) {
     return all.filter(x => order.has(x.code)).sort((a, b) => order.get(a.code) - order.get(b.code));
   }
 }
-
-// async function initArtworksPageDB(root = document) {
-//   const pageRoot = root.querySelector('[data-artworks-root]');
-//   if (!pageRoot) return; // 다른 페이지에서는 미동작
-
-//   const grid = pageRoot.querySelector('[data-artworks-grid]');
-//   const filterBar = pageRoot.querySelector('[data-filter-bar]');
-//   if (!grid || !filterBar) return;
-
-//   // 1) 존 목록 로드 → 필터 생성
-//   let zones = [];
-//   try {
-//     zones = await _aw_fetchZones();
-//   } catch (e) {
-//     console.error('[Artworks] zones fetch failed:', e);
-//   }
-//   _aw_renderFilterBar(pageRoot, zones, {
-//     active: 'ALL',
-//     onPick: async (zone) => {
-//       try {
-//         if (zone === 'ALL') {
-//           const all = await _aw_fetchAllCards_withFallback();
-//           _aw_renderCards(grid, all);
-//         } else {
-//           const codes = await _aw_fetchCodesByZone(zone);
-//           const list = await _aw_fetchCardsByCodes_withFallback(codes);
-//           _aw_renderCards(grid, list);
-//         }
-//       } catch (e) {
-//         console.error('[Artworks] filter apply failed:', e);
-//         _aw_renderCards(grid, []);
-//       }
-//     }
-//   });
-
-//   // 2) 초기 전체 카드 로드
-//   try {
-//     const all = await _aw_fetchAllCards_withFallback();
-//     _aw_renderCards(grid, all);
-//   } catch (e) {
-//     console.error('[Artworks] initial load failed:', e);
-//     _aw_renderCards(grid, []);
-//   }
-// }
-
-// // 페이지 감지 후 자동 실행 (04-artworks.html 만)
-// (() => {
-//   const root = document.querySelector('[data-artworks-root]');
-//   if (root) { initArtworksPageDB(document); }
-// })();
-
-
 
 /* === 01-wall: hydrate existing plan-card from DB === */
 async function loadArtworksMap() {
