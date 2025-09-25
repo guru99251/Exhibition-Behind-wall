@@ -1,6 +1,18 @@
 // Execute after third-party libraries load (deferred).
 gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
 
+// === [Supabase] client init (put near the top of script.js) ===
+const SUPABASE_URL = 'https://tbegcazozckpkjtaticj.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRiZWdjYXpvemNrcGtqdGF0aWNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg1NDkyNjIsImV4cCI6MjA3NDEyNTI2Mn0.GMpSO8iBTSRM97ZMMIfqyjc2ZW_kLtQrZwduFNGtxws';
+const sb = (window.supabase)
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  : null;
+
+// 간단 헬퍼
+const q$ = (sel, root=document) => root.querySelector(sel);
+const qA$ = (sel, root=document) => [...root.querySelectorAll(sel)];
+
+
 document.addEventListener('keydown', (event) => {
   if (event.defaultPrevented) { return; }
   if (!(event.code === 'Space' || event.key === ' ' || event.key === 'Spacebar')) { return; }
@@ -2764,8 +2776,12 @@ function hydratePoster(img, lqipSrc = DEFAULT_LQIP) {
     selectedEmojis.clear();
     form.querySelectorAll('.emoji.is-selected').forEach(btn => btn.classList.remove('is-selected'));
   });
-
-
 })();
+
+
+
+
+
+/* ---DB 연결 시작--- */
 
 

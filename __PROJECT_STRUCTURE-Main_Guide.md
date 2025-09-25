@@ -11,10 +11,17 @@ Behind Wall/
 |- styles.css
 |- package.json
 |- package-lock.json
+|- .gitignore
+|- cors.json
+|- lifecycle.json
+|- lib/
+  └ - supabase.ts
+|- __DB-DEV-Plan(updated).md <!-- DB 구축 계획 파일입니다. -->
+|- _참고사항.md <!-- DB 관련 내용입니다. -->
 |- .archive elements examples/ <!-- copy 하기 위한 코드를 모아놓은 폴더입니다 -->
 |- .test/ <!-- 테스트용 폴더 입니다 -->
 |- node_modules/
-\- src/
+\- src/ <!-- 비공개 파일: GCS 버킷 연결용 -->
 ```
 
 # 전시 기획 노트
@@ -38,7 +45,8 @@ websocket 통신이 필요해.
 모든 전시 작품의 정보(작품이름, 포스터, 제작 인원, 작품 설명, 분야, 사용 프로그램)를 카드 UI로 한눈에 볼 수 있게 할꺼야. 그리드 형태로 배치해서 스크롤을 내려서 한눈에 볼 수 있게끔.
 
 
-# 02~04.html 페이지별 Task & Instruction
+<!-- 완료 사항 -->
+<!-- # 02~04.html 페이지별 Task & Instruction
 
 ---
 
@@ -128,4 +136,4 @@ websocket 통신이 필요해.
 
 
 ----
-
+ -->
