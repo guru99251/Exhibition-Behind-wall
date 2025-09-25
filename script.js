@@ -1239,6 +1239,14 @@ function initCommentPage(container) {
     ALL: container.querySelector('[data-comment-stream="ALL"]') || fallbackStream
   };
 
+  // 컴포저/버튼/폼 노드 스코프를 이 함수 안에서 정의
+  const openBtn       = container.querySelector('[data-open-composer]');
+  const modal         = container.querySelector('[data-composer]');
+  const closeEls      = container.querySelectorAll('[data-close-composer]');
+  const form          = container.querySelector('[data-composer-form]');
+  const selCode       = form?.querySelector('.select-code');
+  const selZone       = form?.querySelector('.select-zone');
+  const messageInput  = form?.querySelector('.message-input');
 
   const safe = deriveSidebarSafe();
   container.style.setProperty('--sidebar-safe', `${safe}px`);
@@ -1260,6 +1268,48 @@ function initCommentPage(container) {
   SAMPLE_COMMENTS.forEach((item) => handleIncomingComment(item));
 
   const retry = container.querySelector('[data-comment-retry]');
+
+  // [좋아요] — Supabase/WS 어떤 경로든 공통으로 동작하도록,
+  // hasSupabase 분기 'return'보다 위에서 한 번만 등록합니다.
+  const LIKE_LOCKS = new Map();
+  container.addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-like-btn]');
+    if (!btn) return;
+
+    const commentId = btn.dataset.id;
+    if (!commentId || LIKE_LOCKS.get(commentId)) return;
+    LIKE_LOCKS.set(commentId, true);
+  
+    const countEl = btn.querySelector('.chat-like__count') || btn;
+    const before = parseInt((countEl.textContent || '').replace(/[^\d]/g, ''), 10) || 0;
+  
+    // 1) 낙관적 UI
+    countEl.textContent = String(before + 1);
+  
+   // 2) DB 반영 — reactions 집계에서 '좋아요 수'는 emoji === 'like'만 집계됩니다.
+    try {
+      const client =
+        (COMMENT_STATE.connection && COMMENT_STATE.connection.supabase) || window.sb;
+      if (!client) throw new Error('Supabase client not initialized');
+  
+      const { error } = await client
+        .from('comment_reactions')
+        .insert([{ comment_id: commentId, emoji: 'like', count: 1 }]);
+  
+      if (error) {
+        // 실패 시 낙관 롤백
+        countEl.textContent = String(before);
+        console.error('[Like][INSERT ERROR]', error);
+      }
+      // 성공 시엔 리얼타임 구독 → v_comment_feed 재조회로 정확한 합계가 곧 반영됩니다.
+    } catch (err) {
+      countEl.textContent = String(before);
+      console.error('[Like][EXCEPTION]', err);
+    } finally {
+      // 짧은 잠금(연타 방지)
+      setTimeout(() => LIKE_LOCKS.delete(commentId), 300);
+    }
+  });
 
   // Supabase Realtime가 설정되어 있으면 WS 대신 Supabase를 사용
   const hasSupabase = !!(container.dataset.supabaseUrl && container.dataset.supabaseKey && window.supabase?.createClient);
@@ -1340,11 +1390,28 @@ function initCommentPage(container) {
   });
 }
 
-function handleIncomingComment(payload) {
-  const zones = mapIncomingToZone(payload);
-  const targets = Array.isArray(zones) ? zones : [zones];
+function handleIncomingComment(raw) {
+  // 1) 소스별 키를 하나로 맞춤
+  const normalized = {
+    id: raw.id,
+    message: raw.message ?? raw.text ?? '',
+    ts: raw.ts ?? (raw.timestamp ? Date.parse(raw.timestamp) : Date.now()),
+    zone: raw.zone || (Array.isArray(raw.zones) && raw.zones[0]) || 'ALL',
+    zones: raw.zones || (raw.zone ? [raw.zone] : ['ALL']),
+    code: raw.code || raw.artwork_code || raw.artwork?.code || '',
+    emojis: Array.isArray(raw.emojis) ? raw.emojis
+            : (raw.reactions?.emojis ? Object.keys(raw.reactions.emojis) : []),
+    likes: Number.isFinite(raw.likes) ? Number(raw.likes) : (Number(raw.reactions?.likes) || 0),
+    artworkPoster: raw.artworkPoster || raw.artwork?.poster || raw.artwork_poster || ''
+  };
+
+  // 2) 목적지 컬럼들(A/B/C/ALL)에 삽입 + 렌더
+  const targets = Array.isArray(normalized.zones) && normalized.zones.length
+    ? normalized.zones.map(z => String(z).toUpperCase())
+    : [ (typeof normalized.zone === 'string' ? normalized.zone.toUpperCase() : 'ALL') ];
+
   targets.forEach((zone) => {
-    const updated = upsertMessage(COMMENT_STATE.store, zone, payload);
+    const updated = upsertMessage(COMMENT_STATE.store, zone, normalized);
     renderColumn(zone, updated);
   });
 }
@@ -1356,28 +1423,21 @@ function handleIncomingComment(payload) {
 
 /* v_comment_feed 단일 row를 payload로 변환 */
 function mapFeedRowToPayload(row) {
-  // reactions: { "👏":2, "like":1, ... } 형태 → { emojis: {...}, likes: N }
-  const reactions = row?.reactions || {};
-  const { like, ...emojis } = reactions;
+  const rx = row?.reactions || {};
+  const { like, ...emojisObj } = rx;
+  const emojisArr = Object.keys(emojisObj || {});
+  // zones: ['A'] 형태 우선, 없으면 'ALL'
+  const zone = Array.isArray(row.zones) && row.zones.length ? String(row.zones[0]).toUpperCase() : 'ALL';
   return {
     id: row.id,
-    text: row.text,
-    zones: Array.isArray(row.zones) && row.zones.length ? row.zones : ['ALL'],
-    timestamp: row.created_at,
-    author: {
-      name: row.author_name || 'Anonymous',
-      department: row.author_dept || 'Visitor',
-      studentId: row.author_sid || '',
-    },
-    reactions: {
-      emojis,
-      likes: typeof like === 'number' ? like : 0,
-    },
-    artwork: {
-      code: row.artwork_code || '',
-      title: row.artwork_title || '',
-      poster: row.artwork_poster || '',
-    },
+    message: row.text || '',
+    zone,
+    zones: row.zones || [zone],     // 안전하게 둘 다 보유
+    ts: row.created_at ? new Date(row.created_at).getTime() : Date.now(),
+    code: row.artwork_code || '',
+    emojis: emojisArr,
+    likes: (typeof like === 'number' ? like : 0),
+    artworkPoster: row.artwork_poster || ''
   };
 }
 
@@ -1694,9 +1754,86 @@ function upsertMessage(store, zone, item) {
   } else {
     list.unshift(cloned);
   }
-  list.sort((a, b) => new Date(b.timestamp || Date.now()) - new Date(a.timestamp || Date.now()));
+  list.sort((a, b) => (Number(b.ts) || Date.now()) - (Number(a.ts) || Date.now()));
   store[zone] = list.slice(0, 40);
   return store[zone];
+}
+
+
+function renderRow(item) {
+  const li = document.createElement('li');
+  li.className = 'chat-row';
+  li.setAttribute('role', 'article');
+  li.setAttribute('aria-roledescription', 'comment');
+
+  // id/정렬/필터용 dataset
+  const ts = item.ts ?? Date.now();
+  const stamp = new Date(ts);
+  li.dataset.id   = item.id || '';
+  li.dataset.ts   = String(Number.isNaN(stamp.getTime()) ? Date.now() : stamp.getTime());
+  li.dataset.zone = (item.zone || '').toString().toUpperCase();
+  li.dataset.code = (item.code || '').toString();
+
+  const meta = document.createElement('div');
+  meta.className = 'chat-row__meta';
+
+  const tag = document.createElement('span');
+  tag.className = `chat-tag ${item.code ? '--code' : (item.zone ? `--zone-${String(item.zone).toUpperCase()}` : '--all')}`;
+  tag.textContent = item.code ? item.code : (item.zone ? String(item.zone).toUpperCase() : 'All');
+
+  // 이모지
+  let emojiWrap = null;
+  if (Array.isArray(item.emojis) && item.emojis.length) {
+    emojiWrap = document.createElement('div');
+    emojiWrap.className = 'chat-emojis';
+    item.emojis.forEach((em) => {
+      const b = document.createElement('span');
+      b.className = 'chat-emoji';
+      b.textContent = em;
+      emojiWrap.appendChild(b);
+    });
+  }
+
+  const track = document.createElement('div');
+  track.className = 'chat-row__track';
+
+  const timeEl = document.createElement('time');
+  timeEl.className = 'chat-time';
+  try { timeEl.dateTime = new Date(ts).toISOString(); } catch (_) { timeEl.dateTime = new Date().toISOString(); }
+  timeEl.textContent = new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  const likeBtn = document.createElement('button');
+  likeBtn.type = 'button';
+  likeBtn.className = 'chat-like';
+  likeBtn.setAttribute('data-like-btn', '');
+  likeBtn.dataset.id = item.id; // ← comments.id 와 동일 값
+
+  const likeCount = document.createElement('span');
+  likeCount.className = 'chat-like__count';
+  likeCount.textContent = String(Number.isFinite(item.likes) ? Number(item.likes) : 0);
+  likeBtn.appendChild(likeCount);
+
+  track.append(timeEl, likeBtn);
+  emojiWrap ? meta.append(tag, emojiWrap, track) : meta.append(tag, track);
+
+  const message = document.createElement('p');
+  message.className = 'chat-row__message';
+  message.textContent = (item.message ?? '').toString();
+
+  li.append(meta, message);
+
+  if (item.artworkPoster) {
+    const figure = document.createElement('figure');
+    figure.className = 'chat-row__media';
+    const img = document.createElement('img');
+    img.className = 'chat-row__media-img';
+    img.alt = '';
+    img.src = item.artworkPoster;
+    figure.appendChild(img);
+    li.appendChild(figure);
+  }
+
+  return li;
 }
 
 function renderColumn(zone, items) {
@@ -1704,7 +1841,7 @@ function renderColumn(zone, items) {
   if (!target) { return; }
   const frag = document.createDocumentFragment();
   items.forEach((item) => {
-    frag.appendChild(renderCommentCard(item));
+    frag.appendChild(renderRow(item));   // 👈 여기만 renderCommentCard → renderRow
   });
   target.innerHTML = '';
   target.appendChild(frag);
@@ -2602,85 +2739,6 @@ function hydratePoster(imgEl, fullSrc) {
     return zone ? String(zone).toUpperCase() : 'All';
   }
 
-  // [02-comment] renderRow: dataset 순서 오류 해결 + 이모지 배지 출력
-  function renderRow(item) {
-    const li = document.createElement('li');
-    li.className = 'chat-row';
-    li.setAttribute('role', 'article');
-    li.setAttribute('aria-roledescription', 'comment');
-
-    const timestampSource = item.ts ?? Date.now();
-    let timestamp = new Date(timestampSource);
-    if (Number.isNaN(timestamp.getTime())) timestamp = new Date();
-
-    // !! 타임스탬프 계산 후 dataset 부여 (오류 수정)
-    li.dataset.ts   = String(timestamp.getTime());
-    li.dataset.zone = (item.zone || '').toString().toUpperCase();
-    li.dataset.code = (item.code || '').toString();
-
-    const meta = document.createElement('div');
-    meta.className = 'chat-row__meta';
-
-    const tag = document.createElement('span');
-    tag.className = `chat-tag ${tagClass(item)}`;
-    tag.textContent = tagLabel(item);
-
-    // 선택 이모지 배지
-    let emojiWrap = null;
-    if (Array.isArray(item.emojis) && item.emojis.length) {
-      emojiWrap = document.createElement('div');
-      emojiWrap.className = 'chat-emojis';
-      item.emojis.forEach((em) => {
-        const b = document.createElement('span');
-        b.className = 'chat-emoji';
-        b.textContent = em;
-        emojiWrap.appendChild(b);
-      });
-    }
-
-    const track = document.createElement('div');
-    track.className = 'chat-row__track';
-
-    const timeEl = document.createElement('time');
-    timeEl.className = 'chat-time';
-    try { timeEl.dateTime = timestamp.toISOString(); } catch (_) { timeEl.dateTime = new Date().toISOString(); }
-    timeEl.textContent = timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-    const likeBtn = document.createElement('button');
-    likeBtn.type = 'button';
-    likeBtn.className = 'chat-like';
-    const likeCount = document.createElement('span');
-    likeCount.className = 'chat-like__count';
-    likeCount.textContent = String(Number.isFinite(item.likes) ? Number(item.likes) : 0);
-    likeBtn.appendChild(likeCount);
-    likeBtn.addEventListener('click', () => {
-      const nextValue = parseInt(likeCount.textContent || '0', 10) + 1;
-      likeCount.textContent = String(nextValue);
-    });
-
-    track.append(timeEl, likeBtn);
-    emojiWrap ? meta.append(tag, emojiWrap, track) : meta.append(tag, track);
-
-    const message = document.createElement('p');
-    message.className = 'chat-row__message';
-    message.textContent = (item.message ?? '').toString();
-
-    li.append(meta, message);
-
-    if (item.artworkPoster) {
-      const figure = document.createElement('figure');
-      figure.className = 'chat-row__media';
-      const img = document.createElement('img');
-      img.className = 'chat-row__media-img';
-      img.alt = '';
-      img.src = item.artworkPoster;
-      figure.appendChild(img);
-      li.appendChild(figure);
-    }
-
-    return li;
-  }
-
   function prependRow(item) {
     const row = renderRow(item);
     stream.prepend(row);
@@ -2978,52 +3036,6 @@ function hydratePoster(imgEl, fullSrc) {
     };
   }
 
-  /* --- WebSocket --- */
-  const WS_URL = (window.COMMENT_WS_URL || 'wss://example.com/live');
-  let ws; let retry = 0; let timer;
-
-  function connect(){
-    try {
-      ws = new WebSocket(WS_URL);
-      ws.addEventListener('open', () => {
-        retry = 0;
-      });
-      ws.addEventListener('message', (e) => {
-        const data = JSON.parse(e.data);
-        prependRow(data);
-      });
-      ws.addEventListener('close', () => retryConnect());
-      ws.addEventListener('error', () => {
-        try { ws.close(); } catch (_) {}
-      });
-    } catch (err) {
-      retryConnect();
-    }
-  }
-
-  function retryConnect(){
-    if (retry > 6) { return; }
-    clearTimeout(timer);
-    const wait = Math.min(2000 * (retry + 1), 8000);
-    timer = setTimeout(connect, wait);
-    retry += 1;
-  }
-  connect();
-
-  if (location.hostname === 'localhost' || location.protocol === 'file:') {
-    setInterval(() => {
-      prependRow({
-        id: crypto.randomUUID(),
-        message: ['Amazing','Incredible','Wow!','Love the color','Super vibrant'][Math.floor(Math.random() * 5)],
-        ts: Date.now(),
-        zone: ['A','B','C',null][Math.floor(Math.random() * 4)],
-        code: Math.random() > .7 ? ARTWORK_CODES[Math.floor(Math.random() * ARTWORK_CODES.length)] : '',
-        artworkPoster: Math.random() > .6 ? 'https://picsum.photos/400/600?grayscale&random=' + Math.floor(Math.random() * 1000) : '',
-        likes: Math.floor(Math.random() * 5)
-      });
-    }, 2500);
-  }
-
   // [02-comment] 퀵픽(이모지/자동문구) 동작
   const selectedEmojis = new Set();
 
@@ -3051,6 +3063,31 @@ function hydratePoster(imgEl, fullSrc) {
       el.setRangeText(joiner + phrase, start, end, 'end');
       el.dispatchEvent(new Event('input', { bubbles: true })); // 타이핑 미니뷰 동기화
       el.focus();
+    }
+  });
+
+  // livechat-stream 내부 좋아요 클릭(DB 반영)
+  document.querySelector('[data-livechat-stream]')?.addEventListener('click', async (e) => {
+    const btn = e.target.closest('.chat-like');
+    if (!btn) return;
+    const row = btn.closest('.chat-row');
+    const commentId = row?.dataset.id;
+    const countEl = btn.querySelector('.chat-like__count');
+    const before = parseInt(countEl?.textContent || '0', 10) || 0;
+
+    // 낙관적 업데이트
+    countEl.textContent = String(before + 1);
+
+    try {
+      const client = (COMMENT_STATE.connection && COMMENT_STATE.connection.supabase) || window.sb;
+      if (!client || !commentId) throw new Error('Supabase client or comment id missing');
+      const { error } = await client
+        .from('comment_reactions')
+        .insert([{ comment_id: commentId, emoji: '♥', count: 1 }]);
+      if (error) throw error;
+    } catch (err) {
+      console.error('[Like][FAIL]', err);
+      countEl.textContent = String(before); // 롤백
     }
   });
 
