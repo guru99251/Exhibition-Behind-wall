@@ -27,7 +27,8 @@
     <main
     class="page-main comment-main"
     data-comment-root
-    data-ws-url="wss://YOUR_DOMAIN_OR_IP/live-comments">
+    data-supabase-url="https://tbegcazozckpkjtaticj.supabase.co"
+    data-supabase-key="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRiZWdjYXpvemNrcGtqdGF0aWNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg1NDkyNjIsImV4cCI6MjA3NDEyNTI2Mn0.GMpSO8iBTSRM97ZMMIfqyjc2ZW_kLtQrZwduFNGtxws">
         <header class="comment-header">
             <div class="comment-header__title">
                 <h1>실시간 방명록</h1>
@@ -173,12 +174,13 @@
 
     </main>
 
+    <!-- ADD: Supabase JS SDK (v2) -->
+    <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollToPlugin.min.js"></script>
 
-    <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
     <script defer src="./script.js"></script>
 </body>
 </html>

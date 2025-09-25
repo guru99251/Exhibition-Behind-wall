@@ -2865,17 +2865,17 @@ body.page-artworks::-webkit-scrollbar {
 
 #column-participants-3d {
   position: absolute;
-  top: 3vh;
+  top: -1vh;
   right: auto;
   bottom: auto;
   left: 14vw;
   width: 220px;
-  height: 63vh;
+  height: 72vh;
 }
 
 #column-participants-ux-ui {
   position: absolute;
-  top: 7vh;
+  top: -5vh;
   right: auto;
   bottom: auto;
   left: 28vw;
@@ -2884,11 +2884,20 @@ body.page-artworks::-webkit-scrollbar {
 
 #column-participants-game {
   position: absolute;
-  top: 36vh;
+  top: 34vh;
   right: auto;
   bottom: auto;
   left: 22vw;
-  width: 360px;
+  width: 390px;
+}
+
+#column-participants-film {
+  position: absolute;
+  top: 64vh;
+  right: auto;
+  bottom: auto;
+  left: 3vw;
+  width: 280px;
 }
 
 /* ───────────── 운영진 (Staff) ───────────── */
@@ -2976,4 +2985,18 @@ body.page-artworks::-webkit-scrollbar {
   height: 100%;
   object-fit: cover;          /* 이미지 꽉 채우되 비율 유지 */
   display: block;
+}
+
+
+.artwork-card__meta {
+  gap: 0;
+}
+
+.artwork-card__disciplines {
+  margin-top: 1rem;
+  gap: clamp(0.2rem, 0.5vw, 0.5rem);
+}
+
+.discipline {
+  padding: 0.1rem 0.5rem !important;
 }

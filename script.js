@@ -1258,6 +1258,19 @@ function initCommentPage(container) {
   SAMPLE_COMMENTS.forEach((item) => handleIncomingComment(item));
 
   const retry = container.querySelector('[data-comment-retry]');
+
+  // Supabase Realtime가 설정되어 있으면 WS 대신 Supabase를 사용
+  const hasSupabase = !!(container.dataset.supabaseUrl && container.dataset.supabaseKey && window.supabase?.createClient);
+  if (hasSupabase) {
+    COMMENT_STATE.connection = setupSupabaseRealtime(container);
+    const retry = container.querySelector('[data-comment-retry]');
+    retry?.addEventListener('click', () => {
+      updateConnectionBadge('connecting');
+      COMMENT_STATE.connection?.reconnect?.();
+    });
+    return; // 아래 WS 연결 로직은 건너뜀
+  }
+
   const wsUrl = container.dataset.wsUrl || 'wss://behindwall.local/comments';
 
   COMMENT_STATE.connection = connectCommentsWS(wsUrl, {
@@ -1281,6 +1294,163 @@ function handleIncomingComment(payload) {
     const updated = upsertMessage(COMMENT_STATE.store, zone, payload);
     renderColumn(zone, updated);
   });
+}
+
+
+/* =========================================
+ * Supabase Realtime Adapter
+ * ========================================= */
+
+/* v_comment_feed 단일 row를 payload로 변환 */
+function mapFeedRowToPayload(row) {
+  // reactions: { "👏":2, "like":1, ... } 형태 → { emojis: {...}, likes: N }
+  const reactions = row?.reactions || {};
+  const { like, ...emojis } = reactions;
+  return {
+    id: row.id,
+    text: row.text,
+    zones: Array.isArray(row.zones) && row.zones.length ? row.zones : ['ALL'],
+    timestamp: row.created_at,
+    author: {
+      name: row.author_name || 'Anonymous',
+      department: row.author_dept || 'Visitor',
+      studentId: row.author_sid || '',
+    },
+    reactions: {
+      emojis,
+      likes: typeof like === 'number' ? like : 0,
+    },
+    artwork: {
+      code: row.artwork_code || '',
+      title: row.artwork_title || '',
+      poster: row.artwork_poster || '',
+    },
+  };
+}
+
+/*
+ * Supabase Realtime 구독을 열고, 테이블 변경 발생 시 v_comment_feed를 조회해 렌더링으로 전달.
+ * COMMENT_STATE.connection 형태를 WS와 동일 인터페이스(reconnect 메서드)로 제공.
+ */
+function setupSupabaseRealtime(container) {
+  const supaUrl = container.dataset.supabaseUrl;
+  const supaKey = container.dataset.supabaseKey;
+  if (!supaUrl || !supaKey || !(window.supabase?.createClient)) {
+    console.warn('[Supabase] missing url/key or SDK. Fallback to WS.');
+    return null;
+  }
+
+  const client = window.supabase.createClient(supaUrl, supaKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: { headers: {} },
+  });
+
+  let channels = [];
+  let closed = false;
+
+  const updateOnline = () => updateConnectionBadge('online');
+  const updateConnecting = () => updateConnectionBadge('connecting');
+  const updateOffline = () => updateConnectionBadge('offline');
+
+  async function fetchAndEmitById(id) {
+    if (!id) return;
+    const { data, error } = await client
+      .from('v_comment_feed')
+      .select('*')
+      .eq('id', id)
+      .single();
+    if (error) {
+      console.error('[Supabase] fetch v_comment_feed error:', error);
+      return;
+    }
+    const payload = mapFeedRowToPayload(data);
+    handleIncomingComment(payload);
+  }
+
+  /* zones/reactions 테이블 이벤트에서 comment_id 추출 */
+  function commentIdFromEvent(e) {
+    // Realtime payload: e.new / e.old
+    const row = e?.new || e?.old || {};
+    return row.comment_id || row.id || null;
+  }
+
+  /* 구독 열기 */
+  async function openSubscriptions() {
+    updateConnecting();
+
+    // comments INSERT/UPDATE
+    const chComments = client.channel('comments')
+      .on('postgres_changes', {
+        event: '*', schema: 'public', table: 'comments',
+      }, (e) => {
+        const id = e?.new?.id || e?.old?.id;
+        fetchAndEmitById(id);
+      })
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') updateOnline();
+      });
+
+    // comment_zones INSERT/UPDATE/DELETE
+    const chZones = client.channel('comment_zones')
+      .on('postgres_changes', {
+        event: '*', schema: 'public', table: 'comment_zones',
+      }, (e) => {
+        const id = commentIdFromEvent(e);
+        fetchAndEmitById(id);
+      })
+      .subscribe();
+
+    // comment_reactions INSERT/UPDATE/DELETE
+    const chReactions = client.channel('comment_reactions')
+      .on('postgres_changes', {
+        event: '*', schema: 'public', table: 'comment_reactions',
+      }, (e) => {
+        const id = commentIdFromEvent(e);
+        fetchAndEmitById(id);
+      })
+      .subscribe();
+
+    channels = [chComments, chZones, chReactions];
+
+    // 초기 로드: 최신 N개를 불러와 스트림 구축(옵션)
+    try {
+      const { data, error } = await client
+        .from('v_comment_feed')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(30);
+      if (!error && Array.isArray(data)) {
+        data.forEach((row) => handleIncomingComment(mapFeedRowToPayload(row)));
+      }
+    } catch (err) {
+      console.error('[Supabase] initial fetch error:', err);
+    }
+  }
+
+  /* 모두 닫기 */
+  async function closeSubscriptions() {
+    closed = true;
+    updateOffline();
+    await Promise.all(channels.map((ch) => client.removeChannel(ch)));
+    channels = [];
+  }
+
+  /* 다시 연결하기 (UI의 Reconnect 버튼과 호환) */
+  async function reconnect() {
+    await closeSubscriptions();
+    closed = false;
+    await openSubscriptions();
+  }
+
+  // 구독 열기
+  openSubscriptions();
+
+  // WS와 동일한 인터페이스로 반환(댓글 페이지의 기존 버튼 로직과 호환)
+  return {
+    reconnect,
+    close: closeSubscriptions,
+    supabase: client,
+  };
 }
 
 function connectCommentsWS(url, handlers = {}) {
@@ -1609,44 +1779,55 @@ const CONTRIBUTORS_STATE = {
   data: {
     participants: {
       '2D': [
-        { name: '김은서', studentId: '23' },
-        { name: '이민재', studentId: '23' },
-        { name: '박지현', studentId: '23' },
-        { name: '최도희', studentId: '23' },
-        { name: '안하윤', studentId: '23' },
-        { name: '윤가람', studentId: '23' },
-        { name: '송예린', studentId: '23' },
-        { name: '정세나', studentId: '23' }
+        { name: '진서연', studentId: '23' },
+        { name: '황은빈', studentId: '23' },
+        { name: '박재은', studentId: '23' },
+        { name: '신민주', studentId: '23' },
+        { name: '장서영', studentId: '23' },
+        { name: '이아림', studentId: '23' },
+        { name: '정지원', studentId: '23' }
       ],
       '3D': [
-        { name: '한지수', studentId: '23' },
-        { name: '서정민', studentId: '23' },
-        { name: '권하린', studentId: '23' },
-        { name: '문예찬', studentId: '23' },
-        { name: '임수혁', studentId: '23' },
-        { name: '이유나', studentId: '23' },
-        { name: '박혜수', studentId: '23' },
-        { name: '백동연', studentId: '23' },
-        { name: '강민성', studentId: '23' },
-        { name: '장아름', studentId: '23' },
-        { name: '신빛나', studentId: '23' },
         { name: '조수빈', studentId: '23' },
-        { name: '유혜진', studentId: '23' },
-        { name: '김시온', studentId: '23' },
-        { name: '류예준', studentId: '23' },
-        { name: '구재희', studentId: '23' }
+        { name: '김영우', studentId: '23' },
+        { name: '김성은', studentId: '23' },
+        { name: '권준서', studentId: '23' },
+        { name: '안현영', studentId: '23' },
+        { name: '정재희', studentId: '23' },
+        { name: '이서진', studentId: '23' },
+        { name: '조은서', studentId: '23' },
+        { name: 'Ar Raudhah', studentId: '23' },
+        { name: '진가언', studentId: '23' },
+        { name: '이현지', studentId: '23' },
+        { name: '최수현', studentId: '23' },
+        { name: '전인서', studentId: '23' },
+        { name: '박지영', studentId: '23' },
+        { name: '노서진', studentId: '23' },
+        { name: '김지원', studentId: '23' },
+        { name: '이채빈', studentId: '23' },
+        { name: '권민주', studentId: '23' },
+        { name: '권미진', studentId: '23' },
+        { name: '김가영', studentId: '23' },
+        { name: '윤샘', studentId: '23' }
       ],
       'UX/UI': [
-        { name: '황시연', studentId: '23' },
-        { name: '김하린', studentId: '23' },
-        { name: '이주원', studentId: '23' },
-        { name: '박소진', studentId: '23' }
+        { name: '김효준', studentId: '23' },
+        { name: '오주희', studentId: '23' },
+        { name: '이주빈', studentId: '23' },
+        { name: '한서은', studentId: '23' },
+        { name: '이지인', studentId: '23' }
       ],
       'Game': [
-        { name: '배세훈', studentId: '23' },
-        { name: '조이슬', studentId: '23' },
-        { name: '박준', studentId: '23' },
-        { name: '유다인', studentId: '23' }
+        { name: '권준서', studentId: '23' },
+        { name: '장서영', studentId: '23' },
+        { name: '이시현', studentId: '23' },
+        { name: '최수연', studentId: '23' },
+        { name: '이수인', studentId: '23' },
+        { name: '서혜린', studentId: '23' }
+      ],
+      'Film': [
+        { name: '이유경', studentId: '23' },
+        { name: '지서현', studentId: '23' }
       ]
     },
     staff: {
@@ -1790,6 +1971,36 @@ const ARTWORKS_STATE = {
 // ===== DB로 대체 필요?
 const DEFAULT_LQIP = 'data:image/svg+xml;charset=UTF-8,%3Csvg xmlns%3D%22http://www.w3.org/2000/svg%22 viewBox%3D%220 0 3 4%22%3E%3Crect width%3D%223%22 height%3D%224%22 fill%3D%22%23091420%22/%3E%3C/svg%3E';
 
+// ---------- helpers ----------
+function toArray(value) {
+  // null/undefined → []
+  if (value == null) return [];
+  // 이미 배열이면 낱개/공백을 정리
+  if (Array.isArray(value)) return value.map(String).map(v => v.trim()).filter(Boolean);
+  // 문자열일 때: JSON 배열 문자열이면 파싱 시도
+  const s = String(value).trim();
+  if (!s) return [];
+  try {
+    const parsed = JSON.parse(s);
+    if (Array.isArray(parsed)) return parsed.map(String).map(v => v.trim()).filter(Boolean);
+  } catch {}
+  // 쉼표/세미콜론/슬래시/하이픈 구분자 모두 허용
+  return s.split(/[,;/|·\-]+/).map(v => v.trim()).filter(Boolean);
+}
+
+function uniq(arr) {
+  // 대소문자/양끝공백 무시하고 유니크
+  const seen = new Set();
+  const out = [];
+  for (const raw of arr) {
+    const v = String(raw).trim();
+    if (!v) continue;
+    const key = v.toLowerCase();
+    if (!seen.has(key)) { seen.add(key); out.push(v); }
+  }
+  return out;
+}
+
 // // ===== DB로 대체 필요
 // const ARTWORKS_DATA = [
 //   {
@@ -1893,20 +2104,16 @@ async function fetchArtworksForCards() {
   if (e2) throw e2;
 
   const byCode = new Map();
-  (zonesMap || []).forEach(row => {
+  (zonesMap || []).forEach(r => {
     // zone_code는 'A' ~ 'J' 등 한 글자 코드로 가정
-    byCode.set(row.artwork_code, (row.zone_code || '').toUpperCase());
+    byCode.set(r.artwork_code, (r.zone_code || '').toUpperCase());
   });
 
   // 3) 최종 카드용 형태로 매핑
   return (cards || []).map(row => {
-    // members/tools/genres가 JSON 배열 또는 콤마 문자열일 수 있어 안정 변환
-    const toArray = (v) =>
-      Array.isArray(v) ? v :
-      (typeof v === 'string' && v.trim() ? v.split(/[,\u3001]/).map(s => s.trim()).filter(Boolean) : []);
-    const membersArr = toArray(row.members);
-    const toolsArr   = toArray(row.tools);
-    const genresArr  = toArray(row.genres);
+    const membersArr = uniq(toArray(row.members));
+    const toolsArr   = uniq(toArray(row.tools));
+    const genresArr  = uniq(toArray(row.genres));
 
     return {
       id: row.slug || row.code,
@@ -1914,9 +2121,9 @@ async function fetchArtworksForCards() {
       slug: row.slug,
       title: row.title,
       description: row.description,
-      members: membersArr,
-      tools: toolsArr.join(' · '),      // 메타 줄에 간결 표시
-      discipline: genresArr.join('/'),  // 장르 합쳐서 한 줄
+      members: membersArr,          // ← 배열 유지 (중복 제거됨)
+      tools: toolsArr,              // ← 배열 유지 (중복 제거됨)
+      discipline: genresArr,        // ← 배열 유지 (칩 분리 가능)
       poster: row.cover_url || '',
       lqip: DEFAULT_LQIP,
       zone: byCode.get(row.code) || 'ALL'
@@ -1988,15 +2195,15 @@ function setActiveFilter(value) {
 /* 카드 DOM 생성 — 스타일 클래스명은 페이지 네임스페이스에 기대어 최소화 */
 function createArtworkCard(item) {
   const card = document.createElement('article');
-  card.className = 'artwork-card';         // ← 변경
-  card.setAttribute('data-zone', item.zone || '');
-  card.setAttribute('data-code', item.code || '');
+  card.className = 'artwork-card';
+  card.dataset.zone = item.zone || '';
+  card.dataset.code = item.code || '';
 
-  // 포스터
+  // Poster
   const fig = document.createElement('figure');
-  fig.className = 'artwork-card__poster';  // ← 변경
+  fig.className = 'artwork-card__poster';
   const img = document.createElement('img');
-  img.alt = `${item.title} poster`;
+  img.alt = `${item.title || item.code} poster`;
   img.loading = 'lazy';
   img.decoding = 'async';
   img.dataset.state = 'loading';
@@ -2004,63 +2211,71 @@ function createArtworkCard(item) {
   hydratePoster(img, item.poster);
   fig.appendChild(img);
 
-  // 본문
+  // Body
   const body = document.createElement('div');
-  body.className = 'artwork-card__body';   // ← 변경
+  body.className = 'artwork-card__body';
 
   const ttl = document.createElement('h3');
-  ttl.className = 'artwork-card__title';   // ← 변경
-  ttl.textContent = item.title || '';
-
-  // 메타: 팀/장르/툴
-  const meta = document.createElement('div');
-  meta.className = 'artwork-card__meta';   // ← 변경
+  ttl.className = 'artwork-card__title';
+  ttl.textContent = item.title || item.code;
 
   if (item.description) {
     const desc = document.createElement('p');
-    desc.className = 'artwork-card__description';  // ← 변경
+    desc.className = 'artwork-card__description';
     desc.textContent = item.description;
-    body.appendChild(desc);
+    body.append(ttl, desc);
+  } else {
+    body.append(ttl);
   }
 
-  // 팀원
-  const members = (item.members || []).join(', ');
-  if (members) {
+  // Meta (TEAM / TOOL / GENRE chips)
+  const meta = document.createElement('div');
+  meta.className = 'artwork-card__meta';
+
+  // TEAM
+  if (Array.isArray(item.members) && item.members.length) {
+    const teamLabel = document.createElement('strong');
+    teamLabel.textContent = 'Team';
+    meta.appendChild(teamLabel);
+
     const p = document.createElement('p');
-    p.innerHTML = `<strong>Team</strong>${members}`;
+    p.textContent = uniq(item.members).join(', ');
     meta.appendChild(p);
   }
 
-  // 장르(칩)
-  const disciplinesWrap = document.createElement('div');
-  disciplinesWrap.className = 'artwork-card__disciplines';
-  const disciplines = Array.isArray(item.discipline)
-    ? item.discipline
-    : String(item.discipline || '')
-        .split(/[;]|[\u002D\u2013\u2014]/) // 하이픈류 기준 분리
-        .map(s => s.trim()).filter(Boolean);
-  disciplines.forEach(d => {
-    const chip = document.createElement('span');
-    chip.className = 'discipline';
-    chip.textContent = d;
-    disciplinesWrap.appendChild(chip);
-  });
-  if (disciplinesWrap.childElementCount) meta.appendChild(disciplinesWrap);
+  // TOOL (TEAM 바로 아래)
+  if (Array.isArray(item.tools) && item.tools.length) {
+    const toolLabel = document.createElement('strong');
+    toolLabel.textContent = 'Tool';
+    meta.appendChild(toolLabel);
 
-  // 툴(줄바꿈 리스트)
-  const tools = Array.isArray(item.tools) ? item.tools : String(item.tools || '').split(/[,\u3001]/).map(s=>s.trim()).filter(Boolean);
-  if (tools.length) {
     const ul = document.createElement('ul');
     ul.className = 'artwork-card__tools';
-    tools.forEach(t => {
+    uniq(item.tools).forEach(t => {
       const li = document.createElement('li');
-      li.textContent = t;
+      li.textContent = `- ${t}`;
       ul.appendChild(li);
     });
     meta.appendChild(ul);
   }
 
-  body.prepend(ttl);
+  // GENRE → 칩(.discipline) 개별 표시
+  const disciplines = Array.isArray(item.discipline)
+    ? uniq(item.discipline)
+    : uniq(toArray(item.discipline));
+
+  if (disciplines.length) {
+    const chipsWrap = document.createElement('div');
+    chipsWrap.className = 'artwork-card__disciplines';
+    disciplines.forEach(d => {
+      const chip = document.createElement('span');
+      chip.className = 'discipline';
+      chip.textContent = d;
+      chipsWrap.appendChild(chip);
+    });
+    meta.appendChild(chipsWrap);
+  }
+
   body.appendChild(meta);
   card.append(fig, body);
   return card;
