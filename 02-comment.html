@@ -24,7 +24,10 @@
     <div class="page-backdrop" aria-hidden="true"></div> -->
 
     <!-- main contents -->
-    <main class="page-main comment-main" data-comment-root>
+    <main
+    class="page-main comment-main"
+    data-comment-root
+    data-ws-url="wss://YOUR_DOMAIN_OR_IP/live-comments">
         <header class="comment-header">
             <div class="comment-header__title">
                 <h1>실시간 방명록</h1>
@@ -173,6 +176,9 @@
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollToPlugin.min.js"></script>
+
+    <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
     <script defer src="./script.js"></script>
 </body>
 </html>

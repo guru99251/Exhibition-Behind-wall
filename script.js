@@ -1,17 +1,12 @@
 // Execute after third-party libraries load (deferred).
-gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
+if (window.gsap && window.ScrollTrigger && window.ScrollToPlugin) {
+  gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
+}
 
-// === [Supabase] client init (put near the top of script.js) ===
-const SUPABASE_URL = 'https://tbegcazozckpkjtaticj.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRiZWdjYXpvemNrcGtqdGF0aWNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg1NDkyNjIsImV4cCI6MjA3NDEyNTI2Mn0.GMpSO8iBTSRM97ZMMIfqyjc2ZW_kLtQrZwduFNGtxws';
-const sb = (window.supabase)
-  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
-  : null;
-
-// 간단 헬퍼
-const q$ = (sel, root=document) => root.querySelector(sel);
-const qA$ = (sel, root=document) => [...root.querySelectorAll(sel)];
-
+// === Supabase client (global) ===
+const SUPABASE_URL  = window.SUPABASE_URL  || 'https://tbegcazozckpkjtaticj.supabase.co';
+const SUPABASE_ANON = window.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRiZWdjYXpvemNrcGtqdGF0aWNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg1NDkyNjIsImV4cCI6MjA3NDEyNTI2Mn0.GMpSO8iBTSRM97ZMMIfqyjc2ZW_kLtQrZwduFNGtxws';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
 document.addEventListener('keydown', (event) => {
   if (event.defaultPrevented) { return; }
@@ -1181,51 +1176,51 @@ const COMMENT_STATE = {
 };
 
 
-// // ===== DB로 대체 필요
-// const SAMPLE_COMMENTS = [
-//   {
-//     id: 'c-001',
-//     zones: ['A'],
-//     text: 'Spectral Loop is brighter than earlier rehearsal. The afterglow wraps the ceiling perfectly.',
-//     author: { name: 'Eunseo Kim', department: 'Spatial Media', studentId: '20231204' },
-//     timestamp: '2024-05-12T11:42:00+09:00',
-//     reactions: { emojis: { Light: 3, Spark: 1 }, likes: 7 },
-//     artwork: { title: 'Spectral Loop', poster: 'https://picsum.photos/seed/spectral-loop/600/800' }
-//   },
-//   {
-//     id: 'c-002',
-//     zones: ['B'],
-//     text: 'Kids keep reaching for the holographic coral. Interactive depth feels stable tonight.',
-//     author: { name: 'Anonymous', department: 'Visitor', studentId: '' },
-//     timestamp: '2024-05-12T11:45:12+09:00',
-//     reactions: { emojis: { Wave: 4, Wonder: 2 }, likes: 5 },
-//     artwork: { title: 'Tidal Dream', poster: 'https://picsum.photos/seed/tidal-dream/600/800' }
-//   },
-//   {
-//     id: 'c-003',
-//     zones: ['C'],
-//     text: 'Backstage projection syncs with the live feed. Lag is gone after the afternoon patch.',
-//     author: { name: 'Byungwoo Han', department: 'Systems', studentId: 'STF-14' },
-//     timestamp: '2024-05-12T11:48:30+09:00',
-//     reactions: { emojis: { Gear: 2 }, likes: 3 }
-//   },
-//   {
-//     id: 'c-004',
-//     zones: ['ALL'],
-//     text: 'Standing ovation when the skyline flips to night cycle. Audio swell gave goosebumps.',
-//     author: { name: 'Seoyeon Park', department: 'Guest', studentId: '202405' },
-//     timestamp: '2024-05-12T11:51:02+09:00',
-//     reactions: { emojis: { Clap: 9, Sky: 3 }, likes: 11 }
-//   },
-//   {
-//     id: 'c-005',
-//     zones: ['A', 'B'],
-//     text: 'Please bump narration level 2dB around the walkway; words disappear behind the jet fan.',
-//     author: { name: 'Engineering Team', department: 'Audio', studentId: 'OPS-08' },
-//     timestamp: '2024-05-12T11:53:40+09:00',
-//     reactions: { emojis: { Audio: 2 }, likes: 0 }
-//   }
-// ];
+// ===== DB로 대체 필요
+const SAMPLE_COMMENTS = [
+  {
+    id: 'c-001',
+    zones: ['A'],
+    text: 'Spectral Loop is brighter than earlier rehearsal. The afterglow wraps the ceiling perfectly.',
+    author: { name: 'Eunseo Kim', department: 'Spatial Media', studentId: '20231204' },
+    timestamp: '2024-05-12T11:42:00+09:00',
+    reactions: { emojis: { Light: 3, Spark: 1 }, likes: 7 },
+    artwork: { title: 'Spectral Loop', poster: 'https://picsum.photos/seed/spectral-loop/600/800' }
+  },
+  {
+    id: 'c-002',
+    zones: ['B'],
+    text: 'Kids keep reaching for the holographic coral. Interactive depth feels stable tonight.',
+    author: { name: 'Anonymous', department: 'Visitor', studentId: '' },
+    timestamp: '2024-05-12T11:45:12+09:00',
+    reactions: { emojis: { Wave: 4, Wonder: 2 }, likes: 5 },
+    artwork: { title: 'Tidal Dream', poster: 'https://picsum.photos/seed/tidal-dream/600/800' }
+  },
+  {
+    id: 'c-003',
+    zones: ['C'],
+    text: 'Backstage projection syncs with the live feed. Lag is gone after the afternoon patch.',
+    author: { name: 'Byungwoo Han', department: 'Systems', studentId: 'STF-14' },
+    timestamp: '2024-05-12T11:48:30+09:00',
+    reactions: { emojis: { Gear: 2 }, likes: 3 }
+  },
+  {
+    id: 'c-004',
+    zones: ['ALL'],
+    text: 'Standing ovation when the skyline flips to night cycle. Audio swell gave goosebumps.',
+    author: { name: 'Seoyeon Park', department: 'Guest', studentId: '202405' },
+    timestamp: '2024-05-12T11:51:02+09:00',
+    reactions: { emojis: { Clap: 9, Sky: 3 }, likes: 11 }
+  },
+  {
+    id: 'c-005',
+    zones: ['A', 'B'],
+    text: 'Please bump narration level 2dB around the walkway; words disappear behind the jet fan.',
+    author: { name: 'Engineering Team', department: 'Audio', studentId: 'OPS-08' },
+    timestamp: '2024-05-12T11:53:40+09:00',
+    reactions: { emojis: { Audio: 2 }, likes: 0 }
+  }
+];
 
 function deriveSidebarSafe() {
   const sidebar = document.querySelector('.wall-sidebar');
@@ -1782,6 +1777,7 @@ function applyHorizontalLayout(container = CONTRIBUTORS_STATE.root) {
 }
 
 /* === Artworks page utilities === */
+/* === Artworks page state & helpers (ADD/REPLACE) === */
 const ARTWORKS_STATE = {
   root: null,
   grid: null,
@@ -1791,267 +1787,300 @@ const ARTWORKS_STATE = {
   filterButtons: []
 };
 
-// ===== DB로 대체 필요
+// ===== DB로 대체 필요?
 const DEFAULT_LQIP = 'data:image/svg+xml;charset=UTF-8,%3Csvg xmlns%3D%22http://www.w3.org/2000/svg%22 viewBox%3D%220 0 3 4%22%3E%3Crect width%3D%223%22 height%3D%224%22 fill%3D%22%23091420%22/%3E%3C/svg%3E';
 
-// ===== DB로 대체 필요
-const ARTWORKS_DATA = [
-  {
-    id: 'spectral-loop',
-    title: 'Spectral Loop',
-    zone: 'A',
-    poster: 'https://picsum.photos/seed/art-spectral/600/800',
-    lqip: DEFAULT_LQIP,
-    members: ['김은수', '한지수', '명진영', '김태윤', '최주성'],
-    description: 'Time gradient pulses translate annotated sensor logs into the main projection spine.',
-    discipline: '2D Motion',
-    tools: 'TouchDesigner - After Effects'
-  },
-  {
-    id: 'memory-patch',
-    title: 'Memory Patch',
-    zone: 'B',
-    poster: 'https://picsum.photos/seed/art-memory/600/800',
-    lqip: DEFAULT_LQIP,
-    members: ['권준서', '정재희'],
-    description: 'Visitors stitch their favourite wall moments into an evolving stitched mural.',
-    discipline: '3D Modeling',
-    tools: 'Unity - Arduino'
-  },
-  {
-    id: 'tidal-dream',
-    title: 'Tidal Dream',
-    zone: 'B',
-    poster: 'https://picsum.photos/seed/art-tidal/600/800',
-    lqip: DEFAULT_LQIP,
-    members: ['최주성', '이시현'],
-    description: 'Layered foam shaders respond to live comment sentiment and ripple along the corridor.',
-    discipline: 'Game',
-    tools: 'Unreal Engine - Houdini'
-  },
-  {
-    id: 'orbital-city',
-    title: 'Orbital City',
-    zone: 'C',
-    poster: 'https://picsum.photos/seed/art-orbital/600/800',
-    lqip: DEFAULT_LQIP,
-    members: ['김채영', '권민주'],
-    description: 'City-scale choropleths orbit the backstage glass and echo the skyline finale.',
-    discipline: 'UX/UI',
-    tools: 'Blender - Substance Painter'
-  },
-  {
-    id: 'flora-signal',
-    title: 'Flora Signal',
-    zone: 'A',
-    poster: 'https://picsum.photos/seed/art-flora/600/800',
-    lqip: DEFAULT_LQIP,
-    members: ['박지영', '권미진'],
-    description: 'Real-time plant data pulses across the entrance plane in sync with biometric LEDs.',
-    discipline: '3D Motion',
-    tools: 'MaxMSP - Python'
-  },
-  {
-    id: 'backstage-scan',
-    title: 'Backstage Scan',
-    zone: 'C',
-    poster: 'https://picsum.photos/seed/art-backstage/600/800',
-    lqip: DEFAULT_LQIP,
-    members: ['권민주', '최주성', '진가언', '이성민'],
-    description: 'LiDAR sweeps rebuild the staff runway as a volumetric ghost behind the wall.',
-    discipline: '3D Motion',
-    tools: 'RealityCapture - Notch'
-  },
-  {
-    id: 'comment-loom',
-    title: 'Comment Loom',
-    zone: 'B',
-    poster: 'https://picsum.photos/seed/art-loom/600/800',
-    lqip: DEFAULT_LQIP,
-    members: ['명진영', '김태윤'],
-    description: 'Live visitor notes weave into typographic threads projected along the comment bay.',
-    discipline: 'UX/UI',
-    tools: 'Figma - Svelte'
-  }
-];
+// // ===== DB로 대체 필요
+// const ARTWORKS_DATA = [
+//   {
+//     id: 'spectral-loop',
+//     title: 'Spectral Loop',
+//     zone: 'A',
+//     poster: 'https://picsum.photos/seed/art-spectral/600/800',
+//     lqip: DEFAULT_LQIP,
+//     members: ['김은수', '한지수', '명진영', '김태윤', '최주성'],
+//     description: 'Time gradient pulses translate annotated sensor logs into the main projection spine.',
+//     discipline: '2D Motion',
+//     tools: 'TouchDesigner - After Effects'
+//   },
+//   {
+//     id: 'memory-patch',
+//     title: 'Memory Patch',
+//     zone: 'B',
+//     poster: 'https://picsum.photos/seed/art-memory/600/800',
+//     lqip: DEFAULT_LQIP,
+//     members: ['권준서', '정재희'],
+//     description: 'Visitors stitch their favourite wall moments into an evolving stitched mural.',
+//     discipline: '3D Modeling',
+//     tools: 'Unity - Arduino'
+//   },
+//   {
+//     id: 'tidal-dream',
+//     title: 'Tidal Dream',
+//     zone: 'B',
+//     poster: 'https://picsum.photos/seed/art-tidal/600/800',
+//     lqip: DEFAULT_LQIP,
+//     members: ['최주성', '이시현'],
+//     description: 'Layered foam shaders respond to live comment sentiment and ripple along the corridor.',
+//     discipline: 'Game',
+//     tools: 'Unreal Engine - Houdini'
+//   },
+//   {
+//     id: 'orbital-city',
+//     title: 'Orbital City',
+//     zone: 'C',
+//     poster: 'https://picsum.photos/seed/art-orbital/600/800',
+//     lqip: DEFAULT_LQIP,
+//     members: ['김채영', '권민주'],
+//     description: 'City-scale choropleths orbit the backstage glass and echo the skyline finale.',
+//     discipline: 'UX/UI',
+//     tools: 'Blender - Substance Painter'
+//   },
+//   {
+//     id: 'flora-signal',
+//     title: 'Flora Signal',
+//     zone: 'A',
+//     poster: 'https://picsum.photos/seed/art-flora/600/800',
+//     lqip: DEFAULT_LQIP,
+//     members: ['박지영', '권미진'],
+//     description: 'Real-time plant data pulses across the entrance plane in sync with biometric LEDs.',
+//     discipline: '3D Motion',
+//     tools: 'MaxMSP - Python'
+//   },
+//   {
+//     id: 'backstage-scan',
+//     title: 'Backstage Scan',
+//     zone: 'C',
+//     poster: 'https://picsum.photos/seed/art-backstage/600/800',
+//     lqip: DEFAULT_LQIP,
+//     members: ['권민주', '최주성', '진가언', '이성민'],
+//     description: 'LiDAR sweeps rebuild the staff runway as a volumetric ghost behind the wall.',
+//     discipline: '3D Motion',
+//     tools: 'RealityCapture - Notch'
+//   },
+//   {
+//     id: 'comment-loom',
+//     title: 'Comment Loom',
+//     zone: 'B',
+//     poster: 'https://picsum.photos/seed/art-loom/600/800',
+//     lqip: DEFAULT_LQIP,
+//     members: ['명진영', '김태윤'],
+//     description: 'Live visitor notes weave into typographic threads projected along the comment bay.',
+//     discipline: 'UX/UI',
+//     tools: 'Figma - Svelte'
+//   }
+// ];
 
 
-function initArtworksPage(container) {
-  ARTWORKS_STATE.root = container;
-  ARTWORKS_STATE.grid = container.querySelector('[data-artworks-grid]');
-  ARTWORKS_STATE.filterBar = container.querySelector('[data-filter-bar]');
-  ARTWORKS_STATE.data = ARTWORKS_DATA;
-  ARTWORKS_STATE.currentZone = 'ALL';
 
-  const safe = deriveSidebarSafe();
-  container.style.setProperty('--sidebar-safe', `${safe}px`);
 
-  renderFilterBar(
-    [
-      { label: 'All', value: 'ALL' },
-      { label: 'Zone A', value: 'A' },
-      { label: 'Zone B', value: 'B' },
-      { label: 'Zone C', value: 'C' }
-    ],
-    (zone) => applyZoneFilter(zone)
-  );
 
-  renderArtworkCards(ARTWORKS_STATE.data);
-  computeColumnsByWidth(container);
+/* DB 연결 부분 */
+// === Artworks: DB에서 불러와 기존 카드 렌더 함수가 쓰는 형태로 매핑 ===
+// === DB fetch & mapping (REPLACE the partial you have) ===
+async function fetchArtworksForCards() {
+  // 1) 카드 본문용 뷰(제목/설명/멤버/도구/장르/커버)
+  const { data: cards, error: e1 } = await sb
+    .from('v_artworks_card')
+    .select('code,slug,title,description,team_name,cover_url,members,tools,genres')
+    .order('code', { ascending: true });
+  if (e1) throw e1;
 
-  let resizeFrame;
-  window.addEventListener('resize', () => {
-    cancelAnimationFrame(resizeFrame);
-    resizeFrame = requestAnimationFrame(() => {
-      const gutter = deriveSidebarSafe();
-      container.style.setProperty('--sidebar-safe', `${gutter}px`);
-      computeColumnsByWidth(container);
-    });
+  // 2) 존 매핑 (필터용) — code ↔ zone_code
+  const { data: zonesMap, error: e2 } = await sb
+    .from('zone_artworks')
+    .select('artwork_code,zone_code');
+  if (e2) throw e2;
+
+  const byCode = new Map();
+  (zonesMap || []).forEach(row => {
+    // zone_code는 'A' ~ 'J' 등 한 글자 코드로 가정
+    byCode.set(row.artwork_code, (row.zone_code || '').toUpperCase());
   });
+
+  // 3) 최종 카드용 형태로 매핑
+  return (cards || []).map(row => {
+    // members/tools/genres가 JSON 배열 또는 콤마 문자열일 수 있어 안정 변환
+    const toArray = (v) =>
+      Array.isArray(v) ? v :
+      (typeof v === 'string' && v.trim() ? v.split(/[,\u3001]/).map(s => s.trim()).filter(Boolean) : []);
+    const membersArr = toArray(row.members);
+    const toolsArr   = toArray(row.tools);
+    const genresArr  = toArray(row.genres);
+
+    return {
+      id: row.slug || row.code,
+      code: row.code,
+      slug: row.slug,
+      title: row.title,
+      description: row.description,
+      members: membersArr,
+      tools: toolsArr.join(' · '),      // 메타 줄에 간결 표시
+      discipline: genresArr.join('/'),  // 장르 합쳐서 한 줄
+      poster: row.cover_url || '',
+      lqip: DEFAULT_LQIP,
+      zone: byCode.get(row.code) || 'ALL'
+    };
+  });
+}
+
+
+// DB값을 주입
+/* === Artworks bootstrap === */
+async function initArtworksPage(root) {
+  ARTWORKS_STATE.root = root;
+  ARTWORKS_STATE.grid = root.querySelector('[data-artworks-grid]');
+  ARTWORKS_STATE.filterBar = root.querySelector('[data-filter-bar]');
+
+  try {
+    const rows = await fetchArtworksForCards();
+    ARTWORKS_STATE.data = rows;
+
+    // 필터 UI
+    const filterOpts = buildZoneFilterOptionsFromData(rows);
+    renderFilterBar(filterOpts, (z) => applyZoneFilter(z));
+
+    // 그리드 렌더
+    renderArtworkCards(rows);
+  } catch (err) {
+    console.error('[Artworks] load failed:', err);
+    ARTWORKS_STATE.grid && (ARTWORKS_STATE.grid.textContent = '작품을 불러오지 못했습니다.');
+  }
+}
+
+/* === Page attach (ADD) === */
+document.addEventListener('DOMContentLoaded', () => {
+  const artworksRoot = document.querySelector('[data-artworks-root]');
+  if (artworksRoot) initArtworksPage(artworksRoot);
+});
+
+function buildZoneFilterOptionsFromData(items) {
+  const zones = Array.from(new Set(items.map(it => it.zone).filter(Boolean)));
+  zones.sort(); // A, B, C ...
+  return [{ label: 'All', value: 'ALL' }, ...zones.map(z => ({ label: `Zone ${z}`, value: z }))];
 }
 
 function renderFilterBar(zones, onChange) {
-  if (!ARTWORKS_STATE.filterBar) { return; }
+  if (!ARTWORKS_STATE.filterBar) return;
   ARTWORKS_STATE.filterBar.innerHTML = '';
-  ARTWORKS_STATE.filterButtons = zones.map((zone, index) => {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'artworks-filter';
-    button.dataset.zoneFilter = zone.value;
-    button.textContent = zone.label;
-    if (index === 0) {
-      button.classList.add('is-active');
-    }
-    button.addEventListener('click', () => {
-      onChange(zone.value);
-    });
-    ARTWORKS_STATE.filterBar.appendChild(button);
-    return button;
+  ARTWORKS_STATE.filterButtons = zones.map(({ label, value }) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'artworks-filter';
+    btn.dataset.zone = value;
+    btn.textContent = label;
+    btn.addEventListener('click', () => onChange(value));
+    ARTWORKS_STATE.filterBar.appendChild(btn);
+    return btn;
+  });
+  // 첫 버튼 활성화
+  if (ARTWORKS_STATE.filterButtons.length) {
+    ARTWORKS_STATE.filterButtons[0].classList.add('is-active');
+  }
+}
+
+function setActiveFilter(value) {
+  ARTWORKS_STATE.filterButtons.forEach(btn => {
+    btn.classList.toggle('is-active', btn.dataset.zone === value);
   });
 }
+
+/* 카드 DOM 생성 — 스타일 클래스명은 페이지 네임스페이스에 기대어 최소화 */
+function createArtworkCard(item) {
+  const card = document.createElement('article');
+  card.className = 'artwork-card';         // ← 변경
+  card.setAttribute('data-zone', item.zone || '');
+  card.setAttribute('data-code', item.code || '');
+
+  // 포스터
+  const fig = document.createElement('figure');
+  fig.className = 'artwork-card__poster';  // ← 변경
+  const img = document.createElement('img');
+  img.alt = `${item.title} poster`;
+  img.loading = 'lazy';
+  img.decoding = 'async';
+  img.dataset.state = 'loading';
+  img.src = item.lqip || DEFAULT_LQIP;
+  hydratePoster(img, item.poster);
+  fig.appendChild(img);
+
+  // 본문
+  const body = document.createElement('div');
+  body.className = 'artwork-card__body';   // ← 변경
+
+  const ttl = document.createElement('h3');
+  ttl.className = 'artwork-card__title';   // ← 변경
+  ttl.textContent = item.title || '';
+
+  // 메타: 팀/장르/툴
+  const meta = document.createElement('div');
+  meta.className = 'artwork-card__meta';   // ← 변경
+
+  if (item.description) {
+    const desc = document.createElement('p');
+    desc.className = 'artwork-card__description';  // ← 변경
+    desc.textContent = item.description;
+    body.appendChild(desc);
+  }
+
+  // 팀원
+  const members = (item.members || []).join(', ');
+  if (members) {
+    const p = document.createElement('p');
+    p.innerHTML = `<strong>Team</strong>${members}`;
+    meta.appendChild(p);
+  }
+
+  // 장르(칩)
+  const disciplinesWrap = document.createElement('div');
+  disciplinesWrap.className = 'artwork-card__disciplines';
+  const disciplines = Array.isArray(item.discipline)
+    ? item.discipline
+    : String(item.discipline || '')
+        .split(/[;]|[\u002D\u2013\u2014]/) // 하이픈류 기준 분리
+        .map(s => s.trim()).filter(Boolean);
+  disciplines.forEach(d => {
+    const chip = document.createElement('span');
+    chip.className = 'discipline';
+    chip.textContent = d;
+    disciplinesWrap.appendChild(chip);
+  });
+  if (disciplinesWrap.childElementCount) meta.appendChild(disciplinesWrap);
+
+  // 툴(줄바꿈 리스트)
+  const tools = Array.isArray(item.tools) ? item.tools : String(item.tools || '').split(/[,\u3001]/).map(s=>s.trim()).filter(Boolean);
+  if (tools.length) {
+    const ul = document.createElement('ul');
+    ul.className = 'artwork-card__tools';
+    tools.forEach(t => {
+      const li = document.createElement('li');
+      li.textContent = t;
+      ul.appendChild(li);
+    });
+    meta.appendChild(ul);
+  }
+
+  body.prepend(ttl);
+  body.appendChild(meta);
+  card.append(fig, body);
+  return card;
+}
+
 
 function applyZoneFilter(zone) {
   ARTWORKS_STATE.currentZone = zone;
-  ARTWORKS_STATE.filterButtons.forEach((button) => {
-    const active = button.dataset.zoneFilter === zone;
-    button.classList.toggle('is-active', active);
-  });
-  const filtered = zone === 'ALL'
+  setActiveFilter(zone);
+  const filtered = (zone === 'ALL')
     ? ARTWORKS_STATE.data
-    : ARTWORKS_STATE.data.filter((item) => item.zone === zone);
+    : ARTWORKS_STATE.data.filter(it => (it.zone || '').toUpperCase() === zone.toUpperCase());
   renderArtworkCards(filtered);
-  computeColumnsByWidth();
 }
 
 function renderArtworkCards(items) {
-  if (!ARTWORKS_STATE.grid) { return; }
+  if (!ARTWORKS_STATE.grid) return;
   ARTWORKS_STATE.grid.innerHTML = '';
   const frag = document.createDocumentFragment();
-  items.forEach((item) => {
-    const card = document.createElement('article');
-    card.className = 'artwork-card';
-    card.dataset.zone = item.zone;
-
-    const poster = document.createElement('div');
-    poster.className = 'artwork-card__poster';
-    const img = document.createElement('img');
-    img.alt = `${item.title} poster`;
-    img.loading = 'lazy';
-    img.decoding = 'async';
-    img.dataset.poster = item.poster;
-    hydratePoster(img, item.lqip || DEFAULT_LQIP);
-    poster.appendChild(img);
-    card.appendChild(poster);
-
-    const body = document.createElement('div');
-    body.className = 'artwork-card__body';
-
-    const title = document.createElement('h3');
-    title.className = 'artwork-card__title';
-    title.textContent = item.title;
-    body.appendChild(title);
-
-    if (item.description) {
-      const description = document.createElement('p');
-      description.className = 'artwork-card__description';
-      // description.textContent = item.description;
-      description.textContent = `> ${item.description}`;
-      body.appendChild(description);
-    }
-
-    const meta = document.createElement('div');
-    meta.className = 'artwork-card__meta';
-
-    // Team label with count, e.g. "Team (2)"
-    if (item.members?.length) {
-      const block = document.createElement('div');
-      const label = document.createElement('strong');
-      label.textContent = `Team (${item.members.length})`; // <-- add count
-      block.appendChild(label);
-
-      // Join names with a comma and a space for readability
-      block.appendChild(document.createTextNode('- ' + item.members.join(', ')));
-      meta.appendChild(block);
-    }
-
-    // Tools label with count, e.g. "Tools (3)"
-    if (item.tools) {
-      const block = document.createElement('div');
-      const label = document.createElement('strong');
-
-      // Split text into multiple tools by comma, dash, or slash
-      const tools = String(item.tools)
-        .split(/[,/]|[\u002D\u2013\u2014]/) // -, –, —
-        .map(s => s.trim())
-        .filter(Boolean);
-
-      label.textContent = `Tools (${tools.length})`; // <-- add count
-      block.appendChild(label);
-
-      // Render one tool per line
-      const list = document.createElement('ul');
-      list.className = 'artwork-card__tools';
-      tools.forEach(t => {
-        const li = document.createElement('li');
-        li.textContent = `- ${t}`;
-        list.appendChild(li);
-      });
-
-      block.appendChild(list);
-      meta.appendChild(block);
-    }
-
-      // Tools label with count is finished above, meta still open
-
-      // --- Build disciplines as horizontal chips WITHIN meta (unified UX) ---
-      const disciplinesWrap = document.createElement('div');
-      disciplinesWrap.className = 'artwork-card__disciplines';
-
-      /* Normalize disciplines to an array:
-         - If it's already an array, use it.
-         - Else split by comma, slash, or dash variations. */
-      const disciplines = Array.isArray(item.discipline)
-        ? item.discipline
-        : String(item.discipline)
-            .split(/[;,]|[\u002D\u2013\u2014]/)   // no slash as a delimiter // -, –, —
-            .map(s => s.trim())
-            .filter(Boolean);
-
-      disciplines.forEach(d => {
-        const chip = document.createElement('span');
-        chip.className = 'discipline';
-        chip.textContent = d;
-        disciplinesWrap.appendChild(chip);
-      });
-
-      // Put disciplines inside meta so it stays visually unified with Team/Tools
-      meta.appendChild(disciplinesWrap);
-
-      // --- finalize card assembly AFTER meta is complete ---
-      body.appendChild(meta);
-      card.appendChild(body);
-      frag.appendChild(card);
-  });
+  items.forEach(it => frag.appendChild(createArtworkCard(it)));
   ARTWORKS_STATE.grid.appendChild(frag);
 }
 
@@ -2070,25 +2099,20 @@ function computeColumnsByWidth(root = ARTWORKS_STATE.root) {
   grid.style.setProperty('--art-card-width', `${clamped}px`);
 }
 
-function hydratePoster(img, lqipSrc = DEFAULT_LQIP) {
-  if (!img) { return; }
-  img.dataset.state = 'loading';
-  img.src = lqipSrc;
-  const finalSrc = img.dataset.poster;
-  if (!finalSrc) {
-    img.dataset.state = 'ready';
-    return;
-  }
-  const loader = new Image();
-  loader.decoding = 'async';
-  loader.loading = 'eager';
-  loader.src = finalSrc;
-  loader.addEventListener('load', () => {
-    img.src = finalSrc;
-    img.dataset.state = 'ready';
-  });
-  loader.addEventListener('error', () => {
-    img.dataset.state = 'ready';
+function hydratePoster(imgEl, fullSrc) {
+  if (!fullSrc) return;
+  const hi = new Image();
+  hi.loading = 'eager';
+  hi.decoding = 'async';
+  hi.src = fullSrc;
+  hi.addEventListener('load', () => {
+    // 부드럽게 치환
+    imgEl.style.transition = 'filter 300ms ease';
+    imgEl.style.filter = 'blur(4px)';
+    requestAnimationFrame(() => {
+      imgEl.src = fullSrc;
+      imgEl.style.filter = 'blur(0px)';
+    });
   });
 }
 
@@ -2129,7 +2153,7 @@ function hydratePoster(img, lqipSrc = DEFAULT_LQIP) {
   if (!stream || !form) return;
 
   // 요구 사양: C:101~111, E:112~116, F:117~125  
-// ===== DB로 대체 필요
+  // ===== DB로 대체 필요
   const ARTWORK_BY_ZONE = Object.freeze({
     C: Array.from({length:11}, (_,i)=>`C-${101+i}`),
     E: Array.from({length:5 }, (_,i)=>`E-${112+i}`),
@@ -2784,4 +2808,267 @@ function hydratePoster(img, lqipSrc = DEFAULT_LQIP) {
 
 /* ---DB 연결 시작--- */
 
+/* === 04-artworks: DB 바인딩 (ADD-ON) ================================
+   - zones     : 코드/이름 로드 → 필터 버튼 생성
+   - artworks  : v_artworks_card(있으면) 우선 사용, 없으면 기본 테이블 조합
+   - zone 필터 : zone_artworks → 코드 목록 → 카드 재조회/정렬
+   - 이 블록은 04-artworks.html 에서만 동작 (data-artworks-root 감지)
+===================================================================== */
 
+
+async function _aw_fetchZones() {
+  // zones(code,name) 기준
+  const { data, error } = await sb.from('zones').select('code,name').order('code', { ascending: true });
+  if (error) throw error;
+  // 존재하는 존만(코드 알파벳) 정제
+  return (data || []).filter(z => /^[A-Z]$/.test(z.code));
+}
+
+function _aw_renderFilterBar(root, zones, { active = 'ALL', onPick } = {}) {
+  const holder = root.querySelector('[data-filter-bar]');
+  if (!holder) return;
+  const btn = (code, label, isActive) =>
+    `<button type="button" class="artworks-filter${isActive ? ' is-active' : ''}" data-zone="${code}" aria-pressed="${isActive}">${label}</button>`;
+  const html = [
+    btn('ALL', 'All', active === 'ALL'),
+    ...zones.map(z => btn(z.code, z.code, active === z.code))
+  ].join('');
+  holder.innerHTML = html;
+  holder.addEventListener('click', (e) => {
+    const el = e.target.closest('[data-zone]');
+    if (!el) return;
+    const z = el.dataset.zone;
+    holder.querySelectorAll('[data-zone]').forEach(b => {
+      const on = b.dataset.zone === z;
+      b.classList.toggle('is-active', on);
+      b.setAttribute('aria-pressed', String(on));
+    });
+    onPick?.(z);
+  });
+}
+
+function _aw_renderCards(grid, items) {
+  if (!grid) return;
+  if (!items || !items.length) {
+    grid.innerHTML = `<p style="opacity:.7">표시할 작품이 없습니다.</p>`;
+    return;
+  }
+  grid.innerHTML = items.map(it => {
+    const cover = it.cover_url || it.poster_url || '';
+    const members = Array.isArray(it.members) ? it.members.join(', ') : (it.members || '');
+    const tools   = Array.isArray(it.tools)   ? it.tools.join(', ')   : (it.tools || '');
+    const genres  = Array.isArray(it.genres)  ? it.genres.join(', ')  : (it.genres || '');
+    const desc    = it.description || '';
+    return `
+      <article class="artwork-card" data-code="${it.code}">
+        ${cover ? `
+          <figure class="artwork-card__poster">
+            <img loading="lazy" decoding="async" src="${cover}" alt="${it.title} poster" data-state="ready">
+          </figure>` : ''
+        }
+        <div class="artwork-card__body">
+          <h3 class="artwork-card__title">${it.title || it.code}</h3>
+          ${desc ? `<p class="artwork-card__description">${desc}</p>` : ''}
+          <div class="artwork-card__meta">
+            ${members ? `<p><strong>Team</strong>${members}</p>` : ''}
+            ${genres  ? `<div class="artwork-card__disciplines">${genres.split(',').map(g=>`<span class="discipline">${g.trim()}</span>`).join('')}</div>` : ''}
+            ${tools   ? `<ul class="artwork-card__tools">${tools.split(',').map(t=>`<li>${t.trim()}</li>`).join('')}</ul>` : ''}
+          </div>
+        </div>
+      </article>`;
+  }).join('');
+}
+
+async function _aw_fetchCardsView_all() {
+  // 뷰가 존재하면 한 번에 가져오기
+  const { data, error } = await sb.from('v_artworks_card').select('*').order('code', { ascending: true });
+  if (error) throw error;
+  return data || [];
+}
+
+async function _aw_fetchCardsView_inCodes(codes) {
+  const { data, error } = await sb
+    .from('v_artworks_card')
+    .select('*')
+    .in('code', codes)
+    .order('code', { ascending: true });
+  if (error) throw error;
+  return data || [];
+}
+
+async function _aw_fetchCardsAssemble_all() {
+  // 뷰가 없을 때: 기본 테이블로 조합
+  const [{ data: artworks, error: e1 }, { data: covers, error: e2 }] = await Promise.all([
+    sb.from('artworks').select('code,title,description,slug').order('code', { ascending: true }),
+    sb.from('media_assets').select('artwork_code,type,public_url,ord').in('type', ['cover','poster']).order('ord', { ascending: true })
+  ]);
+  if (e1 || e2) throw (e1 || e2);
+  const coverByCode = new Map();
+  (covers || []).forEach(a => { if (!coverByCode.has(a.artwork_code)) coverByCode.set(a.artwork_code, a.public_url); });
+
+  // 멤버, 도구, 장르 조인
+  const [membersRes, toolsRes, genresRes] = await Promise.all([
+    sb.from('artwork_members').select('artwork_code, persons:person_id(name)').order('artwork_code'),
+    sb.from('artwork_tools').select('artwork_code, tools:tool_id(name)').order('artwork_code'),
+    sb.from('artwork_genres').select('artwork_code, genres:genre_id(name)').order('artwork_code')
+  ]);
+  if (membersRes.error || toolsRes.error || genresRes.error) {
+    throw (membersRes.error || toolsRes.error || genresRes.error);
+  }
+  const memMap = new Map();
+  (membersRes.data || []).forEach(r => {
+    const key = r.artwork_code; const n = r.persons?.name; if (!n) return;
+    if (!memMap.has(key)) memMap.set(key, []);
+    memMap.get(key).push(n);
+  });
+  const toolMap = new Map();
+  (toolsRes.data || []).forEach(r => {
+    const key = r.artwork_code; const n = r.tools?.name; if (!n) return;
+    if (!toolMap.has(key)) toolMap.set(key, []);
+    toolMap.get(key).push(n);
+  });
+  const genMap = new Map();
+  (genresRes.data || []).forEach(r => {
+    const key = r.artwork_code; const n = r.genres?.name; if (!n) return;
+    if (!genMap.has(key)) genMap.set(key, []);
+    genMap.get(key).push(n);
+  });
+
+  return (artworks || []).map(a => ({
+    code: a.code,
+    title: a.title,
+    description: a.description,
+    cover_url: coverByCode.get(a.code) || null,
+    members: memMap.get(a.code) || [],
+    tools:   toolMap.get(a.code) || [],
+    genres:  genMap.get(a.code) || []
+  }));
+}
+
+async function _aw_fetchCodesByZone(zoneCode) {
+  const { data, error } = await sb
+    .from('zone_artworks')
+    .select('artwork_code, position')
+    .eq('zone_code', zoneCode)
+    .order('position', { ascending: true });
+  if (error) throw error;
+  return (data || []).map(r => r.artwork_code);
+}
+
+async function _aw_fetchAllCards_withFallback() {
+  try {
+    return await _aw_fetchCardsView_all();
+  } catch {
+    // 뷰 미존재/권한 문제 등 → 조합 모드로 폴백
+    return await _aw_fetchCardsAssemble_all();
+  }
+}
+
+async function _aw_fetchCardsByCodes_withFallback(codes) {
+  if (!codes || !codes.length) return [];
+  try {
+    return await _aw_fetchCardsView_inCodes(codes);
+  } catch {
+    // 조합 모드: 전체를 한번 만든 뒤, 필요한 코드만 필터
+    const all = await _aw_fetchCardsAssemble_all();
+    const order = new Map(codes.map((c, i) => [c, i]));
+    return all.filter(x => order.has(x.code)).sort((a, b) => order.get(a.code) - order.get(b.code));
+  }
+}
+
+// async function initArtworksPageDB(root = document) {
+//   const pageRoot = root.querySelector('[data-artworks-root]');
+//   if (!pageRoot) return; // 다른 페이지에서는 미동작
+
+//   const grid = pageRoot.querySelector('[data-artworks-grid]');
+//   const filterBar = pageRoot.querySelector('[data-filter-bar]');
+//   if (!grid || !filterBar) return;
+
+//   // 1) 존 목록 로드 → 필터 생성
+//   let zones = [];
+//   try {
+//     zones = await _aw_fetchZones();
+//   } catch (e) {
+//     console.error('[Artworks] zones fetch failed:', e);
+//   }
+//   _aw_renderFilterBar(pageRoot, zones, {
+//     active: 'ALL',
+//     onPick: async (zone) => {
+//       try {
+//         if (zone === 'ALL') {
+//           const all = await _aw_fetchAllCards_withFallback();
+//           _aw_renderCards(grid, all);
+//         } else {
+//           const codes = await _aw_fetchCodesByZone(zone);
+//           const list = await _aw_fetchCardsByCodes_withFallback(codes);
+//           _aw_renderCards(grid, list);
+//         }
+//       } catch (e) {
+//         console.error('[Artworks] filter apply failed:', e);
+//         _aw_renderCards(grid, []);
+//       }
+//     }
+//   });
+
+//   // 2) 초기 전체 카드 로드
+//   try {
+//     const all = await _aw_fetchAllCards_withFallback();
+//     _aw_renderCards(grid, all);
+//   } catch (e) {
+//     console.error('[Artworks] initial load failed:', e);
+//     _aw_renderCards(grid, []);
+//   }
+// }
+
+// // 페이지 감지 후 자동 실행 (04-artworks.html 만)
+// (() => {
+//   const root = document.querySelector('[data-artworks-root]');
+//   if (root) { initArtworksPageDB(document); }
+// })();
+
+
+
+/* === 01-wall: hydrate existing plan-card from DB === */
+async function loadArtworksMap() {
+  const { data, error } = await sb
+    .from('v_artworks_card')
+    .select('code,slug,title,cover_url');
+  if (error) throw error;
+  const map = new Map();
+  (data || []).forEach(r => {
+    const key = (r.slug || r.code || '').toString().toLowerCase();
+    map.set(key, { title: r.title, cover: r.cover_url });
+  });
+  return map;
+}
+
+async function initWallFromDB() {
+  if (!document.body.classList.contains('page-wall')) return;
+  try {
+    const map = await loadArtworksMap();
+    document.querySelectorAll('.plan-card').forEach(card => {
+      const key = (card.dataset.artwork || '').toLowerCase();
+      const hit = map.get(key);
+      if (!hit) return;
+
+      // 제목
+      const name = card.querySelector('.plan-card__name');
+      if (name && hit.title) name.textContent = hit.title;
+
+      // 라벨은 유지, 포스터 이미지는 hover bubble 대신 미리보기 박스에 백그라운드로
+      const photo = card.querySelector('.plan-card__photo');
+      if (photo && hit.cover) {
+        photo.style.backgroundImage = `url("${hit.cover}")`;
+        photo.style.backgroundSize = 'cover';
+        photo.style.backgroundPosition = 'center';
+        photo.style.border = 'none';
+      }
+    });
+  } catch (e) {
+    console.warn('[Wall] hydrate failed', e);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  initWallFromDB();
+});

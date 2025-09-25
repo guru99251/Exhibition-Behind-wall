@@ -2930,3 +2930,50 @@ body.page-artworks::-webkit-scrollbar {
   width: 1500px;
 }
 
+
+
+/* === Artworks: 카드 포스터 영역을 고정 비율 + 중앙 정렬로 */
+.artwork-card__poster {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 4;          /* 카드 비율 고정 */
+  display: grid;                /* 중앙 배치용 */
+  place-items: center;          /* 이미지 중앙 정렬 */
+  overflow: hidden;             /* 넘치는 영역 숨김 */
+  background: rgba(30, 41, 59, 0.6);
+}
+
+/* 기본값: Fit (크롭 없이 카드 안에 맞춤) */
+.artwork-card__poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;          /* ← 핵심: 크롭 없이 맞추기 */
+  object-position: center center;
+  display: block;
+  filter: saturate(102%);
+  transition: opacity 0.4s ease;
+}
+
+/* 로딩 상태 투명도(기존 유지) */
+.artwork-card__poster img[data-state="loading"] {
+  opacity: 0.25;
+}
+
+/* 필요 시 ‘가득 채우기(크롭 허용)’ 모드가 좋다면 이 클래스만 카드에 추가 */
+.artwork-card__poster.--cover img {
+  object-fit: cover;            /* 포스터 꽉 채우기(일부 크롭) */
+}
+
+/* 카드 포스터 고정 비율 + cover */
+.artwork-card__poster {
+  position: relative;
+  aspect-ratio: 3 / 4;        /* 카드 비율 통일 */
+  overflow: hidden;
+  background: #111;
+}
+.artwork-card__poster > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;          /* 이미지 꽉 채우되 비율 유지 */
+  display: block;
+}
