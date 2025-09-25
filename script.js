@@ -1231,12 +1231,14 @@ function deriveSidebarSafe() {
 
 function initCommentPage(container) {
   COMMENT_STATE.root = container;
+  const fallbackStream = container.querySelector('[data-livechat-stream]');
   COMMENT_STATE.streams = {
-    A: container.querySelector('[data-comment-stream="A"]'),
-    B: container.querySelector('[data-comment-stream="B"]'),
-    C: container.querySelector('[data-comment-stream="C"]'),
-    ALL: container.querySelector('[data-comment-stream="ALL"]')
+    A: container.querySelector('[data-comment-stream="A"]') || fallbackStream,
+    B: container.querySelector('[data-comment-stream="B"]') || fallbackStream,
+    C: container.querySelector('[data-comment-stream="C"]') || fallbackStream,
+    ALL: container.querySelector('[data-comment-stream="ALL"]') || fallbackStream
   };
+
 
   const safe = deriveSidebarSafe();
   container.style.setProperty('--sidebar-safe', `${safe}px`);
@@ -1284,6 +1286,57 @@ function initCommentPage(container) {
   retry?.addEventListener('click', () => {
     updateConnectionBadge('connecting');
     COMMENT_STATE.connection?.reconnect?.();
+  });
+
+  // 좋아요 클릭 → DB 반영(낙관적 UI + 리얼타임으로 확정 동기화)
+  container.addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-like-btn]');
+    if (!btn) return;
+
+    const commentId = btn.dataset.id; // 반드시 comments.id(=uuid/bigint)와 동일한 값이어야 함
+    if (!commentId) return;
+
+    // 낙관적 UI
+    const before = parseInt(btn.textContent.replace(/[^\d]/g, ''), 10) || 0;
+    btn.textContent = `♥ ${before + 1}`;
+
+    // 2) DB 반영 (페이지 클라이언트와 동일 인스턴스 사용)
+    try {
+      const client = (COMMENT_STATE.connection && COMMENT_STATE.connection.supabase) || window.sb;
+      if (!client) throw new Error('Supabase client not initialized');
+      const { error } = await client
+        .from('comment_reactions')
+        .insert([{ comment_id: commentId, emoji: '♥', count: 1 }]);
+
+      if (error) {
+        console.error('[Like][INSERT ERROR]', error);
+        // 실패 시 롤백(선택)
+        btn.textContent = `♥ ${before}`;
+      }
+    } catch (err) {
+      console.error('[Like][EXCEPTION]', err);
+      btn.textContent = `♥ ${before}`; // 롤백(선택)
+    }
+  });
+
+  // 작성 모달 컴포저: 열기/닫기 폴백 + 현재 필터 연동, open/close 핸들러 보강
+  openBtn?.addEventListener('click', () => {
+    modal?.setAttribute('aria-hidden', 'false');
+    modal?.classList.add('is-open');
+    // 현재 필터 → 컴포저에 반영
+    const z = (container.querySelector('[data-filter-zone]')?.value || '').toUpperCase();
+    if (selZone) { selZone.value = z; }
+    if (selCode) {
+      // 구역에 맞춰 코드 옵션 구성
+      setComposerCodeOptions(z);
+    }
+  });
+
+  closeEls.forEach((el) => {
+    el.addEventListener('click', () => {
+      modal?.setAttribute('aria-hidden', 'true');
+      modal?.classList.remove('is-open');
+    });
   });
 }
 
@@ -1418,7 +1471,7 @@ function setupSupabaseRealtime(container) {
         .from('v_comment_feed')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(30);
+        .limit(400);
       if (!error && Array.isArray(data)) {
         data.forEach((row) => handleIncomingComment(mapFeedRowToPayload(row)));
       }
@@ -1660,8 +1713,11 @@ function renderColumn(zone, items) {
 function renderCommentCard(item) {
   const card = document.createElement('article');
   card.className = 'comment-card';
+  card.className = 'comment-card';
   card.dataset.id = item.id;
   card.dataset.hasArtwork = item.artwork ? 'true' : 'false';
+  card.dataset.zone = (Array.isArray(item.zones) && item.zones[0]) ? String(item.zones[0]).toUpperCase() : 'ALL';
+  if (item.artwork?.code) { card.dataset.code = item.artwork.code; }
 
   const body = document.createElement('div');
   body.className = 'comment-card__body';
@@ -1705,6 +1761,8 @@ function renderCommentCard(item) {
   if (item.reactions) {
     const reactions = document.createElement('div');
     reactions.className = 'comment-card__reactions';
+    
+    // 이모지 버블
     if (item.reactions.emojis) {
       Object.entries(item.reactions.emojis).forEach(([emoji, count]) => {
         const bubble = document.createElement('span');
@@ -1714,13 +1772,19 @@ function renderCommentCard(item) {
         reactions.appendChild(bubble);
       });
     }
-    if (typeof item.reactions.likes === 'number') {
-      const like = document.createElement('span');
-      like.className = 'comment-card__reaction';
-      like.dataset.type = 'like';
-      like.textContent = `??${item.reactions.likes}`;
-      reactions.appendChild(like);
-    }
+    
+    // 좋아요 버튼(실시간 반영 대상)
+    const likeCount = Number(item.reactions.likes || 0);
+    const likeBtn = document.createElement('button');
+    likeBtn.type = 'button';
+    likeBtn.className = 'comment-card__reaction';
+    likeBtn.dataset.type = 'like';
+    likeBtn.dataset.likeBtn = 'true';
+    likeBtn.dataset.id = item.id;
+    likeBtn.setAttribute('aria-label', '좋아요');
+    likeBtn.textContent = `♥ ${likeCount}`;
+    reactions.appendChild(likeBtn);
+
     if (reactions.children.length) {
       body.appendChild(reactions);
     }
@@ -3022,10 +3086,15 @@ function hydratePoster(imgEl, fullSrc) {
         const art = payload.code ? Number(payload.code) : null;
 
         const { data, error } = await sb.rpc('add_comment', {
-          p_text: payload.message,
-          p_zones: z,
-          p_artwork_code: art,
-          p_emojis: payload.emojis || []
+          payload: {
+            id: payload.id,                 // optional: 중복 방지
+            text: payload.message,
+            zones: z,                       // ['A'] 또는 ['ALL']
+            artwork_code: art,              // 숫자 or null
+            reactions: Object.fromEntries(  // 이모지를 { "👏":1, ... }로 변환
+              (payload.emojis || []).map(e => [e, 1])
+            )
+          }
         });
 
         if (error) {
@@ -3042,6 +3111,21 @@ function hydratePoster(imgEl, fullSrc) {
       }
     } catch (e) {
       console.error('[Supabase] add_comment exception:', e);
+      // 폴백 예시: comments → zones(선택) 순서로 직접 insert
+      const client = COMMENT_STATE.connection?.supabase;
+      const { data: inserted, error: e1 } = await client
+        .from('comments')
+        .insert([{ text, author_name, author_dept, author_sid, artwork_code }])
+        .select('id')
+        .single();
+      if (e1) throw e1;
+      const id = inserted.id;
+      if (Array.isArray(selectedZones) && selectedZones.length) {
+        const rows = selectedZones.map(z => ({ comment_id: id, zone_code: z }));
+        const { error: e2 } = await client.from('comment_zones').insert(rows);
+        if (e2) throw e2;
+      }
+
     }
 
 
