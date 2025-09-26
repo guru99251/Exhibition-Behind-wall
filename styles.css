@@ -2161,6 +2161,8 @@ body.page-artworks::-webkit-scrollbar {
 .livechat-head .sort-control {
   margin-left: auto;
   flex: 0 0 auto;
+  position: absolute;
+  right: 0rem;
 }
 
 .livechat-stream {

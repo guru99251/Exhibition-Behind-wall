@@ -2263,91 +2263,6 @@ function uniq(arr) {
   return out;
 }
 
-// // ===== DB로 대체 필요
-// const ARTWORKS_DATA = [
-//   {
-//     id: 'spectral-loop',
-//     title: 'Spectral Loop',
-//     zone: 'A',
-//     poster: 'https://picsum.photos/seed/art-spectral/600/800',
-//     lqip: DEFAULT_LQIP,
-//     members: ['김은수', '한지수', '명진영', '김태윤', '최주성'],
-//     description: 'Time gradient pulses translate annotated sensor logs into the main projection spine.',
-//     discipline: '2D Motion',
-//     tools: 'TouchDesigner - After Effects'
-//   },
-//   {
-//     id: 'memory-patch',
-//     title: 'Memory Patch',
-//     zone: 'B',
-//     poster: 'https://picsum.photos/seed/art-memory/600/800',
-//     lqip: DEFAULT_LQIP,
-//     members: ['권준서', '정재희'],
-//     description: 'Visitors stitch their favourite wall moments into an evolving stitched mural.',
-//     discipline: '3D Modeling',
-//     tools: 'Unity - Arduino'
-//   },
-//   {
-//     id: 'tidal-dream',
-//     title: 'Tidal Dream',
-//     zone: 'B',
-//     poster: 'https://picsum.photos/seed/art-tidal/600/800',
-//     lqip: DEFAULT_LQIP,
-//     members: ['최주성', '이시현'],
-//     description: 'Layered foam shaders respond to live comment sentiment and ripple along the corridor.',
-//     discipline: 'Game',
-//     tools: 'Unreal Engine - Houdini'
-//   },
-//   {
-//     id: 'orbital-city',
-//     title: 'Orbital City',
-//     zone: 'C',
-//     poster: 'https://picsum.photos/seed/art-orbital/600/800',
-//     lqip: DEFAULT_LQIP,
-//     members: ['김채영', '권민주'],
-//     description: 'City-scale choropleths orbit the backstage glass and echo the skyline finale.',
-//     discipline: 'UX/UI',
-//     tools: 'Blender - Substance Painter'
-//   },
-//   {
-//     id: 'flora-signal',
-//     title: 'Flora Signal',
-//     zone: 'A',
-//     poster: 'https://picsum.photos/seed/art-flora/600/800',
-//     lqip: DEFAULT_LQIP,
-//     members: ['박지영', '권미진'],
-//     description: 'Real-time plant data pulses across the entrance plane in sync with biometric LEDs.',
-//     discipline: '3D Motion',
-//     tools: 'MaxMSP - Python'
-//   },
-//   {
-//     id: 'backstage-scan',
-//     title: 'Backstage Scan',
-//     zone: 'C',
-//     poster: 'https://picsum.photos/seed/art-backstage/600/800',
-//     lqip: DEFAULT_LQIP,
-//     members: ['권민주', '최주성', '진가언', '이성민'],
-//     description: 'LiDAR sweeps rebuild the staff runway as a volumetric ghost behind the wall.',
-//     discipline: '3D Motion',
-//     tools: 'RealityCapture - Notch'
-//   },
-//   {
-//     id: 'comment-loom',
-//     title: 'Comment Loom',
-//     zone: 'B',
-//     poster: 'https://picsum.photos/seed/art-loom/600/800',
-//     lqip: DEFAULT_LQIP,
-//     members: ['명진영', '김태윤'],
-//     description: 'Live visitor notes weave into typographic threads projected along the comment bay.',
-//     discipline: 'UX/UI',
-//     tools: 'Figma - Svelte'
-//   }
-// ];
-
-
-
-
-
 /* DB 연결 부분 */
 // === Artworks: DB에서 불러와 기존 카드 렌더 함수가 쓰는 형태로 매핑 ===
 // === DB fetch & mapping (REPLACE the partial you have) ===
@@ -2808,7 +2723,7 @@ function setComposerCodeOptions(zone) {
   // 모달: 코드 선택 → 구역 자동 반영
   selCode?.addEventListener('change', () => {
     const v = selCode.value || '';
-    const m = v.match(/^([A-J])-/i); // 전시구역 범위
+    const m = v.match(/^([A-J])-/i);
     if (m && selZone) {
       const z = m[1].toUpperCase();
       selZone.value = z;
@@ -3147,6 +3062,161 @@ function setComposerCodeOptions(zone) {
 
   // [02-comment] 퀵픽(이모지/자동문구) 동작
   const selectedEmojis = new Set();
+  const VALID_ZONE_CODES = new Set(['A','B','C','D','E','F','G','H','I','J']);
+  function normalizeZoneValue(value) {
+    if (!value) { return null; }
+    const zone = String(value).trim().toUpperCase();
+    return VALID_ZONE_CODES.has(zone) ? zone : null;
+  }
+
+  function deriveArtworkCode(value) {
+    const numeric = Number(value);
+    return Number.isInteger(numeric) ? numeric : null;
+  }
+
+  function getSupabaseClient() {
+    return COMMENT_STATE.connection?.supabase || window.sb || null;
+  }
+
+  function buildReactionMap(emojis) {
+    if (!Array.isArray(emojis) || !emojis.length) { return {}; }
+    const entries = [];
+    emojis.forEach((emoji) => {
+      const key = String(emoji || '').trim();
+      if (key) { entries.push([key, 1]); }
+    });
+
+    return Object.fromEntries(entries);
+  }
+
+  async function sendCommentViaRpc(client, payload, zonesForRpc, artworkCode, reactionMap) {
+    try {
+      const { data, error } = await client.rpc('add_comment', {
+        payload: {
+          id: payload.id,
+          text: payload.message,
+          zones: zonesForRpc,
+          artwork_code: artworkCode,
+          reactions: reactionMap
+        }
+      });
+
+      if (error) {
+        console.error('[Supabase] add_comment error:', error);
+        return { success: false, error };
+      }
+      return { success: true, data };
+    } catch (err) {
+      console.error('[Supabase] add_comment exception:', err);
+      return { success: false, error: err };
+    }
+  }
+
+  async function insertCommentDirect(client, payload, normalizedZones, artworkCode, reactionMap) {
+    const baseRow = {
+      external_id: payload.id,
+      text: payload.message,
+      artwork_code: artworkCode
+    };
+
+    const inserted = await client
+      .from('comments')
+      .insert(baseRow)
+      .select('id')
+      .single();
+
+    let commentId = inserted.data?.id || null;
+    if (inserted.error) {
+      const err = inserted.error;
+      if (err.code === '23505') {
+        const existing = await client
+          .from('comments')
+          .select('id')
+          .eq('external_id', payload.id)
+          .single();
+        if (existing.error) { throw existing.error; }
+        commentId = existing.data?.id || null;
+      } else {
+        throw err;
+      }
+    }
+
+    if (!commentId) {
+      throw new Error('Failed to resolve comment id after insert');
+    }
+
+    if (normalizedZones.length) {
+      const zoneRows = normalizedZones.map((zone) => ({
+        comment_id: commentId,
+        zone_code: zone,
+        artwork_code: artworkCode
+      }));
+
+      const { error: zoneError } = await client
+        .from('comment_zones')
+        .upsert(zoneRows, { onConflict: 'comment_id,zone_code' });
+      if (zoneError && zoneError.code !== '23505') {
+        throw zoneError;
+      }
+    }
+
+    const reactionKeys = Object.keys(reactionMap || {});
+    if (reactionKeys.length) {
+      const reactionRows = reactionKeys.map((key) => ({
+        comment_id: commentId,
+        emoji: key,
+        count: reactionMap[key]
+      }));
+      const { error: reactionError } = await client
+        .from('comment_reactions')
+        .upsert(reactionRows, { onConflict: 'comment_id,emoji' });
+      if (reactionError && reactionError.code !== '23505') {
+        throw reactionError;
+      }
+    }
+    return { success: true, commentId };
+  }
+
+
+  async function ensureCommentMetadata(client, externalId, normalizedZones, artworkCode) {
+    try {
+      const { data: existing, error } = await client
+        .from('comments')
+        .select('id, artwork_code')
+        .eq('external_id', externalId)
+        .single();
+      if (error || !existing) { return; }
+      const commentId = existing.id;
+
+      if ((artworkCode ?? null) !== (existing.artwork_code ?? null)) {
+        const { error: updateError } = await client
+          .from('comments')
+          .update({ artwork_code: artworkCode })
+          .eq('id', commentId);
+        if (updateError) {
+          console.warn('[Supabase] comment artwork update failed:', updateError);
+        }
+      }
+
+      if (normalizedZones.length) {
+        const zoneRows = normalizedZones.map((zone) => ({
+          comment_id: commentId,
+          zone_code: zone,
+          artwork_code: artworkCode
+        }));
+
+        const { error: zoneError } = await client
+          .from('comment_zones')
+          .upsert(zoneRows, { onConflict: 'comment_id,zone_code' });
+        if (zoneError) {
+          console.warn('[Supabase] comment_zones sync error:', zoneError);
+        }
+      }
+    } catch (err) {
+      console.warn('[Supabase] ensure metadata exception:', err);
+    }
+  }
+
 
   form?.addEventListener('click', (e) => {
     const t = e.target;
@@ -3178,9 +3248,10 @@ function setComposerCodeOptions(zone) {
   // [02-comment] 전송: 이모지 포함, 초기화 보강
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
+
     const fd = new FormData(form);
     const msg = (fd.get('message') || '').toString().trim();
-    if (!msg) return;
+    if (!msg) { return; }
 
     const payload = {
       id: crypto.randomUUID(),
@@ -3193,74 +3264,46 @@ function setComposerCodeOptions(zone) {
     };
     prependRow(payload);
 
-    // [ADD] Supabase RPC로 DB에 저장 (익명)
-    try {
-      const rootEl = document.querySelector('[data-comment-root]');
-      const hasSupabase = !!(rootEl?.dataset.supabaseUrl && rootEl?.dataset.supabaseKey && window.supabase?.createClient);
-
-      if (hasSupabase && COMMENT_STATE?.connection?.supabase) {
-        const sb = COMMENT_STATE.connection.supabase;
-
-        // zones: 단일 선택이면 배열로, 미선택이면 ['ALL']
-        const z = payload.zone && /^[A-Z]$/.test(payload.zone) ? [payload.zone] : ['ALL'];
-
-        /* 변경 전 */
-        // artwork_code: 숫자 or null
-        // const art = payload.code ? String(Number(payload.code)) : null;
-
-        /* 변경 후 */
-        const artNum = Number(payload.code);
-        const art = Number.isFinite(artNum) ? artNum : null;
-
-        const { data, error } = await sb.rpc('add_comment', {
-          payload: {
-            id: payload.id,                 // optional: 중복 방지
-            text: payload.message,
-            zones: z,                       // ['A'] 또는 ['ALL']
-            artwork_code: art,              // 숫자 or null
-            reactions: Object.fromEntries(  // 이모지를 { "👏":1, ... }로 변환
-              (payload.emojis || []).map(e => [e, 1])
-            )
-          }
-        });
-
-        if (error) {
-          console.error('[Supabase] add_comment error:', error);
-          // 실패 시에도 UI는 유지하되 배지로 오프라인 표시
-          updateConnectionBadge('offline');
-        } else {
-          // 성공: 서버가 생성한 공식 row가 Realtime으로 곧바로 push됨
-          // (지금은 낙관적 UI로 이미 prepend 했으므로 추가 작업 불필요)
-          updateConnectionBadge('online');
+    const client = getSupabaseClient();
+    if (client) {
+      const normalizedZone = normalizeZoneValue(payload.zone);
+      const normalizedZones = normalizedZone ? [normalizedZone] : [];
+      const artworkCode = deriveArtworkCode(payload.code);
+      const reactionMap = buildReactionMap(payload.emojis);
+      const zonesForRpc = normalizedZones.length ? normalizedZones : ['ALL'];
+      let persisted = false;
+      const rpcOutcome = await sendCommentViaRpc(client, payload, zonesForRpc, artworkCode, reactionMap);
+      persisted = rpcOutcome.success;
+      if (!persisted) {
+        try {
+          const fallbackOutcome = await insertCommentDirect(client, payload, normalizedZones, artworkCode, reactionMap);
+          persisted = fallbackOutcome.success;
+        } catch (err) {
+          console.error('[Supabase] manual comment insert failed:', err);
         }
+      }
+
+      if (persisted) {
+        await ensureCommentMetadata(client, payload.id, normalizedZones, artworkCode);
+        updateConnectionBadge('online')
       } else {
-        // Supabase 환경이 아니면 기존 WS 경로 시도(이미 존재)
+        updateConnectionBadge('offline');
       }
-    } catch (e) {
-      console.error('[Supabase] add_comment exception:', e);
-      // 폴백 예시: comments → zones(선택) 순서로 직접 insert
-      const client = COMMENT_STATE.connection?.supabase;
-      const { data: inserted, error: e1 } = await client
-        .from('comments')
-        .insert([{ text, author_name, author_dept, author_sid, artwork_code }])
-        .select('id')
-        .single();
-      if (e1) throw e1;
-      const id = inserted.id;
-      if (Array.isArray(selectedZones) && selectedZones.length) {
-        const rows = selectedZones.map(z => ({ comment_id: id, zone_code: z }));
-        const { error: e2 } = await client.from('comment_zones').insert(rows);
-        if (e2) throw e2;
-      }
+    } else {
+      console.warn('[Supabase] client unavailable; comment stored locally only.');
     }
 
-    try { if (ws?.readyState === 1) ws.send(JSON.stringify(payload)); } catch (_) {}
-
+    try {
+      if (ws?.readyState === 1) { ws.send(JSON.stringify(payload)); }
+    } catch (_) {
+      /* noop */
+    }
     closeModal();
     form.reset();
     selectedEmojis.clear();
-    form.querySelectorAll('.emoji.is-selected').forEach(btn => btn.classList.remove('is-selected'));
+    form.querySelectorAll('.emoji.is-selected').forEach((btn) => btn.classList.remove('is-selected'));
   });
+
 })();
 
 /* === 04-artworks: DB 바인딩 (ADD-ON) ================================
