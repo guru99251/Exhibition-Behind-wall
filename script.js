@@ -263,7 +263,7 @@ class Pixel {
 }
 
 const canvas = document.createElement("canvas");
-// page-wall?먯꽌??紐⑥옄?댄겕 ?뚮뜑 ?먯껜瑜?留됱쓬
+// page-wall에서는 모자이크 캔버스를 표시하지 않음
 const container = document.body.classList.contains('page-wall') ? null : document.querySelector('#mosaic');
 if (container) { container.append(canvas); }
 
@@ -1270,12 +1270,20 @@ function initCommentPage(container) {
   container.dataset.commentInit = '1';
   COMMENT_STATE.root = container;
   const fallbackStream = container.querySelector('[data-livechat-stream]');
-  COMMENT_STATE.streams = {
-    A: container.querySelector('[data-comment-stream="A"]') || fallbackStream,
-    B: container.querySelector('[data-comment-stream="B"]') || fallbackStream,
-    C: container.querySelector('[data-comment-stream="C"]') || fallbackStream,
-    ALL: container.querySelector('[data-comment-stream="ALL"]') || fallbackStream
-  };
+  const dynamicStreams = Object.fromEntries(
+    Array.from(container.querySelectorAll('[data-comment-stream]')).map((el) => {
+      const zoneAttr = (el.dataset.commentStream || '').toUpperCase();
+      const key = zoneAttr || 'ALL';
+      return [key, el];
+    })
+  );
+  if (fallbackStream) {
+    if (!dynamicStreams.ALL) {
+      dynamicStreams.ALL = fallbackStream;
+    }
+    dynamicStreams.__default = fallbackStream;
+  }
+  COMMENT_STATE.streams = dynamicStreams;
 
   // 컴포저/버튼/폼 노드 스코프를 이 함수 안에서 정의
   const openBtn       = container.querySelector('[data-open-composer]');
@@ -1366,7 +1374,8 @@ function initCommentPage(container) {
   });
 
   updateConnectionBadge('connecting');
-  COMMENT_STATE.store = { A: [], B: [], C: [], ALL: [] };
+  COMMENT_STATE.store = Object.create(null);
+  COMMENT_STATE.store.ALL = [];
   COMMENT_STATE.likeTracker = new Map();
 
   // 데모 데이터는 실제 연결(Realtime/WS)이 없을 때만 주입
@@ -1511,9 +1520,12 @@ function handleIncomingComment(raw) {
   normalized.likes = tracker.server + tracker.pending;
 
   // 2) 목적지 컬럼들(A/B/C/ALL)에 삽입 + 렌더
-  const targets = Array.isArray(normalized.zones) && normalized.zones.length
-    ? normalized.zones.map(z => String(z).toUpperCase())
-    : [ (typeof normalized.zone === 'string' ? normalized.zone.toUpperCase() : 'ALL') ];
+  const zoneCandidates = Array.isArray(normalized.zones) && normalized.zones.length
+    ? normalized.zones
+    : [ (typeof normalized.zone === 'string' ? normalized.zone : 'ALL') ];
+  const targets = Array.from(new Set(
+    zoneCandidates.map((z) => String(z || 'ALL').toUpperCase()).concat('ALL')
+  ));
 
   targets.forEach((zone) => {
     const updated = upsertMessage(COMMENT_STATE.store, zone, normalized);
@@ -1642,7 +1654,11 @@ function setupSupabaseRealtime(container) {
             emojis: []
           };
           // ALL/A/B/C 어느 컬럼에 있을지 몰라서 모두 갱신 시도(존재하는 곳만 반응)
-          ['ALL', 'A', 'B', 'C'].forEach(z => patchRow(z, item));
+          const patchTargets = Object.keys(COMMENT_STATE.store || {});
+          if (!patchTargets.includes('ALL')) {
+            patchTargets.push('ALL');
+          }
+          patchTargets.forEach((zoneKey) => patchRow(zoneKey, item));
           return;
         }
         // 이 외 변화(신규 코멘트 등)는 원래대로 fetch → 단건 emit
@@ -1966,7 +1982,8 @@ function renderRow(item) {
 }
 
 function renderColumn(zone, items) {
-  const target = COMMENT_STATE.streams[zone];
+  const streams = COMMENT_STATE.streams || {};
+  const target = streams[zone] || streams.ALL || streams.__default;
   if (!target) { return; }
   const frag = document.createDocumentFragment();
   items.forEach((item) => {
