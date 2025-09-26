@@ -1340,36 +1340,28 @@ function initCommentPage(container) {
       //   .insert([{ comment_id: commentId, emoji: 'like', count: 1 }]);
 
       /* 변경 후 */
+// ✅ REPLACE this whole RPC block in the like click handler
       const { data, error } = await client.rpc('increment_like', {
         p_comment_id: commentId,
-        p_actor_hash: null, // 지금은 필요 없으므로 null
+        p_actor_hash: null,
       });
 
       if (error) {
+        // 실패하면 낙관적 증가 롤백
         tracker.pending = Math.max(0, tracker.pending - 1);
         updateLikeDisplays(commentId);
         console.error('[Like][RPC ERROR]', error);
         return;
       }
 
-      // 최신 카운트 서버 동기화
-      const latest = data?.[0]?.new_count ?? null;
-      if (latest != null) {
-        tracker.pending = 0;
+      // 서버 최신 카운트로 동기화
+      const latest = data?.[0]?.new_count;
+      if (Number.isFinite(latest)) {
         tracker.server = latest;
+        tracker.pending = 0;
         updateLikeDisplays(commentId);
       }
 
-      if (error) {
-        tracker.pending = Math.max(0, tracker.pending - 1);
-        updateLikeDisplays(commentId);
-        console.error('[Like][INSERT ERROR]', error);
-        return;
-      }
-
-      tracker.pending = Math.max(0, tracker.pending - 1);
-      tracker.server += 1;
-      updateLikeDisplays(commentId);
     } catch (err) {
       tracker.pending = Math.max(0, tracker.pending - 1);
       updateLikeDisplays(commentId);
@@ -1559,14 +1551,38 @@ function setupSupabaseRealtime(container) {
       .subscribe();
 
     // comment_reactions INSERT/UPDATE/DELETE
+    // ✅ REPLACE the comment_reactions subscription handler
     const chReactions = client.channel('comment_reactions')
       .on('postgres_changes', {
         event: '*', schema: 'public', table: 'comment_reactions',
       }, (e) => {
-        const id = commentIdFromEvent(e);
+        const cid = e?.new?.comment_id || e?.old?.comment_id;
+        // like 이모지에 대해서만 즉시 UI 패치 (전량 재조회/재렌더 금지)
+        if (e?.new?.emoji === 'like' && Number.isFinite(e?.new?.count) && cid) {
+          const tr = ensureLikeTracker(cid);
+          tr.server = e.new.count;   // 서버 카운트 동기화
+          tr.pending = Math.max(0, tr.pending); // 낙관적 증가가 남아 있으면 유지
+          updateLikeDisplays(cid);   // 버튼 표시만 즉시 갱신
+
+          // 행 자체도 패치(메시지/시간 등은 변화 없음)
+          const item = {
+            id: cid,
+            ts: Date.now(), // 정렬 재평가가 필요 없으면 기존 ts 유지해도 OK
+            zone: 'ALL',    // 안전값; 실제 존은 기존 DOM/스토어에 있음
+            code: '',
+            message: '',
+            emojis: []
+          };
+          // ALL/A/B/C 어느 컬럼에 있을지 몰라서 모두 갱신 시도(존재하는 곳만 반응)
+          ['ALL', 'A', 'B', 'C'].forEach(z => patchRow(z, item));
+          return;
+        }
+        // 이 외 변화(신규 코멘트 등)는 원래대로 fetch → 단건 emit
+        const id = cid || e?.new?.id || e?.old?.id;
         fetchAndEmitById(id);
       })
       .subscribe();
+
 
     channels = [chComments, chZones, chReactions];
 
@@ -3182,9 +3198,7 @@ function hydratePoster(imgEl, fullSrc) {
         const { error: e2 } = await client.from('comment_zones').insert(rows);
         if (e2) throw e2;
       }
-
     }
-
 
     try { if (ws?.readyState === 1) ws.send(JSON.stringify(payload)); } catch (_) {}
 
@@ -3195,19 +3209,12 @@ function hydratePoster(imgEl, fullSrc) {
   });
 })();
 
-
-
-
-
-/* ---DB 연결 시작--- */
-
 /* === 04-artworks: DB 바인딩 (ADD-ON) ================================
    - zones     : 코드/이름 로드 → 필터 버튼 생성
    - artworks  : v_artworks_card(있으면) 우선 사용, 없으면 기본 테이블 조합
    - zone 필터 : zone_artworks → 코드 목록 → 카드 재조회/정렬
    - 이 블록은 04-artworks.html 에서만 동작 (data-artworks-root 감지)
 ===================================================================== */
-
 
 async function _aw_fetchZones() {
   // zones(code,name) 기준
