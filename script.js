@@ -1265,6 +1265,9 @@ function updateLikeDisplays(commentId) {
 }
 
 function initCommentPage(container) {
+  if (!container) { return; }
+  if (container.dataset.commentInit === '1') { return; }
+  container.dataset.commentInit = '1';
   COMMENT_STATE.root = container;
   const fallbackStream = container.querySelector('[data-livechat-stream]');
   COMMENT_STATE.streams = {
@@ -2645,7 +2648,8 @@ function hydratePoster(imgEl, fullSrc) {
 function setComposerCodeOptions(zone) {
   const selCode = form?.querySelector('.select-code');
   if (!selCode) return;
-  const codes = (zone && ARTWORK_BY_ZONE[zone]) ? ARTWORK_BY_ZONE[zone] : [];
+  const normalizedZone = String(zone || '').toUpperCase();
+  const codes = (!normalizedZone || normalizedZone === 'ALL') ? Object.values(ARTWORK_BY_ZONE).flat() : (ARTWORK_BY_ZONE[normalizedZone] || []);
   const opts = ['<option value="">(전체)</option>'];
   opts.push(...codes.map(label => {
     const num = parseInt(label.replace(/\D/g, ''), 10);
@@ -2660,17 +2664,19 @@ function setComposerCodeOptions(zone) {
   // ----- 필터 + 정렬 -----
   let currentSort = 'latest';
   function applyFiltersAndSort() {
-    const zone = (filterZoneSel?.value || '').toUpperCase();
+    const rawZone = filterZoneSel?.value || '';
+    const zone = rawZone.toUpperCase();
     const code = filterCodeSel?.value || '';
     const rows = Array.from(stream.children);
+    const isAllZone = !zone || zone === 'ALL';
 
     // 필터
     rows.forEach(row => {
       const rowZone = (row.dataset.zone || '').toUpperCase();
       const rowCode = (row.dataset.code || '');
       let visible = true;
-      if (zone && zone !== 'ALL') visible = visible && rowZone === zone;
-      if (code) visible = visible && rowCode === code;
+      if (!isAllZone) visible = visible && rowZone === zone;
+      if (!isAllZone && code) visible = visible && rowCode === code;
       row.style.display = visible ? '' : 'none';
     });
 
@@ -2701,6 +2707,9 @@ function setComposerCodeOptions(zone) {
   // 이벤트 바인딩
   filterZoneSel?.addEventListener('change', () => {
     setFilterCodeOptions(filterZoneSel.value);
+    if (!filterZoneSel.value && filterCodeSel) {
+      filterCodeSel.value = '';
+    }
     applyFiltersAndSort();
   });
   
