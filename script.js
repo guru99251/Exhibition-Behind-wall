@@ -1,4 +1,4 @@
-// Execute after third-party libraries load (deferred).
+﻿// Execute after third-party libraries load (deferred).
 if (window.gsap && window.ScrollTrigger && window.ScrollToPlugin) {
   gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
 }
@@ -1301,8 +1301,11 @@ function initCommentPage(container) {
       ev.preventDefault();
 
       const text = (messageInput.value || '').trim();
-      const zone = (selZone?.value || '').toUpperCase() || null;      // ex) 'C' 또는 null
-      const code = (selCode?.value || '').trim() || null;             // ex) '117' 또는 null
+      const rawZone = (selZone?.value || '').trim().toUpperCase();
+      const zone = /^[A-J]$/.test(rawZone) ? rawZone : null;
+
+      const code = (selCode?.value || '').trim() || null; // UI 용 원문 유지
+      const artworkCode = Number.isInteger(Number(code)) ? Number(code) : null; // DB 저장용 숫자
 
       if (!text) { 
         messageInput.focus();
@@ -1319,7 +1322,7 @@ function initCommentPage(container) {
         const extId = (crypto?.randomUUID && crypto.randomUUID()) || String(Date.now());
         const { data: inserted, error: err1 } = await client
           .from('comments')
-          .insert([{ text, external_id: extId, artwork_code: code || null }])
+          .insert([{ text, external_id: extId, artwork_code: artworkCode }])
           .select('id, text, created_at')
           .single();
 
@@ -1327,11 +1330,14 @@ function initCommentPage(container) {
 
         const commentId = inserted.id;
 
-        // 2) zone/code가 지정되었으면 comment_zones에 연결(선택)
-        if (zone || code) {
-          const payload = { comment_id: commentId, zone_code: zone, artwork_code: code || null };
+        // 2) zone 지정되었으면 comment_zones에 연결 (존재 zone이 있을 때만 삽입, 실패해도 코멘트 저장은 유지)
+        if (zone) {
+          const payload = { comment_id: commentId, zone_code: zone, artwork_code: artworkCode };
           const { error: err2 } = await client.from('comment_zones').insert([payload]);
-          if (err2) throw err2;
+          if (err2) {
+            console.warn('[Composer] comment_zones insert skipped:', err2);
+            // 코멘트 자체는 이미 저장됨 → 여기서 throw 금지
+          }
         }
 
         // 3) 폼 정리 + 모달 닫기
@@ -1345,7 +1351,7 @@ function initCommentPage(container) {
           text,
           message: text,
           zones: zone ? [zone] : ['ALL'],
-          zone: zone || 'ALL',
+          zone: zone ,
           code: code || '',
           ts: Date.now(),
           reactions: { likes: 0, emojis: {} },
@@ -3170,15 +3176,20 @@ function setComposerCodeOptions(zone) {
 
   async function sendCommentViaRpc(client, payload, zonesForRpc, artworkCode, reactionMap) {
     try {
-      const { data, error } = await client.rpc('add_comment', {
-        payload: {
-          id: payload.id,
-          text: payload.message,
-          zones: zonesForRpc,
-          artwork_code: artworkCode,
-          reactions: reactionMap
-        }
-      });
+      const rpcPayload = {
+        id: payload.id,
+        text: payload.message
+      };
+      if (Array.isArray(zonesForRpc) && zonesForRpc.length > 0) {
+        rpcPayload.zones = zonesForRpc;
+      }
+      if (Number.isInteger(artworkCode)) {
+        rpcPayload.artwork_code = artworkCode;
+      }
+      if (reactionMap && Object.keys(reactionMap).length > 0) {
+        rpcPayload.reactions = reactionMap;
+      }
+      const { data, error } = await client.rpc('add_comment', { payload: rpcPayload });
 
       if (error) {
         console.error('[Supabase] add_comment error:', error);
@@ -3358,26 +3369,48 @@ function setComposerCodeOptions(zone) {
 
     const client = getSupabaseClient();
     if (client) {
-      const normalizedZone = normalizeZoneValue(payload.zone);
+      const normalizedZone  = normalizeZoneValue(payload.zone);
       const normalizedZones = normalizedZone ? [normalizedZone] : [];
-      const artworkCode = deriveArtworkCode(payload.code);
-      const reactionMap = buildReactionMap(payload.emojis);
-      const zonesForRpc = normalizedZones.length ? normalizedZones : ['ALL'];
+      const artworkCode     = deriveArtworkCode(payload.code);
+      const reactionMap     = buildReactionMap(payload.emojis);
+
       let persisted = false;
-      const rpcOutcome = await sendCommentViaRpc(client, payload, zonesForRpc, artworkCode, reactionMap);
-      persisted = rpcOutcome.success;
+
+      // 1) 존 또는 코드가 있을 때만 RPC 호출(없으면 RPC는 무의미/무동작일 수 있음)
+      const shouldUseRpc = (normalizedZones.length > 0) || Number.isInteger(artworkCode);
+      if (shouldUseRpc) {
+        const rpcOutcome = await sendCommentViaRpc(client, payload, normalizedZones, artworkCode, reactionMap);
+        persisted = !!rpcOutcome?.success;
+      }
+
+      // 2) RPC가 스킵되었거나 실패했거나, 혹은 '성공'인데 실제로 안 썼을 수도 있으니 존재 여부 점검
+      if (!persisted) {
+        try {
+          const check = await client
+            .from('comments')
+            .select('id')
+            .eq('external_id', payload.id)
+            .limit(1);
+          if (!check.error && Array.isArray(check.data) && check.data.length > 0) {
+            persisted = true;
+          }
+        } catch (_) { /* noop */ }
+      }
+
+      // 3) 아직 없으면 직접 INSERT로 폴백(존이 없으면 comment_zones는 만들지 않음)
       if (!persisted) {
         try {
           const fallbackOutcome = await insertCommentDirect(client, payload, normalizedZones, artworkCode, reactionMap);
-          persisted = fallbackOutcome.success;
+          persisted = !!fallbackOutcome?.success;
         } catch (err) {
           console.error('[Supabase] manual comment insert failed:', err);
         }
       }
 
+      // 4) 후처리: 메타 동기화 + 배지
       if (persisted) {
         await ensureCommentMetadata(client, payload.id, normalizedZones, artworkCode);
-        updateConnectionBadge('online')
+        updateConnectionBadge('online');
       } else {
         updateConnectionBadge('offline');
       }
