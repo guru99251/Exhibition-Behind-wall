@@ -229,7 +229,7 @@ CREATE TABLE public.comment_reactions (
 );
 CREATE TABLE public.comment_zones (
   comment_id uuid NOT NULL,
-  zone_code character NOT NULL DEFAULT 'ALL'::bpchar CHECK (zone_code = ANY (ARRAY['A'::bpchar, 'B'::bpchar, 'C'::bpchar, 'D'::bpchar, 'E'::bpchar, 'F'::bpchar, 'G'::bpchar, 'H'::bpchar, 'I'::bpchar])),
+  zone_code character NOT NULL DEFAULT 'ALL'::bpchar CHECK (zone_code ~ '^[A-J]$'::text),
   artwork_code smallint,
   CONSTRAINT comment_zones_pkey PRIMARY KEY (comment_id, zone_code),
   CONSTRAINT comment_zones_zone_code_fkey FOREIGN KEY (zone_code) REFERENCES public.zones(code),
@@ -302,7 +302,7 @@ CREATE TABLE public.team_members (
   team_id integer NOT NULL,
   person_id uuid NOT NULL,
   role text NOT NULL CHECK (role = ANY (ARRAY['leader'::text, 'member'::text])),
-  CONSTRAINT team_members_pkey PRIMARY KEY (person_id, team_id),
+  CONSTRAINT team_members_pkey PRIMARY KEY (team_id, person_id),
   CONSTRAINT team_members_team_id_fkey FOREIGN KEY (team_id) REFERENCES public.teams(id),
   CONSTRAINT team_members_person_id_fkey FOREIGN KEY (person_id) REFERENCES public.persons(id)
 );

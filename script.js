@@ -1,4 +1,4 @@
-﻿// Execute after third-party libraries load (deferred).
+// Execute after third-party libraries load (deferred).
 if (window.gsap && window.ScrollTrigger && window.ScrollToPlugin) {
   gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
 }
@@ -1282,6 +1282,71 @@ function initCommentPage(container) {
   const selCode       = form?.querySelector('.select-code');
   const selZone       = form?.querySelector('.select-zone');
   const messageInput  = form?.querySelector('.message-input');
+
+  // === 작성 폼 전송 → DB 저장 ===
+  if (form && messageInput) {
+    form.addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+
+      const text = (messageInput.value || '').trim();
+      const zone = (selZone?.value || '').toUpperCase() || null;      // ex) 'C' 또는 null
+      const code = (selCode?.value || '').trim() || null;             // ex) '117' 또는 null
+
+      if (!text) { 
+        messageInput.focus();
+        return;
+      }
+
+      try {
+        const client = (COMMENT_STATE.connection && COMMENT_STATE.connection.supabase) || window.sb;
+        if (!client) throw new Error('Supabase client not initialized');
+
+        // 1) comments에 본문 저장 (필수)
+        //    - artwork_code는 DB 타입 충돌을 피하려면 우선 null로 저장하고
+        //      comment_zones에 zone/code를 기록합니다.
+        const extId = (crypto?.randomUUID && crypto.randomUUID()) || String(Date.now());
+        const { data: inserted, error: err1 } = await client
+          .from('comments')
+          .insert([{ text, external_id: extId, artwork_code: code || null }])
+          .select('id, text, created_at')
+          .single();
+
+        if (err1) throw err1;
+
+        const commentId = inserted.id;
+
+        // 2) zone/code가 지정되었으면 comment_zones에 연결(선택)
+        if (zone || code) {
+          const payload = { comment_id: commentId, zone_code: zone, artwork_code: code || null };
+          const { error: err2 } = await client.from('comment_zones').insert([payload]);
+          if (err2) throw err2;
+        }
+
+        // 3) 폼 정리 + 모달 닫기
+        form.reset();
+        modal?.setAttribute('aria-hidden', 'true');
+        modal?.classList.remove('is-open');
+
+        // 4) 낙관적 렌더(Realtime이 곧 동기화해주지만 즉시 보이게)
+        handleIncomingComment({
+          id: commentId,
+          text,
+          message: text,
+          zones: zone ? [zone] : ['ALL'],
+          zone: zone || 'ALL',
+          code: code || '',
+          ts: Date.now(),
+          reactions: { likes: 0, emojis: {} },
+          likes: 0,
+        });
+
+      } catch (error) {
+        console.error('[Composer][INSERT ERROR]', error);
+        alert('코멘트 저장에 실패했어요. (권한 또는 네트워크 문제일 수 있어요)');
+      }
+    });
+  }
+
 
   const safe = deriveSidebarSafe();
   container.style.setProperty('--sidebar-safe', `${safe}px`);
@@ -2718,20 +2783,6 @@ function setComposerCodeOptions(zone) {
     modal.classList.remove('is-open');
   }
 
-
-
-  // 모달: 코드 선택 → 구역 자동 반영
-  selCode?.addEventListener('change', () => {
-    const v = selCode.value || '';
-    const m = v.match(/^([A-J])-/i);
-    if (m && selZone) {
-      const z = m[1].toUpperCase();
-      selZone.value = z;
-      setComposerCodeOptions(z);  // 해당 구역 코드들로 목록 재구성
-      selCode.value = v;          // 재구성 후에도 선택 유지
-    }
-  });
-
   // 모달: 구역 선택 → 코드 옵션 재주입
   selZone?.addEventListener('change', () => {
     setComposerCodeOptions(selZone.value);
@@ -3516,4 +3567,11 @@ async function initWallFromDB() {
 
 document.addEventListener('DOMContentLoaded', () => {
   initWallFromDB();
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  const commentRoot = document.querySelector('[data-comment-root]');
+  if (commentRoot) {
+    initCommentPage(commentRoot);
+  }
 });
