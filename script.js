@@ -1169,14 +1169,14 @@ document.addEventListener('keydown', (ev) => {
   handle.addEventListener('keydown', toggle);
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setOpen(false); });
 
-  form?.querySelectorAll(".emoji, .phrase").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      if (!messageInput) return;
-      messageInput.value = (messageInput.value || "") + (btn.textContent || "");
-      typingControls?.syncFromInput();
-      messageInput.dispatchEvent(new Event("input", { bubbles: true }));
-    });
-  });
+  // form?.querySelectorAll(".emoji, .phrase").forEach((btn) => {
+  //   btn.addEventListener("click", () => {
+  //     if (!messageInput) return;
+  //     messageInput.value = (messageInput.value || "") + (btn.textContent || "");
+  //     typingControls?.syncFromInput();
+  //     messageInput.dispatchEvent(new Event("input", { bubbles: true }));
+  //   });
+  // });
 })();
 
 /* === Comment page utilities === */
@@ -2608,7 +2608,7 @@ function hydratePoster(imgEl, fullSrc) {
   }
 })();
 
-// ====수정된 부분====
+
 (function(){
   const root    = document.querySelector('[data-comment-root]');
   if (!root) return;
@@ -2646,59 +2646,33 @@ function hydratePoster(imgEl, fullSrc) {
   ));
 
   // ----- 필터 코드 옵션 -----
-  function setFilterCodeOptions(zoneValue) {
-
-    if (!filterCodeSel) return;
-    const zone = (zoneValue || '').toUpperCase();
+  function setFilterCodeOptions(zone) {
+    const sel = root.querySelector('[data-filter-code]');
+    if (!sel) return;
+    const pool = zone ? (ARTWORK_BY_ZONE[zone] || []) : Object.values(ARTWORK_BY_ZONE).flat();
     const opts = ['<option value="">(선택 안 함)</option>'];
-    if (ARTWORK_BY_ZONE[zone]) {
-      opts.push(ARTWORK_BY_ZONE[zone].map(label=>{
-        const num = label.replace(/\D/g,'');   // "C-101" → "101"
-        return `<option value="${num}">${label}</option>`;
-      }).join(''));
-    }
-    const codes = ARTWORK_BY_ZONE[zone] || [];
-    const previous = filterCodeSel.value;
-    const options = ['<option value="">(선택 안 함)</option>'];
-    if (codes.length) {
-      options.push(codes.map((code) => `<option>${code}</option>`).join(''));
-
-    }
-    filterCodeSel.innerHTML = options.join('');
-    if (codes.includes(previous)) {
-      filterCodeSel.value = previous;
-    } else {
-      filterCodeSel.value = '';
-    }
+    opts.push(...pool.map(label => {
+      const num = parseInt(label.replace(/\D/g, ''), 10);
+      return `<option value="${num}">${label}</option>`;
+    }));
+    sel.innerHTML = opts.join('');
   }
 
 
   setFilterCodeOptions(filterZoneSel?.value || '');
 
   // ----- composer 코드 옵션 -----
-  function setComposerCodeOptions(zoneValue) {
-    if (!selCode) return;
-    const zone = (zoneValue || '').toUpperCase();
-    const opts = ['<option value="">(선택 안 함)</option>'];
-    if (ARTWORK_BY_ZONE[zone]) {
-    opts.push(ARTWORK_BY_ZONE[zone].map(label=>{
-    const num = label.replace(/\D/g,'');
+function setComposerCodeOptions(zone) {
+  const selCode = form?.querySelector('.select-code');
+  if (!selCode) return;
+  const codes = (zone && ARTWORK_BY_ZONE[zone]) ? ARTWORK_BY_ZONE[zone] : [];
+  const opts = ['<option value="">(전체)</option>'];
+  opts.push(...codes.map(label => {
+    const num = parseInt(label.replace(/\D/g, ''), 10);
     return `<option value="${num}">${label}</option>`;
-    }).join(''));
-  }
-    const codes = ARTWORK_BY_ZONE[zone] || [];
-    const previous = selCode.value;
-    const options = ['<option value="">(선택 안 함)</option>'];
-    if (codes.length) {
-      options.push(codes.map((code) => `<option>${code}</option>`).join(''));
-    }
-    selCode.innerHTML = options.join('');
-    if (codes.includes(previous)) {
-      selCode.value = previous;
-    } else {
-      selCode.value = '';
-    }
-  }
+  }));
+  selCode.innerHTML = opts.join('');
+}
 
 
   setComposerCodeOptions(selZone?.value || '');
@@ -2750,17 +2724,35 @@ function hydratePoster(imgEl, fullSrc) {
     applyFiltersAndSort();
   });
   
-  // 코드 선택 → 구역 자동 변경 + 옵션 재주입 + 필터/정렬 재적용
-  filterCodeSel?.addEventListener('change', () => {
-    const v = filterCodeSel.value || '';
-    const m = v.match(/^([A-I])-/i);     // 👈 selCode가 아니라 v를 사용
-    if (m && filterZoneSel) {
-      const z = m[1].toUpperCase();
+  // // 코드 선택 → 구역 자동 변경 + 옵션 재주입 + 필터/정렬 재적용
+  /* 변경 전 */
+  // filterCodeSel?.addEventListener('change', () => {
+  //   const v = filterCodeSel.value || '';
+  //   const m = v.match(/^([A-J])-/i);     // 👈 selCode가 아니라 v를 사용
+  //   if (m && filterZoneSel) {
+  //     const z = m[1].toUpperCase();
+  //     filterZoneSel.value = z;
+  //     setFilterCodeOptions(z);           // 해당 구역 코드로 옵션 재구성
+  //     filterCodeSel.value = v;           // 재구성 후에도 선택 유지
+  //   }
+  //   applyFiltersAndSort();
+  // });
+
+  /* 변경 후 */
+  // 필터 바
+  filterCodeSel.addEventListener('change', () => {
+    const z = CODE_TO_ZONE[Number(filterCodeSel.value)];
+    if (z) {
       filterZoneSel.value = z;
-      setFilterCodeOptions(z);           // 해당 구역 코드로 옵션 재구성
-      filterCodeSel.value = v;           // 재구성 후에도 선택 유지
+      setFilterCodeOptions(z);
     }
     applyFiltersAndSort();
+  });
+
+  // 컴포저
+  selCode?.addEventListener('change', () => {
+    const z = CODE_TO_ZONE[Number(selCode.value)];
+    if (z) selZone.value = z;
   });
 
   sortGroup?.addEventListener('click', (e) => {
@@ -2781,66 +2773,34 @@ function hydratePoster(imgEl, fullSrc) {
 
   // 모달: 필터 상태 프리필 후 열기
   function openModal() {
-
     if (!modal) return;
-
     modal.setAttribute('aria-hidden', 'false');
-
     modal.classList.add('is-open');
 
-    
-
     const filterZoneValue = (filterZoneSel?.value || '').toUpperCase();
-
     const filterCodeValue = filterCodeSel?.value || '';
 
-    
-
-    if (selZone) {
-
-      selZone.value = filterZoneValue;
-
-    }
-
-    
-
+    if (selZone) { selZone.value = filterZoneValue; }
     const composerZone = (selZone?.value || filterZoneValue).toUpperCase();
-
     setComposerCodeOptions(composerZone);
 
-    
-
     if (selCode) {
-
-      const zoneCodes = ARTWORK_BY_ZONE[composerZone] || [];
-
-      if (filterCodeValue && zoneCodes.includes(filterCodeValue)) {
-
-        selCode.value = filterCodeValue;
-
-      } else {
-
-        selCode.value = '';
-
+      selCode.value = '';
+      if (filterCodeValue) {
+        // 옵션에 없으면 그대로 빈 값 유지
+        const opt = selCode.querySelector(`option[value="${filterCodeValue}"]`);
+        if (opt) selCode.value = filterCodeValue;
       }
-
     }
-
     
-
-    requestAnimationFrame(() => messageInput?.focus({ preventScroll: true }));
-
-  }
+  requestAnimationFrame(() => messageInput?.focus({ preventScroll: true }));
+}
 
 
   function closeModal(){
-
     if (!modal) return;
-
     modal.setAttribute('aria-hidden', 'true');
-
     modal.classList.remove('is-open');
-
   }
 
 
@@ -2848,7 +2808,7 @@ function hydratePoster(imgEl, fullSrc) {
   // 모달: 코드 선택 → 구역 자동 반영
   selCode?.addEventListener('change', () => {
     const v = selCode.value || '';
-    const m = v.match(/^([A-I])-/i);
+    const m = v.match(/^([A-J])-/i); // 전시구역 범위
     if (m && selZone) {
       const z = m[1].toUpperCase();
       selZone.value = z;
@@ -3243,8 +3203,14 @@ function hydratePoster(imgEl, fullSrc) {
 
         // zones: 단일 선택이면 배열로, 미선택이면 ['ALL']
         const z = payload.zone && /^[A-Z]$/.test(payload.zone) ? [payload.zone] : ['ALL'];
+
+        /* 변경 전 */
         // artwork_code: 숫자 or null
-        const art = payload.code ? String(Number(payload.code)) : null;
+        // const art = payload.code ? String(Number(payload.code)) : null;
+
+        /* 변경 후 */
+        const artNum = Number(payload.code);
+        const art = Number.isFinite(artNum) ? artNum : null;
 
         const { data, error } = await sb.rpc('add_comment', {
           payload: {

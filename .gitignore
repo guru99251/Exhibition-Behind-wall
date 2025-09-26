@@ -4,3 +4,4 @@ _참고사항.md
 src/
 .env
 node_modules/
+.database_downloaded/
