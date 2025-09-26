@@ -1189,51 +1189,51 @@ const COMMENT_STATE = {
 };
 
 
-// ===== DB로 대체 필요
-const SAMPLE_COMMENTS = [
-  {
-    id: 'c-001',
-    zones: ['A'],
-    text: 'Spectral Loop is brighter than earlier rehearsal. The afterglow wraps the ceiling perfectly.',
-    author: { name: 'Eunseo Kim', department: 'Spatial Media', studentId: '20231204' },
-    timestamp: '2024-05-12T11:42:00+09:00',
-    reactions: { emojis: { Light: 3, Spark: 1 }, likes: 7 },
-    artwork: { title: 'Spectral Loop', poster: 'https://picsum.photos/seed/spectral-loop/600/800' }
-  },
-  {
-    id: 'c-002',
-    zones: ['B'],
-    text: 'Kids keep reaching for the holographic coral. Interactive depth feels stable tonight.',
-    author: { name: 'Anonymous', department: 'Visitor', studentId: '' },
-    timestamp: '2024-05-12T11:45:12+09:00',
-    reactions: { emojis: { Wave: 4, Wonder: 2 }, likes: 5 },
-    artwork: { title: 'Tidal Dream', poster: 'https://picsum.photos/seed/tidal-dream/600/800' }
-  },
-  {
-    id: 'c-003',
-    zones: ['C'],
-    text: 'Backstage projection syncs with the live feed. Lag is gone after the afternoon patch.',
-    author: { name: 'Byungwoo Han', department: 'Systems', studentId: 'STF-14' },
-    timestamp: '2024-05-12T11:48:30+09:00',
-    reactions: { emojis: { Gear: 2 }, likes: 3 }
-  },
-  {
-    id: 'c-004',
-    zones: ['ALL'],
-    text: 'Standing ovation when the skyline flips to night cycle. Audio swell gave goosebumps.',
-    author: { name: 'Seoyeon Park', department: 'Guest', studentId: '202405' },
-    timestamp: '2024-05-12T11:51:02+09:00',
-    reactions: { emojis: { Clap: 9, Sky: 3 }, likes: 11 }
-  },
-  {
-    id: 'c-005',
-    zones: ['A', 'B'],
-    text: 'Please bump narration level 2dB around the walkway; words disappear behind the jet fan.',
-    author: { name: 'Engineering Team', department: 'Audio', studentId: 'OPS-08' },
-    timestamp: '2024-05-12T11:53:40+09:00',
-    reactions: { emojis: { Audio: 2 }, likes: 0 }
-  }
-];
+// // ===== DB로 대체 필요
+// const SAMPLE_COMMENTS = [
+//   {
+//     id: 'c-001',
+//     zones: ['A'],
+//     text: 'Spectral Loop is brighter than earlier rehearsal. The afterglow wraps the ceiling perfectly.',
+//     author: { name: 'Eunseo Kim', department: 'Spatial Media', studentId: '20231204' },
+//     timestamp: '2024-05-12T11:42:00+09:00',
+//     reactions: { emojis: { Light: 3, Spark: 1 }, likes: 7 },
+//     artwork: { title: 'Spectral Loop', poster: 'https://picsum.photos/seed/spectral-loop/600/800' }
+//   },
+//   {
+//     id: 'c-002',
+//     zones: ['B'],
+//     text: 'Kids keep reaching for the holographic coral. Interactive depth feels stable tonight.',
+//     author: { name: 'Anonymous', department: 'Visitor', studentId: '' },
+//     timestamp: '2024-05-12T11:45:12+09:00',
+//     reactions: { emojis: { Wave: 4, Wonder: 2 }, likes: 5 },
+//     artwork: { title: 'Tidal Dream', poster: 'https://picsum.photos/seed/tidal-dream/600/800' }
+//   },
+//   {
+//     id: 'c-003',
+//     zones: ['C'],
+//     text: 'Backstage projection syncs with the live feed. Lag is gone after the afternoon patch.',
+//     author: { name: 'Byungwoo Han', department: 'Systems', studentId: 'STF-14' },
+//     timestamp: '2024-05-12T11:48:30+09:00',
+//     reactions: { emojis: { Gear: 2 }, likes: 3 }
+//   },
+//   {
+//     id: 'c-004',
+//     zones: ['ALL'],
+//     text: 'Standing ovation when the skyline flips to night cycle. Audio swell gave goosebumps.',
+//     author: { name: 'Seoyeon Park', department: 'Guest', studentId: '202405' },
+//     timestamp: '2024-05-12T11:51:02+09:00',
+//     reactions: { emojis: { Clap: 9, Sky: 3 }, likes: 11 }
+//   },
+//   {
+//     id: 'c-005',
+//     zones: ['A', 'B'],
+//     text: 'Please bump narration level 2dB around the walkway; words disappear behind the jet fan.',
+//     author: { name: 'Engineering Team', department: 'Audio', studentId: 'OPS-08' },
+//     timestamp: '2024-05-12T11:53:40+09:00',
+//     reactions: { emojis: { Audio: 2 }, likes: 0 }
+//   }
+// ];
 
 function deriveSidebarSafe() {
   const sidebar = document.querySelector('.wall-sidebar');
@@ -1334,9 +1334,31 @@ function initCommentPage(container) {
       const client = (COMMENT_STATE.connection && COMMENT_STATE.connection.supabase) || window.sb;
       if (!client) { throw new Error('Supabase client not initialized'); }
 
-      const { error } = await client
-        .from('comment_reactions')
-        .insert([{ comment_id: commentId, emoji: 'like', count: 1 }]);
+      /* 변경 전 */
+      // const { error } = await client
+      //   .from('comment_reactions')
+      //   .insert([{ comment_id: commentId, emoji: 'like', count: 1 }]);
+
+      /* 변경 후 */
+      const { data, error } = await client.rpc('increment_like', {
+        p_comment_id: commentId,
+        p_actor_hash: null, // 지금은 필요 없으므로 null
+      });
+
+      if (error) {
+        tracker.pending = Math.max(0, tracker.pending - 1);
+        updateLikeDisplays(commentId);
+        console.error('[Like][RPC ERROR]', error);
+        return;
+      }
+
+      // 최신 카운트 서버 동기화
+      const latest = data?.[0]?.new_count ?? null;
+      if (latest != null) {
+        tracker.pending = 0;
+        tracker.server = latest;
+        updateLikeDisplays(commentId);
+      }
 
       if (error) {
         tracker.pending = Math.max(0, tracker.pending - 1);
