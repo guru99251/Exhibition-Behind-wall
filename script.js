@@ -1293,9 +1293,10 @@ function initCommentPage(container) {
   const selCode       = form?.querySelector('.select-code');
   const selZone       = form?.querySelector('.select-zone');
   const messageInput  = form?.querySelector('.message-input');
+  const usesEnhancedComposer = container.dataset.composerMode === 'enhanced';
 
   // === 작성 폼 전송 → DB 저장 ===
-  if (form && messageInput) {
+  if (form && messageInput && !usesEnhancedComposer) {
     form.addEventListener('submit', async (ev) => {
       ev.preventDefault();
 
@@ -2596,6 +2597,7 @@ function hydratePoster(imgEl, fullSrc) {
 (() => {
   const commentRoot = document.querySelector('[data-comment-root]');
   if (commentRoot) {
+    commentRoot.dataset.composerMode = 'enhanced';
     initCommentPage(commentRoot);
   }
   const contributorsRoot = document.querySelector('[data-contributors-root]');
@@ -3303,8 +3305,21 @@ function setComposerCodeOptions(zone) {
     if (t.classList.contains('emoji')) {
       const em = (t.textContent || '').trim();
       if (!em) return;
-      if (selectedEmojis.has(em)) { selectedEmojis.delete(em); t.classList.remove('is-selected'); }
-      else { selectedEmojis.add(em); t.classList.add('is-selected'); }
+      if (selectedEmojis.has(em)) {
+        selectedEmojis.delete(em);
+        t.classList.remove('is-selected');
+      } else {
+        selectedEmojis.add(em);
+        t.classList.add('is-selected');
+        if (messageInput) {
+          const el = messageInput;
+          const start = el.selectionStart ?? el.value.length;
+          const end = el.selectionEnd ?? el.value.length;
+          el.setRangeText(em, start, end, 'end');
+          el.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+      }
+      messageInput?.focus();
       return;
     }
 
@@ -3598,6 +3613,7 @@ document.addEventListener('DOMContentLoaded', () => {
 document.addEventListener('DOMContentLoaded', () => {
   const commentRoot = document.querySelector('[data-comment-root]');
   if (commentRoot) {
+    commentRoot.dataset.composerMode = 'enhanced';
     initCommentPage(commentRoot);
   }
 });
