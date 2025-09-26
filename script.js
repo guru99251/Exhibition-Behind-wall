@@ -6,7 +6,19 @@ if (window.gsap && window.ScrollTrigger && window.ScrollToPlugin) {
 // === Supabase client (global) ===
 const SUPABASE_URL  = window.SUPABASE_URL  || 'https://tbegcazozckpkjtaticj.supabase.co';
 const SUPABASE_ANON = window.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRiZWdjYXpvemNrcGtqdGF0aWNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg1NDkyNjIsImV4cCI6MjA3NDEyNTI2Mn0.GMpSO8iBTSRM97ZMMIfqyjc2ZW_kLtQrZwduFNGtxws';
-const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+let sb = null;
+if (window.supabase?.createClient) {
+  sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+  window.sb = sb; // share for other modules/handlers
+} else {
+  if (!('sb' in window)) { window.sb = null; }
+  document.addEventListener('DOMContentLoaded', () => {
+    if (!window.sb && window.supabase?.createClient) {
+      sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+      window.sb = sb;
+    }
+  }, { once: true });
+}
 
 document.addEventListener('keydown', (event) => {
   if (event.defaultPrevented) { return; }
@@ -1172,7 +1184,8 @@ const COMMENT_STATE = {
   root: null,
   streams: {},
   store: { A: [], B: [], C: [], ALL: [] },
-  connection: null
+  connection: null,
+  likeTracker: new Map()
 };
 
 
@@ -1229,6 +1242,28 @@ function deriveSidebarSafe() {
   return rect.left + rect.width + 32;
 }
 
+function ensureLikeTracker(commentId) {
+  if (!commentId) { return { server: 0, pending: 0 }; }
+  if (!COMMENT_STATE.likeTracker) { COMMENT_STATE.likeTracker = new Map(); }
+  if (!COMMENT_STATE.likeTracker.has(commentId)) {
+    COMMENT_STATE.likeTracker.set(commentId, { server: 0, pending: 0 });
+  }
+  return COMMENT_STATE.likeTracker.get(commentId);
+}
+
+function updateLikeDisplays(commentId) {
+  if (!commentId || !COMMENT_STATE.root) { return; }
+  const tracker = ensureLikeTracker(commentId);
+  const display = Math.max(0, tracker.server + tracker.pending);
+  const buttons = COMMENT_STATE.root.querySelectorAll('[data-like-btn]');
+  buttons.forEach((button) => {
+    if (button.dataset.id === commentId) {
+      const target = button.querySelector('.chat-like__count') || button;
+      target.textContent = String(display);
+    }
+  });
+}
+
 function initCommentPage(container) {
   COMMENT_STATE.root = container;
   const fallbackStream = container.querySelector('[data-livechat-stream]');
@@ -1264,53 +1299,61 @@ function initCommentPage(container) {
 
   updateConnectionBadge('connecting');
   COMMENT_STATE.store = { A: [], B: [], C: [], ALL: [] };
+  COMMENT_STATE.likeTracker = new Map();
 
-  SAMPLE_COMMENTS.forEach((item) => handleIncomingComment(item));
+  // 데모 데이터는 실제 연결(Realtime/WS)이 없을 때만 주입
+  const hasSupabaseCreds = !!(container.dataset.supabaseUrl && container.dataset.supabaseKey && window.supabase?.createClient);
+  const hasWs = !!container.dataset.wsUrl;
+  if (!hasSupabaseCreds && !hasWs) {
+    SAMPLE_COMMENTS.forEach((item) => handleIncomingComment(item));
+  }
 
   const retry = container.querySelector('[data-comment-retry]');
 
-  // [좋아요] — Supabase/WS 어떤 경로든 공통으로 동작하도록,
-  // hasSupabase 분기 'return'보다 위에서 한 번만 등록합니다.
-  const LIKE_LOCKS = new Map();
+  // Likes: optimistic UI update with Supabase persistence.
   container.addEventListener('click', async (e) => {
     const btn = e.target.closest('[data-like-btn]');
-    if (!btn) return;
+    if (!btn) { return; }
 
     const commentId = btn.dataset.id;
-    if (!commentId || LIKE_LOCKS.get(commentId)) return;
-    LIKE_LOCKS.set(commentId, true);
-  
+    if (!commentId) { return; }
+
     const countEl = btn.querySelector('.chat-like__count') || btn;
-    const before = parseInt((countEl.textContent || '').replace(/[^\d]/g, ''), 10) || 0;
-  
-    // 1) 낙관적 UI
-    countEl.textContent = String(before + 1);
-  
-   // 2) DB 반영 — reactions 집계에서 '좋아요 수'는 emoji === 'like'만 집계됩니다.
+    const tracker = ensureLikeTracker(commentId);
+    if (tracker.server === 0 && tracker.pending === 0) {
+      const current = parseInt((countEl.textContent || '').replace(/[^\d]/g, ''), 10);
+      if (!Number.isNaN(current)) {
+        tracker.server = current;
+      }
+    }
+
+    tracker.pending += 1;
+    updateLikeDisplays(commentId);
+
     try {
-      const client =
-        (COMMENT_STATE.connection && COMMENT_STATE.connection.supabase) || window.sb;
-      if (!client) throw new Error('Supabase client not initialized');
-  
+      const client = (COMMENT_STATE.connection && COMMENT_STATE.connection.supabase) || window.sb;
+      if (!client) { throw new Error('Supabase client not initialized'); }
+
       const { error } = await client
         .from('comment_reactions')
         .insert([{ comment_id: commentId, emoji: 'like', count: 1 }]);
-  
+
       if (error) {
-        // 실패 시 낙관 롤백
-        countEl.textContent = String(before);
+        tracker.pending = Math.max(0, tracker.pending - 1);
+        updateLikeDisplays(commentId);
         console.error('[Like][INSERT ERROR]', error);
+        return;
       }
-      // 성공 시엔 리얼타임 구독 → v_comment_feed 재조회로 정확한 합계가 곧 반영됩니다.
+
+      tracker.pending = Math.max(0, tracker.pending - 1);
+      tracker.server += 1;
+      updateLikeDisplays(commentId);
     } catch (err) {
-      countEl.textContent = String(before);
+      tracker.pending = Math.max(0, tracker.pending - 1);
+      updateLikeDisplays(commentId);
       console.error('[Like][EXCEPTION]', err);
-    } finally {
-      // 짧은 잠금(연타 방지)
-      setTimeout(() => LIKE_LOCKS.delete(commentId), 300);
     }
   });
-
   // Supabase Realtime가 설정되어 있으면 WS 대신 Supabase를 사용
   const hasSupabase = !!(container.dataset.supabaseUrl && container.dataset.supabaseKey && window.supabase?.createClient);
   if (hasSupabase) {
@@ -1338,38 +1381,6 @@ function initCommentPage(container) {
     COMMENT_STATE.connection?.reconnect?.();
   });
 
-  // 좋아요 클릭 → DB 반영(낙관적 UI + 리얼타임으로 확정 동기화)
-  container.addEventListener('click', async (e) => {
-    const btn = e.target.closest('[data-like-btn]');
-    if (!btn) return;
-
-    const commentId = btn.dataset.id; // 반드시 comments.id(=uuid/bigint)와 동일한 값이어야 함
-    if (!commentId) return;
-
-    // 낙관적 UI
-    const before = parseInt(btn.textContent.replace(/[^\d]/g, ''), 10) || 0;
-    btn.textContent = `♥ ${before + 1}`;
-
-    // 2) DB 반영 (페이지 클라이언트와 동일 인스턴스 사용)
-    try {
-      const client = (COMMENT_STATE.connection && COMMENT_STATE.connection.supabase) || window.sb;
-      if (!client) throw new Error('Supabase client not initialized');
-      const { error } = await client
-        .from('comment_reactions')
-        .insert([{ comment_id: commentId, emoji: '♥', count: 1 }]);
-
-      if (error) {
-        console.error('[Like][INSERT ERROR]', error);
-        // 실패 시 롤백(선택)
-        btn.textContent = `♥ ${before}`;
-      }
-    } catch (err) {
-      console.error('[Like][EXCEPTION]', err);
-      btn.textContent = `♥ ${before}`; // 롤백(선택)
-    }
-  });
-
-  // 작성 모달 컴포저: 열기/닫기 폴백 + 현재 필터 연동, open/close 핸들러 보강
   openBtn?.addEventListener('click', () => {
     modal?.setAttribute('aria-hidden', 'false');
     modal?.classList.add('is-open');
@@ -1404,6 +1415,18 @@ function handleIncomingComment(raw) {
     likes: Number.isFinite(raw.likes) ? Number(raw.likes) : (Number(raw.reactions?.likes) || 0),
     artworkPoster: raw.artworkPoster || raw.artwork?.poster || raw.artwork_poster || ''
   };
+
+  const tracker = ensureLikeTracker(normalized.id);
+  const incomingLikes = Number.isFinite(normalized.likes) ? Number(normalized.likes) : 0;
+  const previousServerLikes = tracker.server;
+  tracker.server = incomingLikes;
+  if (tracker.pending > 0 && incomingLikes > previousServerLikes) {
+    const applied = incomingLikes - previousServerLikes;
+    tracker.pending = Math.max(0, tracker.pending - applied);
+  } else if (incomingLikes < previousServerLikes && tracker.pending > 0) {
+    tracker.pending = Math.max(0, Math.min(tracker.pending, tracker.server));
+  }
+  normalized.likes = tracker.server + tracker.pending;
 
   // 2) 목적지 컬럼들(A/B/C/ALL)에 삽입 + 렌더
   const targets = Array.isArray(normalized.zones) && normalized.zones.length
@@ -3063,31 +3086,6 @@ function hydratePoster(imgEl, fullSrc) {
       el.setRangeText(joiner + phrase, start, end, 'end');
       el.dispatchEvent(new Event('input', { bubbles: true })); // 타이핑 미니뷰 동기화
       el.focus();
-    }
-  });
-
-  // livechat-stream 내부 좋아요 클릭(DB 반영)
-  document.querySelector('[data-livechat-stream]')?.addEventListener('click', async (e) => {
-    const btn = e.target.closest('.chat-like');
-    if (!btn) return;
-    const row = btn.closest('.chat-row');
-    const commentId = row?.dataset.id;
-    const countEl = btn.querySelector('.chat-like__count');
-    const before = parseInt(countEl?.textContent || '0', 10) || 0;
-
-    // 낙관적 업데이트
-    countEl.textContent = String(before + 1);
-
-    try {
-      const client = (COMMENT_STATE.connection && COMMENT_STATE.connection.supabase) || window.sb;
-      if (!client || !commentId) throw new Error('Supabase client or comment id missing');
-      const { error } = await client
-        .from('comment_reactions')
-        .insert([{ comment_id: commentId, emoji: '♥', count: 1 }]);
-      if (error) throw error;
-    } catch (err) {
-      console.error('[Like][FAIL]', err);
-      countEl.textContent = String(before); // 롤백
     }
   });
 
