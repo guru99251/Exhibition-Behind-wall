@@ -20,6 +20,114 @@ if (window.supabase?.createClient) {
   }, { once: true });
 }
 
+const PLAN_CARD_THEMES = Object.freeze({
+  'spectral-loop': {
+    previewBg: `radial-gradient(
+        circle at 22% 32%,
+        rgba(147, 197, 253, 0.42),
+        transparent 60%
+      ),
+      radial-gradient(
+        circle at 76% 18%,
+        rgba(129, 140, 248, 0.36),
+        transparent 58%
+      ),
+      linear-gradient(135deg, rgba(30, 64, 175, 0.9), rgba(56, 189, 248, 0.78))`,
+    bubbleAccent: 'rgba(147, 197, 253, 0.92)',
+    bubbleBorder: 'rgba(147, 197, 253, 0.5)',
+    bubbleShadow: '0 26px 60px rgba(99, 102, 241, 0.42)'
+  },
+  'memory-patch': {
+    previewBg: `radial-gradient(
+        circle at 26% 26%,
+        rgba(253, 224, 71, 0.36),
+        transparent 58%
+      ),
+      radial-gradient(
+        circle at 74% 42%,
+        rgba(244, 114, 182, 0.32),
+        transparent 56%
+      ),
+      linear-gradient(130deg, rgba(234, 179, 8, 0.88), rgba(249, 168, 212, 0.72))`,
+    bubbleAccent: 'rgba(253, 224, 71, 0.92)',
+    bubbleBorder: 'rgba(253, 224, 71, 0.42)',
+    bubbleShadow: '0 26px 60px rgba(250, 204, 21, 0.36)'
+  },
+  'tidal-dream': {
+    previewBg: `radial-gradient(
+        circle at 24% 24%,
+        rgba(45, 212, 191, 0.38),
+        transparent 58%
+      ),
+      radial-gradient(
+        circle at 70% 64%,
+        rgba(56, 189, 248, 0.32),
+        transparent 58%
+      ),
+      linear-gradient(135deg, rgba(14, 116, 144, 0.88), rgba(56, 189, 248, 0.72))`,
+    bubbleAccent: 'rgba(56, 189, 248, 0.9)',
+    bubbleBorder: 'rgba(56, 189, 248, 0.42)',
+    bubbleShadow: '0 26px 60px rgba(56, 189, 248, 0.36)'
+  },
+  'orbital-city': {
+    previewBg: `radial-gradient(
+        circle at 30% 28%,
+        rgba(249, 115, 22, 0.32),
+        transparent 58%
+      ),
+      radial-gradient(
+        circle at 78% 68%,
+        rgba(192, 132, 252, 0.32),
+        transparent 56%
+      ),
+      linear-gradient(135deg, rgba(79, 70, 229, 0.88), rgba(249, 115, 22, 0.68))`,
+    bubbleAccent: 'rgba(192, 132, 252, 0.9)',
+    bubbleBorder: 'rgba(192, 132, 252, 0.46)',
+    bubbleShadow: '0 26px 60px rgba(192, 132, 252, 0.38)'
+  },
+  'flora-signal': {
+    previewBg: `radial-gradient(
+        circle at 24% 30%,
+        rgba(74, 222, 128, 0.36),
+        transparent 58%
+      ),
+      radial-gradient(
+        circle at 72% 40%,
+        rgba(52, 211, 153, 0.32),
+        transparent 56%
+      ),
+      linear-gradient(135deg, rgba(16, 185, 129, 0.9), rgba(34, 197, 94, 0.72))`,
+    bubbleAccent: 'rgba(74, 222, 128, 0.92)',
+    bubbleBorder: 'rgba(74, 222, 128, 0.4)',
+    bubbleShadow: '0 26px 60px rgba(34, 197, 94, 0.36)'
+  }
+});
+
+function resolvePlanCardTheme(value) {
+  if (!value) { return null; }
+  const key = String(value).toLowerCase();
+  return PLAN_CARD_THEMES[key] || null;
+}
+
+function applyPlanCardTheme(card, theme) {
+  if (!card || !theme) { return; }
+  const set = (prop, val) => {
+    if (typeof val === 'string' && val.length) {
+      card.style.setProperty(prop, val);
+    }
+  };
+  set('--plan-card-preview-photo-bg', theme.previewBg);
+  set('--plan-card-preview-photo-label-color', theme.previewLabel);
+  set('--plan-card-preview-photo-text', theme.previewText);
+  set('--plan-card-preview-name-color', theme.previewName);
+  set('--plan-card-preview-shadow', theme.previewShadow);
+  set('--plan-card-preview-border-color', theme.previewBorder);
+  set('--plan-card-bubble-accent', theme.bubbleAccent);
+  set('--plan-card-bubble-border', theme.bubbleBorder);
+  set('--plan-card-bubble-shadow', theme.bubbleShadow);
+}
+
+
 document.addEventListener('keydown', (event) => {
   if (event.defaultPrevented) { return; }
   if (!(event.code === 'Space' || event.key === ' ' || event.key === 'Spacebar')) { return; }
@@ -612,6 +720,14 @@ document.addEventListener('keydown', (ev) => {
   const floorButtons  = Array.from(document.querySelectorAll('.page-wall .floor-selector__button'));
   if (!scroller || !floorSections.length || !floorButtons.length) { return; }
 
+  const planCards = Array.from(document.querySelectorAll('.page-wall .plan-card'));
+  planCards.forEach((card) => {
+    const theme = resolvePlanCardTheme(card?.dataset?.artwork);
+    if (theme) {
+      applyPlanCardTheme(card, theme);
+    }
+  });
+
   const baseSection = floorSections[0];
   if (!baseSection) { return; }
   const baseHeader = baseSection.querySelector('.floor-section__head');
@@ -677,7 +793,32 @@ document.addEventListener('keydown', (ev) => {
     const titleEl = node.querySelector('.plan-hover-bubble__title');
     const metaEl = node.querySelector('.plan-hover-bubble__meta');
 
+    const applyBubbleTheme = (themeData) => {
+      if (!themeData) {
+        node.style.removeProperty('--bubble-accent');
+        node.style.removeProperty('--bubble-border');
+        node.style.removeProperty('--bubble-shadow');
+        return;
+      }
+      if (typeof themeData.bubbleAccent === 'string' && themeData.bubbleAccent.length) {
+        node.style.setProperty('--bubble-accent', themeData.bubbleAccent);
+      } else {
+        node.style.removeProperty('--bubble-accent');
+      }
+      if (typeof themeData.bubbleBorder === 'string' && themeData.bubbleBorder.length) {
+        node.style.setProperty('--bubble-border', themeData.bubbleBorder);
+      } else {
+        node.style.removeProperty('--bubble-border');
+      }
+      if (typeof themeData.bubbleShadow === 'string' && themeData.bubbleShadow.length) {
+        node.style.setProperty('--bubble-shadow', themeData.bubbleShadow);
+      } else {
+        node.style.removeProperty('--bubble-shadow');
+      }
+    };
+
     const hide = () => {
+      applyBubbleTheme(null);
       node.classList.remove('is-visible', 'is-flipped');
       node.style.transform = 'translate3d(-9999px, -9999px, 0)';
       node.setAttribute('aria-hidden', 'true');
@@ -686,11 +827,13 @@ document.addEventListener('keydown', (ev) => {
 
     hide();
 
-    const show = (card, cardData) => {
+    const show = (card, cardData, theme) => {
       if (!cardData || !titleEl || !metaEl) {
+        applyBubbleTheme(null);
         hide();
         return;
       }
+      applyBubbleTheme(theme);
       titleEl.textContent = cardData.name || '';
       const parts = [];
       if (finalFloorLabel) { parts.push(finalFloorLabel); }
@@ -725,6 +868,7 @@ document.addEventListener('keydown', (ev) => {
   const revealFinalPreview = (card) => {
     if (!card) { return; }
     const artwork = card.dataset.artwork || '';
+    const theme = resolvePlanCardTheme(artwork);
     const finalData = artwork ? finalCardLookup.get(artwork) : null;
     const photo = card.querySelector('.plan-card__photo');
     if (!finalData || !photo) {
@@ -733,12 +877,15 @@ document.addEventListener('keydown', (ev) => {
       card.removeAttribute('data-original-label');
       return;
     }
+    if (theme) {
+      applyPlanCardTheme(card, theme);
+    }
     if (!card.hasAttribute('data-original-label')) {
       card.setAttribute('data-original-label', photo.dataset.label || '');
     }
     photo.dataset.label = finalData.label || '';
     card.classList.add('plan-card--final-preview');
-    hoverBubble?.show?.(card, { ...finalData, artwork });
+    hoverBubble?.show?.(card, { ...finalData, artwork }, theme);
   };
 
   const resetFinalPreview = (card) => {
@@ -2329,6 +2476,19 @@ function setActiveFilter(value) {
   });
 }
 
+function buildZoneCodeLabel(zone, code) {
+  const zoneStr = zone == null ? '' : String(zone).trim().toUpperCase();
+  const codeStr = code == null ? '' : String(code).trim();
+  if (!zoneStr && !codeStr) { return ''; }
+  if (!zoneStr) { return codeStr; }
+  if (!codeStr) { return zoneStr; }
+  const normalized = codeStr.toUpperCase();
+  if (normalized.startsWith(`${zoneStr}-`)) {
+    return normalized;
+  }
+  return `${zoneStr}-${codeStr}`;
+}
+
 /* 카드 DOM 생성 — 스타일 클래스명은 페이지 네임스페이스에 기대어 최소화 */
 function createArtworkCard(item) {
   const card = document.createElement('article');
@@ -2356,10 +2516,12 @@ function createArtworkCard(item) {
   ttl.className = 'artwork-card__title';
   ttl.textContent = item.title || item.code;
 
+  const zoneLabel = buildZoneCodeLabel(item.zone, item.code);
+
   if (item.description) {
     const desc = document.createElement('p');
     desc.className = 'artwork-card__description';
-    desc.textContent = item.description;
+    desc.textContent = zoneLabel ? `(${zoneLabel}) ${item.description}` : item.description;
     body.append(ttl, desc);
   } else {
     body.append(ttl);
@@ -3321,7 +3483,9 @@ function _aw_renderCards(grid, items) {
     const members = Array.isArray(it.members) ? it.members.join(', ') : (it.members || '');
     const tools   = Array.isArray(it.tools)   ? it.tools.join(', ')   : (it.tools || '');
     const genres  = Array.isArray(it.genres)  ? it.genres.join(', ')  : (it.genres || '');
-    const desc    = it.description || '';
+    const rawDesc = it.description || '';
+    const zoneLabel = buildZoneCodeLabel(it.zone, it.code);
+    const desc    = zoneLabel && rawDesc ? `(${zoneLabel}) ${rawDesc}` : rawDesc;
     return `
       <article class="artwork-card" data-code="${it.code}">
         ${cover ? `

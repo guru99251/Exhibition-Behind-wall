@@ -550,12 +550,11 @@ body.page #mosaic {
   left: 50%;
   bottom: -27px;                 /* 글자와 선 간격 */
   transform: translateX(-50%);
-  width: 5%;                   /* 제목 길이 대비 짧은 비율 */
+  width: 20%;                   /* 제목 길이 대비 짧은 비율 */
   height: 1px;                  /* 선 두께 */
   background-color: #ffffffee;       /* 선 색상 */
   opacity: 0.8;
 }
-
 
 /* (층별) 가변 콘텐츠 */
 .floor-section {
@@ -670,15 +669,25 @@ body.page #mosaic {
   top: calc(var(--y) * 1%);
   transform: translate(-50%, -50%);
   display: grid;
-  gap: 0.65rem;
-  width: clamp(9rem, 16vw, 12.5rem);
-  padding: clamp(0.55rem, 1vw, 0.75rem);
-  border: 1px solid var(--color-text-border-opacity04);
-  background: var(--color-bg);
+  gap: var(--plan-card-gap, 0.65rem);
+  width: var(--plan-card-width, clamp(9rem, 16vw, 12.5rem));
+  padding: var(--plan-card-padding, clamp(0.55rem, 1vw, 0.75rem));
+  border: 1px solid var(--plan-card-border, var(--color-text-border-opacity04));
+  background: var(--plan-card-surface, var(--color-bg));
   cursor: pointer;
   transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
   z-index: 2;
-  border-radius: var(--global-border-radius);
+  border-radius: var(--plan-card-radius, var(--global-border-radius));
+  box-shadow: var(--plan-card-elevation, none);
+  --plan-card-preview-shadow: 0 26px 58px rgba(56, 189, 248, 0.33);
+  --plan-card-preview-border-color: rgba(226, 232, 240, 0.88);
+  --plan-card-preview-photo-bg: linear-gradient(135deg, rgba(15, 23, 42, 0.88), rgba(30, 41, 59, 0.82));
+  --plan-card-preview-photo-label-color: rgba(248, 250, 252, 0.88);
+  --plan-card-preview-photo-text: #f8fafc;
+  --plan-card-preview-name-color: #f8fafc;
+  --plan-card-bubble-accent: rgba(148, 163, 184, 0.9);
+  --plan-card-bubble-border: rgba(148, 163, 184, 0.45);
+  --plan-card-bubble-shadow: 0 26px 64px rgba(7, 12, 22, 0.5);
 }
 
 .plan-card:hover,
@@ -696,12 +705,15 @@ body.page #mosaic {
 .plan-card__photo {
   position: relative;
   box-sizing: border-box;
-  border: 1px solid var(--color-text-border-opacity04);
-  padding: clamp(1.6rem, 4vw, 2.4rem);
+  border: 1px solid var(--plan-card-photo-border, var(--color-text-border-opacity04));
+  padding: var(--plan-card-photo-padding, clamp(1.6rem, 4vw, 2.4rem));
   display: grid;
   place-items: center;
   text-align: center;
   overflow: hidden;
+  background: var(--plan-card-photo-bg, transparent);
+  background-size: var(--plan-card-photo-bg-size, cover);
+  background-position: var(--plan-card-photo-bg-position, center);
 }
 
 .plan-card__photo::after {
@@ -709,120 +721,42 @@ body.page #mosaic {
   font-size: clamp(0.72rem, 1vw, 0.88rem);
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--color-text-border-opacity04);
+  color: var(--plan-card-label-color, var(--color-text-border-opacity04));
 }
 
 .plan-card__name {
-  text-transform: uppercase;
+  /* text-transform: uppercase; */
   letter-spacing: 0rem;
   font-size: clamp(0.78rem, 1.1vw, 0.95rem);
-  color: var(--color-text);
+  color: var(--plan-card-name-color, var(--color-text));
   text-align: center;
 }
 
 .plan-card--final-preview {
-  border-color: rgba(226, 232, 240, 0.88);
-  box-shadow: 0 26px 58px rgba(56, 189, 248, 0.33);
+  border-color: var(--plan-card-preview-border-color);
+  box-shadow: var(--plan-card-preview-shadow);
 }
 
 .plan-card--final-preview .plan-card__photo {
   border-color: transparent;
-  color: #f8fafc;
-  background: radial-gradient(
-      circle at 18% 24%,
-      rgba(255, 255, 255, 0.18),
-      transparent 54%
-    ),
-    linear-gradient(140deg, rgba(15, 23, 42, 0.88), rgba(30, 41, 59, 0.85));
+  color: var(--plan-card-preview-photo-text, #f8fafc);
+  background: var(--plan-card-preview-photo-bg);
   background-blend-mode: screen;
   transition: background 0.4s ease;
 }
 
 .plan-card--final-preview .plan-card__photo::after {
-  color: rgba(248, 250, 252, 0.88);
+  color: var(--plan-card-preview-photo-label-color);
 }
 
 .plan-card--final-preview .plan-card__name {
-  color: #f8fafc;
-}
-
-.plan-card.plan-card--final-preview[data-artwork="spectral-loop"]
-  .plan-card__photo {
-  background: radial-gradient(
-      circle at 22% 32%,
-      rgba(147, 197, 253, 0.42),
-      transparent 60%
-    ),
-    radial-gradient(
-      circle at 76% 18%,
-      rgba(129, 140, 248, 0.36),
-      transparent 58%
-    ),
-    linear-gradient(135deg, rgba(30, 64, 175, 0.9), rgba(56, 189, 248, 0.78));
-}
-
-.plan-card.plan-card--final-preview[data-artwork="memory-patch"]
-  .plan-card__photo {
-  background: radial-gradient(
-      circle at 26% 26%,
-      rgba(253, 224, 71, 0.36),
-      transparent 58%
-    ),
-    radial-gradient(
-      circle at 74% 42%,
-      rgba(244, 114, 182, 0.32),
-      transparent 56%
-    ),
-    linear-gradient(130deg, rgba(234, 179, 8, 0.88), rgba(249, 168, 212, 0.72));
-}
-
-.plan-card.plan-card--final-preview[data-artwork="tidal-dream"]
-  .plan-card__photo {
-  background: radial-gradient(
-      circle at 24% 24%,
-      rgba(45, 212, 191, 0.38),
-      transparent 58%
-    ),
-    radial-gradient(
-      circle at 70% 64%,
-      rgba(56, 189, 248, 0.32),
-      transparent 58%
-    ),
-    linear-gradient(135deg, rgba(14, 116, 144, 0.88), rgba(56, 189, 248, 0.72));
-}
-
-.plan-card.plan-card--final-preview[data-artwork="orbital-city"]
-  .plan-card__photo {
-  background: radial-gradient(
-      circle at 30% 28%,
-      rgba(249, 115, 22, 0.32),
-      transparent 58%
-    ),
-    radial-gradient(
-      circle at 78% 68%,
-      rgba(192, 132, 252, 0.32),
-      transparent 56%
-    ),
-    linear-gradient(135deg, rgba(79, 70, 229, 0.88), rgba(249, 115, 22, 0.68));
-}
-
-.plan-card.plan-card--final-preview[data-artwork="flora-signal"]
-  .plan-card__photo {
-  background: radial-gradient(
-      circle at 24% 30%,
-      rgba(74, 222, 128, 0.36),
-      transparent 58%
-    ),
-    radial-gradient(
-      circle at 72% 40%,
-      rgba(52, 211, 153, 0.32),
-      transparent 56%
-    ),
-    linear-gradient(135deg, rgba(16, 185, 129, 0.9), rgba(34, 197, 94, 0.72));
+  color: var(--plan-card-preview-name-color);
 }
 
 .plan-hover-bubble {
   --bubble-accent: rgba(148, 163, 184, 0.9);
+  --bubble-border: rgba(148, 163, 184, 0.45);
+  --bubble-shadow: 0 26px 64px rgba(7, 12, 22, 0.5);
   position: absolute;
   top: 0;
   left: 0;
@@ -832,13 +766,13 @@ body.page #mosaic {
   max-width: clamp(240px, 30vw, 320px);
   padding: clamp(0.75rem, 1.8vw, 1.1rem) clamp(1rem, 2vw, 1.6rem);
   border-radius: 18px;
-  border: 1px solid rgba(148, 163, 184, 0.45);
+  border: 1px solid var(--bubble-border);
   background: linear-gradient(
     140deg,
     rgba(7, 12, 22, 0.96),
     rgba(15, 23, 42, 0.9)
   );
-  box-shadow: 0 26px 64px rgba(7, 12, 22, 0.5);
+  box-shadow: var(--bubble-shadow);
   color: #f8fafc;
   pointer-events: none;
   opacity: 0;
@@ -858,11 +792,11 @@ body.page #mosaic {
   left: 50%;
   width: 16px;
   height: 16px;
-  border: 1px solid rgba(148, 163, 184, 0.42);
+  border: 1px solid var(--bubble-border);
   background: inherit;
   transform: translate(-50%, 60%) rotate(45deg);
   bottom: -8px;
-  box-shadow: 0 10px 26px rgba(7, 12, 22, 0.32);
+  box-shadow: var(--bubble-shadow);
 }
 
 .plan-hover-bubble.is-flipped::after {
@@ -887,55 +821,6 @@ body.page #mosaic {
   color: rgba(226, 232, 240, 0.78);
 }
 
-.plan-hover-bubble[data-artwork="spectral-loop"] {
-  --bubble-accent: rgba(147, 197, 253, 0.92);
-  border-color: rgba(147, 197, 253, 0.5);
-  box-shadow: 0 26px 60px rgba(99, 102, 241, 0.42);
-}
-
-.plan-hover-bubble[data-artwork="memory-patch"] {
-  --bubble-accent: rgba(253, 224, 71, 0.92);
-  border-color: rgba(253, 224, 71, 0.42);
-  box-shadow: 0 26px 60px rgba(250, 204, 21, 0.36);
-}
-
-.plan-hover-bubble[data-artwork="tidal-dream"] {
-  --bubble-accent: rgba(56, 189, 248, 0.9);
-  border-color: rgba(56, 189, 248, 0.42);
-  box-shadow: 0 26px 60px rgba(56, 189, 248, 0.36);
-}
-
-.plan-hover-bubble[data-artwork="orbital-city"] {
-  --bubble-accent: rgba(192, 132, 252, 0.9);
-  border-color: rgba(192, 132, 252, 0.46);
-  box-shadow: 0 26px 60px rgba(192, 132, 252, 0.38);
-}
-
-.plan-hover-bubble[data-artwork="flora-signal"] {
-  --bubble-accent: rgba(74, 222, 128, 0.92);
-  border-color: rgba(74, 222, 128, 0.4);
-  box-shadow: 0 26px 60px rgba(34, 197, 94, 0.36);
-}
-
-.plan-hover-bubble[data-artwork="spectral-loop"]::after {
-  border-color: rgba(147, 197, 253, 0.5);
-}
-
-.plan-hover-bubble[data-artwork="memory-patch"]::after {
-  border-color: rgba(253, 224, 71, 0.42);
-}
-
-.plan-hover-bubble[data-artwork="tidal-dream"]::after {
-  border-color: rgba(56, 189, 248, 0.42);
-}
-
-.plan-hover-bubble[data-artwork="orbital-city"]::after {
-  border-color: rgba(192, 132, 252, 0.46);
-}
-
-.plan-hover-bubble[data-artwork="flora-signal"]::after {
-  border-color: rgba(74, 222, 128, 0.4);
-}
 /* styles.css — 01-wall: 플로팅 버블 즉시 표시 (애니메이션 제거) */
 .page-wall .plan-hover-bubble {
   transition: none !important;
@@ -1907,8 +1792,8 @@ body.page.page-wall {
 }
 
 .artwork-card__description {
-  font-size: 0.9rem;
-  line-height: 1.6;
+  font-size: 0.85rem;
+  line-height: 1.5;
   opacity: 0.8;
 }
 
@@ -2001,7 +1886,6 @@ body.page.page-artworks {
   margin-inline: auto;
   padding-inline: clamp(0.4rem, 1vw, 1rem);
 }
-
 
 .page-comment .page-main,
 .page-contributors .page-main,
@@ -2908,7 +2792,6 @@ body.page-artworks::-webkit-scrollbar {
   margin-left: 0.4rem;
 }
 
-
 /* contributors-column 개별 박스 너비/위치 지정 */
 [data-participants-grid],
 [data-staff-grid] { position: relative; }
@@ -2999,8 +2882,6 @@ body.page-artworks::-webkit-scrollbar {
   width: 1500px;
 }
 
-
-
 /* === Artworks: 카드 포스터 영역을 고정 비율 + 중앙 정렬로 */
 .artwork-card__poster {
   position: relative;
@@ -3046,7 +2927,6 @@ body.page-artworks::-webkit-scrollbar {
   object-fit: cover;          /* 이미지 꽉 채우되 비율 유지 */
   display: block;
 }
-
 
 .artwork-card__meta {
   gap: 0;
