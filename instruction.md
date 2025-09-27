@@ -1,5 +1,5 @@
 # 업데이트 사항 지침
-!important! : 절대 ```@charset "UTF-8";```을 지켜주세요. 모든 파일을 "UTF-8 with BOM" 이 아닌, 오직 **"UTF-8"** 로 다뤄주세요.
+!important! : 절대 `@charset "UTF-8";`을 지켜주세요. 모든 파일을 "UTF-8 with BOM" 이 아닌, 오직 **"UTF-8"** 로 다뤄주세요.
 
 ## 전체 공통:
 
@@ -20,6 +20,7 @@
 
 <!-- - 현재 각 .plan-card hover 시, 플로팅 박스가 등장하는 애니메이션이 이상합니다(좌측 상단 어디 멀리서 날아옴). 이 애니메이션을 삭제하고 말풍선이 hover 시 바로 팝업되게 설정해 주세요. -->
 
+- 현재 각 .plan-card 의 스타일 선택자가 [data-artwork=]로 되어 있어서(eg.data-artwork="spectral-loop") 각 카드의 작품이름(카드제목)을 변경할 때 어려움을 겪고 있습니다. 추후에는 각 카드의 위치값(absolute로 조정할 예정)이나 내부 이미지, 카드 제목, 크기를 따로따로 조정할 에정입니다. 각 카드의 변동성과 확장성을 용이하게 만들어주세요. 
 
 ---
 ## 02-comment.html
@@ -53,3 +54,4 @@
 
 ---
 ## 04-artworks.html
+- 각 작품 카드 description 맨 앞에 (전시구역-작품코드) 를 덧붙여 주세요. (eg: "(C-105) This is a placeholder description...")
