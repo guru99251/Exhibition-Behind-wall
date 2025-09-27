@@ -553,20 +553,7 @@ if (introTrigger) {
   introTrigger.addEventListener("click", runIntroSequence);
 }
 
-// Keyboard shortcuts for manual control.
-document.addEventListener('keydown', (ev) => {
-  // Ignore shortcuts when focus is inside a form control.
-  const tag = document.activeElement && document.activeElement.tagName;
-  if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(tag)) return;
 
-  const k = (ev.key || '').toLowerCase();
-  if (k === 'e' || k === 'o') {
-    showDisc({ withTitle: true, text: "Loading // Please wait // --" });
-  }
-  if (k === 'x' || k === 'escape') {
-    hideDisc();
-  }
-});
 // End keyboard shortcut handlers.
 
 
