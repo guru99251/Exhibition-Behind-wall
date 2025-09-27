@@ -331,3 +331,80 @@ CREATE TABLE public.zones (
   CONSTRAINT zones_pkey PRIMARY KEY (code)
 );
 ```
+
+---
+
+# to - do (개발 사항)
+
+## 01-wall.html에서 .plan-card 추가 
+아래 지침을 참고하여 추가 예정
+```
+01-wall.html 페이지에서 plan-card를 원하는 대로 추가해서, 각각 다른 사진과 다른 제목(title)을 넣으려고 합니다. 어떤 방식으로 추가하면 되나요?:
+
+추가해야 할 것
+
+각 층의 .plan-map 안에 새로운 button.plan-card를 추가합니다:
+- data-artwork: 이 작품을 구분할 고유 slug/key
+- data-floor: 층 번호 (1–7)
+- style="--x:NN; --y:NN;" → 지도 이미지 영역에서 퍼센트 좌표로 카드 위치 지정
+- 내부에 사람이 읽을 수 있는 data-label을 가진 .plan-card__photo
+- 보이는 제목을 넣는 .plan-card__name
+
+기본 패턴
+
+해당 층 섹션 안에 배치하세요 (예: #floor-2 .plan-map):
+카드마다 다른 --x/--y 값을 넣어 위치를 조정합니다.
+예시:
+
+01-wall.html
+<button type="button" class="plan-card" data-artwork="my-art-unique" data-floor="2" style="--x:42; --y:58;">
+  <div class="plan-card__photo" data-label="초기 스케치"></div>
+  <div class="plan-card__name">My Custom Title</div>
+</button>
+
+위치 설정 팁:
+--x, --y 값은 도면 이미지 영역의 퍼센트 단위입니다. 대략 10–90 사이 값으로 시작해서 조정하세요.
+
+다른 사진을 넣는 방법
+두 가지 방법이 있습니다. 하나를 선택하세요:
+
+① Supabase/DB 기반 (DB에 데이터가 있다면 권장)
+- v_artworks_card 테이블에 data-artwork 값과 일치하는 slug/code 행이 있어야 하고, cover_url이 포스터 이미지 URL을 가리켜야 합니다.
+- script.js가 로드 시 자동으로 background 이미지와 title을 세팅합니다.
+- .plan-card__name은 fallback으로 남겨두세요. DB의 title이 자동으로 덮어씁니다.
+
+② 수동/로컬 이미지 (DB 사용 안 할 경우)
+- 사진 박스에 직접 background 설정:
+  <div class="plan-card__photo" data-label="초기 스케치" style="background-image:url('./images/my-photo.jpg'); background-size:cover; background-position:center;"></div>
+- 또는 CSS custom property 활용(현재 CSS에 대응):
+  <div class="plan-card__photo" data-label="초기 스케치" style="--plan-card-photo-bg:url('./images/my-photo.jpg');"></div>
+- 두 방식 다 가능합니다. 단, DB가 있으면 data-artwork가 매칭될 때 DB 값이 수동 지정한 title/사진을 덮어씁니다.
+
+최종 미리보기(hover 시)
+
+hover 상태에서 보이는 “최종 미리보기”는 7층(7F) 카드의 정보를 기준으로 합니다.
+낮은 층에서 hover할 때 올바른 미리보기 풍선과 label을 보려면:
+- 동일한 data-artwork 값을 가진 카드를 7F에도 추가하세요.
+- 그 카드의 .plan-card__photo data-label을 원하는 문구로 넣으세요.
+
+7F 예시:
+<button type="button" class="plan-card" data-artwork="my-art-unique" data-floor="7" style="--x:50; --y:40;">
+  <div class="plan-card__photo" data-label="최종 포스터"></div>
+  <div class="plan-card__name">My Final Title</div>
+</button>
+
+제목(title)
+
+- DB를 쓰지 않는다면, 보이는 제목을 .plan-card__name 안에 직접 넣으세요.
+- DB hydration을 사용하는 경우(동일한 data-artwork 매칭 시), DB의 title이 자동으로 .plan-card__name 텍스트를 대체합니다.
+
+요약 단계
+
+1. 원하는 층 섹션을 선택하고 → button.plan-card 추가
+2. data-artwork(고유 키), data-floor, --x/--y 설정
+3. .plan-card__photo에 data-label 설정, 필요시 inline background 또는 DB cover 사용
+4. .plan-card__name에 보이는 제목 텍스트 넣기 (DB가 있으면 자동 덮어씀)
+5. 동일한 data-artwork를 가진 7F 카드를 추가해 hover 미리보기 동작 연결
+
+만약 예시(층 번호, 원하는 위치, title, 사진 URL)를 알려주시면, 제가 정확한 코드 스니펫을 작성해드릴 수 있습니다.
+```
