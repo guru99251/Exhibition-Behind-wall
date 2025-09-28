@@ -20,6 +20,7 @@ if (window.supabase?.createClient) {
   }, { once: true });
 }
 
+// plan-card 설정 -> data-artwork 값에 따라 스타일 적용
 const PLAN_CARD_THEMES = Object.freeze({
   'spectral-loop': {
     previewBg: `radial-gradient(
@@ -1288,15 +1289,6 @@ if (introTrigger) {
   handle.addEventListener('click', toggle);
   handle.addEventListener('keydown', toggle);
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setOpen(false); });
-
-  // form?.querySelectorAll(".emoji, .phrase").forEach((btn) => {
-  //   btn.addEventListener("click", () => {
-  //     if (!messageInput) return;
-  //     messageInput.value = (messageInput.value || "") + (btn.textContent || "");
-  //     typingControls?.syncFromInput();
-  //     messageInput.dispatchEvent(new Event("input", { bubbles: true }));
-  //   });
-  // });
 })();
 
 /* === Comment page utilities === */
@@ -2755,20 +2747,6 @@ function setComposerCodeOptions(zone) {
   });
   
   // // 코드 선택 → 구역 자동 변경 + 옵션 재주입 + 필터/정렬 재적용
-  /* 변경 전 */
-  // filterCodeSel?.addEventListener('change', () => {
-  //   const v = filterCodeSel.value || '';
-  //   const m = v.match(/^([A-J])-/i);     // 👈 selCode가 아니라 v를 사용
-  //   if (m && filterZoneSel) {
-  //     const z = m[1].toUpperCase();
-  //     filterZoneSel.value = z;
-  //     setFilterCodeOptions(z);           // 해당 구역 코드로 옵션 재구성
-  //     filterCodeSel.value = v;           // 재구성 후에도 선택 유지
-  //   }
-  //   applyFiltersAndSort();
-  // });
-
-  /* 변경 후 */
   // 필터 바
   filterCodeSel.addEventListener('change', () => {
     const z = CODE_TO_ZONE[Number(filterCodeSel.value)];
