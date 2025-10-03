@@ -2578,7 +2578,7 @@ body.page-artworks::-webkit-scrollbar {
 }
 .composer-body {
   display: grid;
-  gap: 0.9rem;
+  gap: 0rem;
   padding: 1rem 1.2rem;
 }
 .field .label {
@@ -2586,6 +2586,7 @@ body.page-artworks::-webkit-scrollbar {
   opacity: 0.8;
   font-size: 0.9rem;
   margin-bottom: 0.25rem;
+  height: 100%;
 }
 .input.message-input {
   width: 100%;
@@ -2593,12 +2594,14 @@ body.page-artworks::-webkit-scrollbar {
   border-radius: 12px;
   /* background: #fff;
   color: #000; */
+  background: rgba(83, 116, 170, 0.35);
+  color: var(--color-text);
   padding: 0.6rem 0.8rem;
   min-height: 3.2rem;
 }
 .quick-picks {
   display: grid;
-  gap: 0.5rem;
+  gap: 0px;
 }
 .emoji-row,
 .phrase-row {
@@ -2609,6 +2612,7 @@ body.page-artworks::-webkit-scrollbar {
 .emoji,
 .phrase {
   all: unset;
+  max-height: 30px;
   border: 1px solid rgba(148, 163, 184, 0.35);
   border-radius: 999px;
   padding: 0.25rem 0.6rem;
@@ -2620,12 +2624,15 @@ body.page-artworks::-webkit-scrollbar {
   gap: 0.6rem;
   grid-template-columns: 1fr 1fr;
 }
+/* 필터링 선택 */
 .select {
   width: 100%;
   border: 1px solid rgba(148, 163, 184, 0.35);
   border-radius: 10px;
-  color: #000000bb;
-  background: #ffffffd3;
+  /* color: #000000bb;
+  background: #ffffffd3; */
+  background: rgba(30, 41, 59, 0.35);
+  color: var(--color-text);
   padding: 0.45rem 0.6rem;
 }
 .composer-foot {

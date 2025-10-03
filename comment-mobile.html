@@ -19,7 +19,7 @@
         <header class="mobile-comment__header">
             <p class="mobile-comment__tag" data-target-label>전체 전시</p>
             <h1>모바일 방명록</h1>
-            <p class="mobile-comment__lead">QR코드나 NFC 태그를 통해 접속한 모바일 전용 페이지입니다. 현장에서 떠오르는 감상과 생각을 바로 남겨주세요.</p>
+            <p class="mobile-comment__lead">채팅, 응원, 반응, 이모지를 자유롭게 남겨보세요.<br>(특정 작품/구역을 지정 가능)</p>
         </header>
 
         <section class="mobile-comment__status">
@@ -39,7 +39,7 @@
 
                             <div class="field-row">
                                 <label class="field">
-                                    <span class="label">전시 구역</span>
+                                    <span class="label">구역 지정</span>
                                     <select class="select select-zone" name="zone">
                                         <option value="">전체</option>
                                         <option>A</option>
@@ -55,7 +55,7 @@
                                     </select>
                                 </label>
                                 <label class="field">
-                                    <span class="label">작품 코드</span>
+                                    <span class="label">작품 선택</span>
                                     <select class="select select-code" name="artworkCode">
                                         <option value="">(선택 없음)</option>
                                     </select>
@@ -73,8 +73,8 @@
 
         <section class="mobile-comment__stream">
             <header>
-                <h2>실시간 반응</h2>
-                <p>최신 댓글이 도착하면 잠시 뒤 자동으로 보입니다.</p>
+                <h2>실시간 채팅</h2>
+                <p>전체 코멘트를 Behind Wall에서 확인하세요!</p>
             </header>
             <ol class="livechat-stream" data-livechat-stream data-comment-stream="ALL" aria-live="polite"></ol>
         </section>

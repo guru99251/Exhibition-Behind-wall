@@ -27,9 +27,9 @@
         data-supabase-key="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRiZWdjYXpvemNrcGtqdGF0aWNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg1NDkyNjIsImV4cCI6MjA3NDEyNTI2Mn0.GMpSO8iBTSRM97ZMMIfqyjc2ZW_kLtQrZwduFNGtxws">
         <header class="comment-header">
             <div class="comment-header__title">
-                <h1>전시 실시간 코멘트</h1>
-                <p>현장을 방문한 관객들의 메시지와 반응이 한눈에 모이는 보드입니다. 팀별 피드백과 응원의 말들을 자유롭게 살펴보세요.<br>
-                    작품별 코멘트를 남기고 싶다면 아래 NFC/QR 전용 링크를 활용해 주세요.
+                <h1>실시간 방명록</h1>
+                <p>전시장에 방문한 관람객들의 채팅, 응원, 반응, 이모지를 확인할 수 있는 페이지입니다. 자유롭게 남겨보세요! <br>
+                    특정 작품이나 구역을 지정하여 코멘트를 남길 수도 있습니다! (리플렛 참고)
                 </p>
             </div>
             <div class="comment-header__status">
@@ -40,16 +40,16 @@
 
         <section class="comment-columns" data-comment-columns>
             <header class="livechat-head">
-                <h2>전체 피드</h2>
+                <h2>전체 게시판</h2>
                 <div class="livechat-head__row">
-                    <p>현장의 말들을 놓치지 않도록 정렬을 조합해 보세요.</p>
+                    <p>참여자와 스태프를 향한 응원메시지 남겨주시면 아주 큰 힘이 됩니다!</p>
                     <div class="sort-control" data-sort-group>
                         <span class="label">정렬</span>
                         <div class="sort-buttons">
-                            <button type="button" class="btn sort is-active" data-sort="latest">최신</button>
-                            <button type="button" class="btn sort" data-sort="likes">좋아요</button>
+                            <button type="button" class="btn sort is-active" data-sort="latest">최신순</button>
+                            <button type="button" class="btn sort" data-sort="likes">좋아요순</button>
                             <button type="button" class="btn sort" data-sort="oldest">시간↑</button>
-                            <button type="button" class="btn sort" data-sort="length">글 길이</button>
+                            <button type="button" class="btn sort" data-sort="length">긴 글</button>
                             <button type="button" class="btn ghost refresh" data-sort-refresh aria-label="정렬 새로고침">↻</button>
                         </div>
                     </div>
@@ -61,7 +61,7 @@
 
         <div class="filters-row" data-filters>
             <label class="field">
-                <span class="label">전시 구역</span>
+                <span class="label">구역</span>
                 <select class="select" data-filter-zone>
                     <option value="">전체</option>
                     <option>A</option><option>B</option><option>C</option>
@@ -79,7 +79,7 @@
         
         <aside class="comment-aside" data-comment-aside>
             <header class="comment-aside__head">
-                현장 참여 안내
+                모바일 참여 !
             </header>
             <div class="qr-card">
                 <figure class="qr-figure">
@@ -115,18 +115,19 @@
                         <div class="quick-picks">
                             <div class="emoji-row" role="group" aria-label="빠른 이모지">
                                 <button type="button" class="emoji">😊</button>
-                                <button type="button" class="emoji">🔥</button>
+                                <button type="button" class="emoji">😍</button>
+                                <button type="button" class="emoji">🤯</button>
                                 <button type="button" class="emoji">👏</button>
-                                <button type="button" class="emoji">💡</button>
+                                <button type="button" class="emoji">🔥</button>
                                 <button type="button" class="emoji">🎉</button>
                             </div>
                             <div class="phrase-row" role="group" aria-label="추천 멘트">
-                                <button type="button" class="phrase">너무 인상 깊었어요!</button>
-                                <button type="button" class="phrase">다음에도 보고 싶어요.</button>
-                                <button type="button" class="phrase">팀원들의 노력이 느껴집니다.</button>
-                                <button type="button" class="phrase">새로운 영감을 얻었습니다.</button>
-                                <button type="button" class="phrase">감사합니다!</button>
+                                <button type="button" class="phrase">정말 멋있어요!</button>
+                                <button type="button" class="phrase">잘 보고 갑니다!</button>
                                 <button type="button" class="phrase">와아아아!!!</button>
+                                <button type="button" class="phrase">디콘 최고!</button>
+                                <button type="button" class="phrase">❤</button>
+                                <button type="button" class="phrase">!!!!!!!!!!!!!!!!!</button>
                             </div>
                         </div>
 

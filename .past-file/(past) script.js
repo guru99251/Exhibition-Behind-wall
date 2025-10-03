@@ -1,4 +1,4 @@
-﻿// Execute after third-party libraries load (deferred).
+// Execute after third-party libraries load (deferred).
 if (window.gsap && window.ScrollTrigger && window.ScrollToPlugin) {
   gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
 }
@@ -2402,7 +2402,6 @@ async function initArtworksPage(root) {
   ARTWORKS_STATE.grid = root.querySelector('[data-artworks-grid]');
   ARTWORKS_STATE.filterBar = root.querySelector('[data-filter-bar]');
 
-
   try {
     const rows = await fetchArtworksForCards();
     ARTWORKS_STATE.data = rows;
@@ -2556,7 +2555,6 @@ function createArtworkCard(item) {
   }
 
   body.appendChild(meta);
-
   card.append(fig, body);
   return card;
 }
@@ -2650,271 +2648,129 @@ function hydratePoster(imgEl, fullSrc) {
   // 요구 사양: C:101~111, E:112~116, F:117~125  
   // ===== DB로 대체 필요
   const ARTWORK_BY_ZONE = Object.freeze({
-    C: Array.from({ length: 11 }, (_, i) => `C-${101 + i}`),
-    E: Array.from({ length: 5 }, (_, i) => `E-${112 + i}`),
-    F: Array.from({ length: 9 }, (_, i) => `F-${117 + i}`),
+    C: Array.from({length:11}, (_,i)=>`C-${101+i}`),
+    E: Array.from({length:5 }, (_,i)=>`E-${112+i}`),
+    F: Array.from({length:9 }, (_,i)=>`F-${117+i}`),
   });
+  // ['C-101',..., 'F-125']
 
+  // 코드(숫자) → 구역(문자) 역매핑
   const CODE_TO_ZONE = Object.freeze(Object.fromEntries(
-    Object.entries(ARTWORK_BY_ZONE).flatMap(([zone, codes]) =>
-      codes.map(label => [Number(label.replace(/\D/g, '')), zone])
+    Object.entries(ARTWORK_BY_ZONE).flatMap(([z, arr]) =>
+      arr.map(label => [Number(label.replace(/\D/g,'')), z])
     )
   ));
 
-  const autoFocusComposer = root.dataset.autoFocusComposer !== 'false';
-  const lockComposer = root.dataset.composerPresentation === 'inline';
-  const autoOpenComposer = root.dataset.autoOpenComposer === 'true';
-
-  function normalizeZoneCandidate(value) {
-    if (value == null) { return ''; }
-    const zone = String(value).trim().toUpperCase();
-    if (!zone) { return ''; }
-    if (zone === 'ALL') { return 'ALL'; }
-    return /^[A-Z]$/.test(zone) ? zone : '';
-  }
-
-  function normalizeCodeCandidate(value) {
-    if (value == null) { return ''; }
-    const text = String(value).trim();
-    if (!text) { return ''; }
-    const match = text.match(/\d+/);
-    if (!match) { return ''; }
-    const num = parseInt(match[0], 10);
-    return Number.isFinite(num) ? String(num) : '';
-  }
-
-  function parseArtworkToken(raw) {
-    const text = String(raw ?? '').trim();
-    if (!text) { return null; }
-    const match = text.match(/^([A-Za-z])[\s-]?(\d{2,})$/);
-    if (match) {
-      return {
-        zone: normalizeZoneCandidate(match[1]),
-        code: normalizeCodeCandidate(match[2])
-      };
-    }
-    const numeric = normalizeCodeCandidate(text);
-    if (numeric) {
-      const mappedZone = CODE_TO_ZONE[Number(numeric)];
-      return {
-        zone: normalizeZoneCandidate(mappedZone),
-        code: numeric
-      };
-    }
-    return null;
-  }
-
-  function computeLabel(zone, code) {
-    const zoneStr = normalizeZoneCandidate(zone) || '';
-    const codeStr = normalizeCodeCandidate(code);
-    if (typeof buildZoneCodeLabel === 'function') {
-      return buildZoneCodeLabel(zoneStr || '', codeStr || '');
-    }
-    if (zoneStr && codeStr) { return `${zoneStr}-${codeStr}`; }
-    return codeStr || zoneStr || '';
-  }
-
-  function resolveInitialTarget() {
-    const search = new URLSearchParams(window.location.search);
-    const datasetZone = normalizeZoneCandidate(root.dataset.defaultZone || root.dataset.prefillZone);
-    const datasetCode = normalizeCodeCandidate(root.dataset.defaultCode || root.dataset.prefillCode);
-    const datasetLabel = root.dataset.defaultLabel || '';
-    const datasetTitle = root.dataset.targetTitle || root.dataset.artworkTitle || '';
-
-    const tokens = [
-      parseArtworkToken(search.get('artwork')),
-      parseArtworkToken(search.get('piece')),
-      parseArtworkToken(search.get('target')),
-    ].find(Boolean) || {};
-
-    let zone = tokens.zone || normalizeZoneCandidate(search.get('zone') || search.get('z'));
-    let code = tokens.code || normalizeCodeCandidate(search.get('code') || search.get('artwork_code') || search.get('artworkId'));
-
-    if (!zone && datasetZone) { zone = datasetZone; }
-    if (!code && datasetCode) { code = datasetCode; }
-
-    if (!zone && code) {
-      const mapped = CODE_TO_ZONE[Number(code)];
-      if (mapped) { zone = normalizeZoneCandidate(mapped); }
-    }
-
-    const label = computeLabel(zone, code);
-    const display = datasetTitle || datasetLabel || label;
-
-    return {
-      zone,
-      code,
-      label,
-      display
-    };
-  }
-
-  const initialPrefill = resolveInitialTarget();
-
+  // ----- 필터 코드 옵션 -----
   function setFilterCodeOptions(zone) {
     const sel = root.querySelector('[data-filter-code]');
-    if (!sel) { return; }
-    const normalizedZone = normalizeZoneCandidate(zone);
-    const pool = (!normalizedZone || normalizedZone === 'ALL')
-      ? Object.values(ARTWORK_BY_ZONE).flat()
-      : (ARTWORK_BY_ZONE[normalizedZone] || []);
-    const opts = ['<option value="">(선택 없음)</option>'];
+    if (!sel) return;
+    const pool = zone ? (ARTWORK_BY_ZONE[zone] || []) : Object.values(ARTWORK_BY_ZONE).flat();
+    const opts = ['<option value="">(선택 안 함)</option>'];
     opts.push(...pool.map(label => {
       const num = parseInt(label.replace(/\D/g, ''), 10);
-      return Number.isNaN(num) ? '' : `<option value="${num}">${label}</option>`;
-    }).filter(Boolean));
+      return `<option value="${num}">${label}</option>`;
+    }));
     sel.innerHTML = opts.join('');
   }
 
-  setFilterCodeOptions(filterZoneSel?.value || initialPrefill.zone || '');
 
-  function setComposerCodeOptions(zone, selectedCode, selectedLabel) {
-    if (!selCode) { return; }
-    const normalizedZone = normalizeZoneCandidate(zone);
-    const pool = (!normalizedZone || normalizedZone === 'ALL')
-      ? Object.values(ARTWORK_BY_ZONE).flat()
-      : (ARTWORK_BY_ZONE[normalizedZone] || []);
-    const options = ['<option value="">(선택 없음)</option>'];
-    options.push(...pool.map(label => {
-      const num = parseInt(label.replace(/\D/g, ''), 10);
-      return Number.isNaN(num) ? '' : `<option value="${num}">${label}</option>`;
-    }).filter(Boolean));
-    selCode.innerHTML = options.join('');
+  setFilterCodeOptions(filterZoneSel?.value || '');
 
-    if (selectedCode) {
-      const codeValue = String(selectedCode);
-      let opt = selCode.querySelector(`option[value="${codeValue}"]`);
-      if (!opt) {
-        const fallbackZone = normalizedZone || normalizeZoneCandidate(CODE_TO_ZONE[Number(codeValue)]);
-        const computed = selectedLabel || computeLabel(fallbackZone, codeValue);
-        opt = document.createElement('option');
-        opt.value = codeValue;
-        opt.textContent = computed || codeValue;
-        opt.dataset.dynamic = '1';
-        selCode.appendChild(opt);
-      }
-      selCode.value = codeValue;
-    } else {
-      selCode.value = '';
-    }
-  }
+  // ----- composer 코드 옵션 -----
+function setComposerCodeOptions(zone) {
+  const selCode = form?.querySelector('.select-code');
+  if (!selCode) return;
+  const normalizedZone = String(zone || '').toUpperCase();
+  const codes = (!normalizedZone || normalizedZone === 'ALL') ? Object.values(ARTWORK_BY_ZONE).flat() : (ARTWORK_BY_ZONE[normalizedZone] || []);
+  const opts = ['<option value="">(전체)</option>'];
+  opts.push(...codes.map(label => {
+    const num = parseInt(label.replace(/\D/g, ''), 10);
+    return `<option value="${num}">${label}</option>`;
+  }));
+  selCode.innerHTML = opts.join('');
+}
 
-  function applyInitialSelection(target) {
-    const zoneValue = normalizeZoneCandidate(target?.zone) || '';
-    const codeValue = normalizeCodeCandidate(target?.code);
-    const label = target?.label || '';
 
-    if (selZone && zoneValue) {
-      selZone.value = zoneValue;
-    }
+  setComposerCodeOptions(selZone?.value || '');
 
-    setComposerCodeOptions(zoneValue || selZone?.value || '', codeValue, label);
-
-    if (filterZoneSel && zoneValue) {
-      filterZoneSel.value = zoneValue;
-      setFilterCodeOptions(zoneValue);
-    }
-    if (filterCodeSel && codeValue) {
-      filterCodeSel.value = codeValue;
-    }
-
-    const tagEl = root.querySelector('[data-target-label]');
-    if (tagEl) {
-      const text = target?.display || label;
-      if (text) {
-        tagEl.textContent = text;
-      }
-      if (zoneValue) {
-        tagEl.dataset.zone = zoneValue;
-      }
-      if (text || zoneValue || codeValue) {
-        tagEl.classList.add('is-active');
-      }
-    }
-  }
-
-  applyInitialSelection(initialPrefill);
-  // ----- 필터 및 정렬 -----
+  // ----- 필터 + 정렬 -----
   let currentSort = 'latest';
   function applyFiltersAndSort() {
-    const zoneValue = normalizeZoneCandidate(filterZoneSel?.value);
-    const codeValue = normalizeCodeCandidate(filterCodeSel?.value);
+    const rawZone = filterZoneSel?.value || '';
+    const zone = rawZone.toUpperCase();
+    const code = filterCodeSel?.value || '';
     const rows = Array.from(stream.children);
-    const isAllZone = !zoneValue || zoneValue === 'ALL';
+    const isAllZone = !zone || zone === 'ALL';
 
+    // 필터
     rows.forEach(row => {
-      const rowZone = normalizeZoneCandidate(row.dataset.zone);
-      const rowCode = row.dataset.code || '';
+      const rowZone = (row.dataset.zone || '').toUpperCase();
+      const rowCode = (row.dataset.code || '');
       let visible = true;
-      if (!isAllZone) {
-        visible = visible && rowZone === zoneValue;
-      }
-      if (!isAllZone && codeValue) {
-        visible = visible && rowCode === codeValue;
-      }
+      if (!isAllZone) visible = visible && rowZone === zone;
+      if (!isAllZone && code) visible = visible && rowCode === code;
       row.style.display = visible ? '' : 'none';
     });
 
+    // 정렬(버튼만 사용)
     const visibleRows = rows.filter(r => r.style.display !== 'none');
-    visibleRows.sort((a, b) => {
+    visibleRows.sort((a,b) => {
       if (currentSort === 'likes') {
         const la = parseInt(a.querySelector('.chat-like__count')?.textContent || '0', 10);
         const lb = parseInt(b.querySelector('.chat-like__count')?.textContent || '0', 10);
         return lb - la;
       }
-      if (currentSort === 'oldest') {
-        return (Number(a.dataset.ts) || 0) - (Number(b.dataset.ts) || 0);
-      }
+      if (currentSort === 'oldest') return (Number(a.dataset.ts)||0) - (Number(b.dataset.ts)||0);
       if (currentSort === 'length') {
         const la = (a.querySelector('.chat-row__message')?.textContent || '').length;
         const lb = (b.querySelector('.chat-row__message')?.textContent || '').length;
         return lb - la;
       }
-      return (Number(b.dataset.ts) || 0) - (Number(a.dataset.ts) || 0);
+      // latest
+      return (Number(b.dataset.ts)||0) - (Number(a.dataset.ts)||0);
     });
 
+    // 붙여넣기(숨김 항목은 뒤로)
     const hiddenRows = rows.filter(r => r.style.display === 'none');
     stream.innerHTML = '';
     visibleRows.concat(hiddenRows).forEach(r => stream.appendChild(r));
   }
 
+  // 이벤트 바인딩
   filterZoneSel?.addEventListener('change', () => {
-    const zoneValue = normalizeZoneCandidate(filterZoneSel.value);
-    setFilterCodeOptions(zoneValue);
-    if ((!zoneValue || zoneValue === 'ALL') && filterCodeSel) {
+    setFilterCodeOptions(filterZoneSel.value);
+    if (!filterZoneSel.value && filterCodeSel) {
       filterCodeSel.value = '';
     }
     applyFiltersAndSort();
   });
-
-  filterCodeSel?.addEventListener('change', () => {
-    const codeValue = deriveArtworkCode(filterCodeSel.value);
-    const zoneFromCode = codeValue !== null ? CODE_TO_ZONE[codeValue] : null;
-    if (zoneFromCode && filterZoneSel) {
-      filterZoneSel.value = zoneFromCode;
-      setFilterCodeOptions(zoneFromCode);
+  
+  // // 코드 선택 → 구역 자동 변경 + 옵션 재주입 + 필터/정렬 재적용
+  // 필터 바
+  filterCodeSel.addEventListener('change', () => {
+    const z = CODE_TO_ZONE[Number(filterCodeSel.value)];
+    if (z) {
+      filterZoneSel.value = z;
+      setFilterCodeOptions(z);
     }
     applyFiltersAndSort();
   });
 
+  // 컴포저
   selCode?.addEventListener('change', () => {
-    const codeValue = deriveArtworkCode(selCode.value);
-    const zoneFromCode = codeValue !== null ? CODE_TO_ZONE[codeValue] : null;
-    if (zoneFromCode && selZone) {
-      selZone.value = normalizeZoneCandidate(zoneFromCode);
-    }
+    const z = CODE_TO_ZONE[Number(selCode.value)];
+    if (z) selZone.value = z;
   });
 
   sortGroup?.addEventListener('click', (e) => {
     const btn = e.target.closest('[data-sort]');
-    if (!btn) { return; }
+    if (!btn) return;
     currentSort = btn.dataset.sort || 'latest';
-    sortGroup.querySelectorAll('[data-sort]').forEach((node) => {
-      node.classList.toggle('is-active', node === btn);
-    });
+    sortGroup.querySelectorAll('[data-sort]')
+      .forEach(b => b.classList.toggle('is-active', b === btn));
     applyFiltersAndSort();
   });
-
   root.querySelector('[data-sort-refresh]')?.addEventListener('click', applyFiltersAndSort);
 
   const typingControls = initTypingMini({
@@ -2923,78 +2779,359 @@ function hydratePoster(imgEl, fullSrc) {
     form
   });
 
+  // 모달: 필터 상태 프리필 후 열기
   function openModal() {
-    if (!modal) { return; }
+    if (!modal) return;
     modal.setAttribute('aria-hidden', 'false');
     modal.classList.add('is-open');
 
-    const filterZoneValue = normalizeZoneCandidate(filterZoneSel?.value);
-    const fallbackZone = normalizeZoneCandidate(selZone?.value || initialPrefill.zone);
-    const desiredZone = filterZoneValue || fallbackZone || '';
-    if (selZone && desiredZone) {
-      selZone.value = desiredZone;
-    }
+    const filterZoneValue = (filterZoneSel?.value || '').toUpperCase();
+    const filterCodeValue = filterCodeSel?.value || '';
 
-    const filterCodeValue = normalizeCodeCandidate(filterCodeSel?.value);
-    const fallbackCode = normalizeCodeCandidate(selCode?.value || initialPrefill.code);
-    const desiredCode = filterCodeValue || fallbackCode || '';
+    if (selZone) { selZone.value = filterZoneValue; }
+    const composerZone = (selZone?.value || filterZoneValue).toUpperCase();
+    setComposerCodeOptions(composerZone);
 
-    setComposerCodeOptions(desiredZone, desiredCode, initialPrefill.label);
-
-    if (!desiredCode && selCode) {
+    if (selCode) {
       selCode.value = '';
+      if (filterCodeValue) {
+        // 옵션에 없으면 그대로 빈 값 유지
+        const opt = selCode.querySelector(`option[value="${filterCodeValue}"]`);
+        if (opt) selCode.value = filterCodeValue;
+      }
     }
+    
+  requestAnimationFrame(() => messageInput?.focus({ preventScroll: true }));
+}
 
-    if (messageInput && autoFocusComposer) {
-      requestAnimationFrame(() => {
-        try {
-          messageInput.focus({ preventScroll: true });
-        } catch {
-          messageInput.focus();
-        }
-      });
-    }
-  }
 
-  function closeModal() {
-    if (!modal) { return; }
-    if (lockComposer) {
-      modal.setAttribute('aria-hidden', 'false');
-      modal.classList.add('is-open');
-      return;
-    }
+  function closeModal(){
+    if (!modal) return;
     modal.setAttribute('aria-hidden', 'true');
     modal.classList.remove('is-open');
   }
 
+  // 모달: 구역 선택 → 코드 옵션 재주입
   selZone?.addEventListener('change', () => {
     setComposerCodeOptions(selZone.value);
   });
 
+
   openBtn?.addEventListener('click', openModal);
-  closeEls.forEach((el) => el.addEventListener('click', closeModal));
-
-  if (lockComposer) {
-    closeEls.forEach((el) => {
-      if (el.classList.contains('composer-close')) {
-        el.setAttribute('hidden', 'hidden');
-        el.setAttribute('aria-hidden', 'true');
-      }
-    });
-  }
-
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && !lockComposer && modal?.getAttribute('aria-hidden') === 'false') {
-      closeModal();
-    }
+  closeEls.forEach(el => el.addEventListener('click', closeModal));
+  document.addEventListener('keydown', (e)=> {
+    if (e.key === 'Escape' && modal?.getAttribute('aria-hidden') === 'false') closeModal();
   });
 
-  if (lockComposer || autoOpenComposer || !openBtn) {
-    openModal();
+  function tagClass({ code, zone }) {
+    if (code) { return '--code'; }
+    if (!zone) { return '--all'; }
+    return `--zone-${String(zone).toUpperCase()}`;
   }
 
-  applyFiltersAndSort();
+  function tagLabel({ code, zone }) {
+    if (code) { return code; }
+    return zone ? String(zone).toUpperCase() : 'All';
+  }
 
+  function prependRow(item) {
+    const row = renderRow(item);
+    stream.prepend(row);
+    if (window.gsap) {
+      gsap.fromTo(row, { y: -6, autoAlpha: 0 }, { duration: 0.25, y: 0, autoAlpha: 1, ease: 'power2.out' });
+    }
+    // prependRow(): 신규 행 추가 후 필터/정렬 재적용
+    applyFiltersAndSort(); 
+
+  }
+
+  function initTypingMini({ demo, input, form } = {}) {
+    if (!demo || !input || !window.gsap) { return null; }
+
+    const svg = demo.querySelector('svg');
+    const hiddenText = demo.querySelector('.typing-text');
+    if (!svg || !hiddenText) { return null; }
+
+    demo.querySelectorAll('.typing-display').forEach((node) => node.remove());
+
+    const display = document.createElement('div');
+    display.className = 'typing-display';
+    demo.appendChild(display);
+
+    const SVG_NS = 'http://www.w3.org/2000/svg';
+    const colors = [
+      { main: '#FBDB4A', shades: ['#FAE073', '#FCE790', '#FADD65', '#E4C650'] },
+      { main: '#F3934A', shades: ['#F7B989', '#F9CDAA', '#DD8644', '#F39C59'] },
+      { main: '#EB547D', shades: ['#EE7293', '#F191AB', '#D64D72', '#C04567'] },
+      { main: '#9F6AA7', shades: ['#B084B6', '#C19FC7', '#916198', '#82588A'] },
+      { main: '#5476B3', shades: ['#6382B9', '#829BC7', '#4D6CA3', '#3E5782'] },
+      { main: '#2BB19B', shades: ['#4DBFAD', '#73CDBF', '#27A18D', '#1F8171'] },
+      { main: '#70B984', shades: ['#7FBE90', '#98CBA6', '#68A87A', '#5E976E'] }
+    ];
+
+    const letters = [];
+    let previousValue = '';
+    let promptTimer = null;
+    let promptActive = false;
+    let scrollTween = null;
+    const PROMPT_TEXT = 'start typing';
+
+    function updateSvgBounds() {
+      const rect = demo.getBoundingClientRect();
+      const width = Math.max(rect.width, 1);
+      const height = Math.max(rect.height, 1);
+      svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+      svg.setAttribute('width', width);
+      svg.setAttribute('height', height);
+    }
+
+    // initTypingMini(): SVG 크기 동기화로 파티클 표시 보장
+    updateSvgBounds();
+    new ResizeObserver(updateSvgBounds).observe(demo);
+    window.addEventListener('resize', updateSvgBounds);
+
+    function sharedPrefix(oldChars, newChars) {
+      const limit = Math.min(oldChars.length, newChars.length);
+      let index = 0;
+      while (index < limit && oldChars[index] === newChars[index]) {
+        index += 1;
+      }
+      return index;
+    }
+
+    function ensureLatestVisible() {
+      if (!demo) { return; }
+      if (demo.scrollHeight <= demo.clientHeight + 4) { return; }
+      const target = demo.scrollHeight;
+      const scrollNow = () => {
+        if (window.gsap) {
+          scrollTween?.kill();
+          scrollTween = gsap.to(demo, {
+            scrollTop: target,
+            duration: 0.25,
+            ease: 'power2.out',
+            onComplete: () => { scrollTween = null; }
+          });
+        } else {
+          demo.scrollTop = target;
+          scrollTween = null;
+        }
+      };
+      if (typeof window.requestAnimationFrame === 'function') {
+        window.requestAnimationFrame(scrollNow);
+      } else {
+        scrollNow();
+      }
+    }
+
+    function render(value) {
+      const safeValue = value ?? '';
+      hiddenText.textContent = safeValue;
+      const newChars = Array.from(safeValue);
+      const oldChars = Array.from(previousValue);
+      const keep = sharedPrefix(oldChars, newChars);
+
+      while (letters.length > keep) {
+        const entry = letters.pop();
+        if (!entry) { continue; }
+        gsap.to(entry.node, {
+          duration: 0.2,
+          y: -6,
+          opacity: 0,
+          ease: 'power1.in',
+          onComplete: () => entry.node.remove()
+        });
+      }
+
+      for (let index = keep; index < newChars.length; index += 1) {
+        addLetter(newChars[index], index);
+      }
+
+      previousValue = safeValue;
+      ensureLatestVisible();
+    }
+
+    function addLetter(char, index) {
+      const palette = colors[index % colors.length];
+      const span = document.createElement('span');
+      span.className = 'typing-letter';
+
+      const isBreak = char === ' ';
+      const isSpace = char === ' ';
+
+      if (isBreak) {
+        span.classList.add('typing-letter--break');
+      } else {
+        if (isSpace) {
+          span.classList.add('typing-letter--space');
+        }
+        span.style.setProperty('--typing-color', palette.main);
+        span.textContent = isSpace ? ' ' : char;
+      }
+
+      display.appendChild(span);
+      letters[index] = { node: span, palette, char };
+
+      if (isBreak) {
+        gsap.set(span, { opacity: 0 });
+        return;
+      }
+
+      gsap.fromTo(
+        span,
+        { scale: 0.6, opacity: 0, y: 4 },
+        { duration: 0.25, scale: 1, opacity: 1, y: 0, ease: 'back.out(2)' }
+      );
+
+      if (!isSpace) {
+        spawnBurst(span, palette);
+      }
+    }
+
+    function spawnBurst(target, palette) {
+      if (!palette) { return; }
+      const hostRect = demo.getBoundingClientRect();
+      const targetRect = target.getBoundingClientRect();
+      const originX = targetRect.left + targetRect.width / 2 - hostRect.left;
+      const originY = targetRect.top + targetRect.height / 2 - hostRect.top;
+
+      for (let i = 0; i < 6; i += 1) {
+        spawnCircle(originX, originY, palette.shades[i % palette.shades.length]);
+      }
+      for (let i = 0; i < 4; i += 1) {
+        spawnTriangle(originX, originY, palette.shades[(i + 2) % palette.shades.length]);
+      }
+    }
+
+    function spawnCircle(x, y, fill) {
+      const radius = 1 + Math.random() * 2.6;
+      const circle = document.createElementNS(SVG_NS, 'circle');
+      circle.setAttribute('cx', x);
+      circle.setAttribute('cy', y);
+      circle.setAttribute('r', radius);
+      circle.setAttribute('fill', fill);
+      svg.appendChild(circle);
+
+      const angle = Math.random() * Math.PI * 2;
+      const distance = 24 + Math.random() * 36;
+
+      gsap.fromTo(circle, { opacity: 1 }, {
+        duration: 0.6,
+        opacity: 0,
+        x: Math.cos(angle) * distance,
+        y: Math.sin(angle) * distance,
+        ease: 'power1.out',
+        onComplete: () => circle.remove()
+      });
+    }
+
+    function spawnTriangle(x, y, fill) {
+      const size = 5 + Math.random() * 5;
+      const tri = document.createElementNS(SVG_NS, 'polygon');
+      tri.setAttribute('points', `0,${size} ${size / 2},0 ${size},${size}`);
+      tri.setAttribute('fill', fill);
+      svg.appendChild(tri);
+
+      const angle = Math.random() * Math.PI * 2;
+      const distance = 20 + Math.random() * 34;
+      const startX = x - size / 2;
+      const startY = y - size / 2;
+
+      gsap.fromTo(tri, { opacity: 1, x: startX, y: startY, rotation: Math.random() * 180 }, {
+        duration: 0.55,
+        opacity: 0,
+        x: startX + Math.cos(angle) * distance,
+        y: startY + Math.sin(angle) * distance,
+        rotation: '+=120',
+        ease: 'power1.inOut',
+        onComplete: () => tri.remove()
+      });
+    }
+
+    function stopPromptCycle() {
+      if (!promptActive) { return; }
+      promptActive = false;
+      window.clearTimeout(promptTimer);
+      promptTimer = null;
+    }
+
+    function startPromptCycle() {
+      if (promptActive) { return; }
+      promptActive = true;
+      window.clearTimeout(promptTimer);
+      runPrompt(0);
+    }
+
+    function runPrompt(step) {
+      if (!promptActive) { return; }
+      if (step <= PROMPT_TEXT.length) {
+        render(PROMPT_TEXT.slice(0, step));
+        promptTimer = window.setTimeout(() => runPrompt(step + 1), 140 + step * 8);
+      } else {
+        promptTimer = window.setTimeout(() => {
+          if (!promptActive) { return; }
+          render('');
+          runPrompt(0);
+        }, 1200);
+      }
+    }
+
+    function syncFromInput() {
+      const value = input.value;
+      stopPromptCycle();
+      render(value);
+      if (!value.length) {
+        startPromptCycle();
+      }
+    }
+
+    input.addEventListener('input', () => {
+      const value = input.value;
+      stopPromptCycle();
+      render(value);
+      if (!value.length) {
+        startPromptCycle();
+      }
+    });
+
+    input.addEventListener('focus', () => {
+      if (!input.value.length) {
+        startPromptCycle();
+      } else {
+        stopPromptCycle();
+        render(input.value);
+      }
+    });
+
+    input.addEventListener('blur', () => {
+      if (!input.value.length) {
+        startPromptCycle();
+      }
+    });
+
+    form?.addEventListener('reset', () => {
+      window.requestAnimationFrame(() => {
+        render('');
+        startPromptCycle();
+      });
+    });
+
+    updateSvgBounds();
+    window.addEventListener('resize', () => {
+      requestAnimationFrame(updateSvgBounds);
+    });
+
+    render('');
+    startPromptCycle();
+
+    return {
+      syncFromInput,
+      ensurePrompt: () => { if (!input.value.length) { startPromptCycle(); } },
+      stopPrompt: stopPromptCycle
+    };
+  }
+
+  // [02-comment] 퀵픽(이모지/자동문구) 동작
   const selectedEmojis = new Set();
   const VALID_ZONE_CODES = new Set(['A','B','C','D','E','F','G','H','I','J']);
   function normalizeZoneValue(value) {
@@ -3003,21 +3140,15 @@ function hydratePoster(imgEl, fullSrc) {
     return VALID_ZONE_CODES.has(zone) ? zone : null;
   }
 
-  function coercePositiveArtworkCode(raw) {
-    if (raw == null) { return null; }
-    const num = typeof raw === 'number' ? raw : Number(String(raw).trim());
-    return Number.isInteger(num) && num > 0 ? num : null;
+  function deriveArtworkCode(value) {
+    const s = String(value ?? '').trim();
+    if (s === '') return null;               // ← 빈 값은 null
+    const n = Number(s);
+    return (Number.isInteger(n) && n > 0)    // ← 0, 음수 방지
+      ? n
+      : null;
   }
 
-  function deriveArtworkCode(value) {
-    if (value == null) { return null; }
-    if (typeof value === 'string') {
-      const trimmed = value.trim();
-      if (!trimmed) { return null; }
-      return coercePositiveArtworkCode(trimmed);
-    }
-    return coercePositiveArtworkCode(value);
-  }
 
   function getSupabaseClient() {
     return COMMENT_STATE.connection?.supabase || window.sb || null;
@@ -3030,6 +3161,7 @@ function hydratePoster(imgEl, fullSrc) {
       const key = String(emoji || '').trim();
       if (key) { entries.push([key, 1]); }
     });
+
     return Object.fromEntries(entries);
   }
 
@@ -3042,11 +3174,8 @@ function hydratePoster(imgEl, fullSrc) {
       if (Array.isArray(zonesForRpc) && zonesForRpc.length > 0) {
         rpcPayload.zones = zonesForRpc;
       }
-      const safeArtworkCode = deriveArtworkCode(artworkCode);
-      if (safeArtworkCode !== null) {
-        rpcPayload.artwork_code = safeArtworkCode;
-      } else {
-        rpcPayload.artwork_code = null;
+      if (Number.isInteger(artworkCode)) {
+        rpcPayload.artwork_code = artworkCode;
       }
       if (reactionMap && Object.keys(reactionMap).length > 0) {
         rpcPayload.reactions = reactionMap;
@@ -3065,11 +3194,10 @@ function hydratePoster(imgEl, fullSrc) {
   }
 
   async function insertCommentDirect(client, payload, normalizedZones, artworkCode, reactionMap) {
-    const safeArtworkCode = deriveArtworkCode(artworkCode);
     const baseRow = {
       external_id: payload.id,
       text: payload.message,
-      artwork_code: safeArtworkCode
+      ...(Number.isInteger(artworkCode) && artworkCode > 0 ? { artwork_code: artworkCode } : {})
     };
 
     const inserted = await client
@@ -3102,7 +3230,7 @@ function hydratePoster(imgEl, fullSrc) {
       const zoneRows = normalizedZones.map((zone) => ({
         comment_id: commentId,
         zone_code: zone,
-        artwork_code: safeArtworkCode
+        ...(Number.isInteger(artworkCode) && artworkCode > 0 ? { artwork_code: artworkCode } : {})
       }));
 
       const { error: zoneError } = await client
@@ -3131,9 +3259,9 @@ function hydratePoster(imgEl, fullSrc) {
     return { success: true, commentId };
   }
 
+
   async function ensureCommentMetadata(client, externalId, normalizedZones, artworkCode) {
     try {
-      const safeArtworkCode = deriveArtworkCode(artworkCode);
       const { data: existing, error } = await client
         .from('comments')
         .select('id, artwork_code')
@@ -3142,10 +3270,10 @@ function hydratePoster(imgEl, fullSrc) {
       if (error || !existing) { return; }
       const commentId = existing.id;
 
-      if ((safeArtworkCode ?? null) !== (existing.artwork_code ?? null)) {
+      if ((artworkCode ?? null) !== (existing.artwork_code ?? null)) {
         const { error: updateError } = await client
           .from('comments')
-          .update({ artwork_code: safeArtworkCode })
+          .update({ artwork_code: artworkCode })
           .eq('id', commentId);
         if (updateError) {
           console.warn('[Supabase] comment artwork update failed:', updateError);
@@ -3156,7 +3284,7 @@ function hydratePoster(imgEl, fullSrc) {
         const zoneRows = normalizedZones.map((zone) => ({
           comment_id: commentId,
           zone_code: zone,
-          artwork_code: safeArtworkCode
+          artwork_code: artworkCode
         }));
 
         const { error: zoneError } = await client
@@ -3170,7 +3298,6 @@ function hydratePoster(imgEl, fullSrc) {
       console.warn('[Supabase] ensure metadata exception:', err);
     }
   }
-
 
   form?.addEventListener('click', (e) => {
     const t = e.target;
@@ -3220,16 +3347,12 @@ function hydratePoster(imgEl, fullSrc) {
     const msg = (fd.get('message') || '').toString().trim();
     if (!msg) { return; }
 
-    const rawArtworkCode = (fd.get('artworkCode') || '').toString().trim();
-    const normalizedArtworkCode = deriveArtworkCode(rawArtworkCode);
-
     const payload = {
       id: crypto.randomUUID(),
       message: msg,
       ts: Date.now(),
       zone: (fd.get('zone') || '').toString().trim().toUpperCase(),
-      code: normalizedArtworkCode !== null ? String(normalizedArtworkCode) : '',
-      artwork_code: normalizedArtworkCode,
+      code: (fd.get('artworkCode') || '').toString().trim(),
       emojis: Array.from(selectedEmojis),
       likes: 0
     };
@@ -3239,7 +3362,7 @@ function hydratePoster(imgEl, fullSrc) {
     if (client) {
       const normalizedZone = normalizeZoneValue(payload.zone);
       const normalizedZones = normalizedZone ? [normalizedZone] : [];
-      const artworkCode = payload.artwork_code;
+      const artworkCode = deriveArtworkCode(payload.code);
       const reactionMap = buildReactionMap(payload.emojis);
       // Supabase only accepts concrete zone codes (A-J); skip synthetic ALL fallback.
       const zonesForRpc = normalizedZones;

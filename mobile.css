@@ -1,3 +1,49 @@
+@charset "UTF-8";
+/* Icon stroke-only mode */
+.menu-icon.svg-icon.stroke svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: var(--icon-stroke, 2);
+  vector-effect: non-scaling-stroke;
+}
+
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap");
+@import url("https://fonts.cdnfonts.com/css/thegoodmonolith");
+
+@font-face {
+  font-family: "RoundedFixedsys";
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_six@1.2/DungGeunMo.woff")
+    format("woff");
+  font-weight: normal;
+  font-display: swap;
+}
+
+:root {
+  --color-bg: #0e0f0f;
+  --color-bg-transparent: #0e0f0fc0;
+  --color-text: #d1d1d1;
+  --color-text-body: rgba(226, 232, 240, 0.82);
+  --color-text-border: #f8f8f8;
+  --color-text-border-opacity01: rgba(255, 255, 255, 0.08);
+  --color-text-border-opacity04: rgba(255, 255, 255, 0.38);
+  --color-text-border-hover: rgba(255, 255, 255, 0.45);
+  --color-test: #fd0000;
+  --color-bg-sidebar: #070707;
+  --global-border-radius: 7px;
+  --cursor-crosshair: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Crect x='11' y='0' width='2' height='24' fill='%23f8fafc'/%3E%3Crect x='0' y='11' width='24' height='2' fill='%23f8fafc'/%3E%3Crect x='10' y='10' width='4' height='4' fill='%23091015'/%3E%3C/svg%3E")
+      12 12,
+    crosshair;
+  --cursor-hover: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Ccircle cx='14' cy='14' r='11' fill='none' stroke='%23facc15' stroke-width='2.2'/%3E%3Ccircle cx='14' cy='14' r='4' fill='%230f172a' stroke='%23facc15' stroke-width='1.2'/%3E%3Ccircle cx='14' cy='14' r='1.2' fill='%23f8fafc'/%3E%3C/svg%3E")
+      14 14,
+    pointer;
+  --comment-card-bg: rgba(13, 18, 28, 0.82);
+  --comment-card-border: rgba(148, 163, 184, 0.32);
+  --comment-card-shadow: 0 18px 38px rgba(7, 12, 22, 0.45);
+  --comment-like-bg: rgba(236, 72, 153, 0.18);
+  --comment-like-icon: #fda4af;
+}
+
+
 :root {
     color-scheme: dark;
     --mobile-bg: #020617;
@@ -14,6 +60,9 @@
 
 * {
     box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: "TheGoodMonolith", "RoundedFixedsys", monospace;
 }
 
 body {
@@ -60,7 +109,7 @@ body {
     border: 1px solid rgba(56, 189, 248, 0.45);
     border-radius: 999px;
     font-size: 0.85rem;
-    letter-spacing: 0.01em;
+    letter-spacing: 0em;
     color: #bae6fd;
 }
 
@@ -126,8 +175,8 @@ select {
     padding: 12px 14px;
     border-radius: 12px;
     border: 1px solid rgba(148, 163, 184, 0.26);
-    background: #ffffffd3;
-    color: #000000bb;
+    background: rgba(30, 41, 59, 0.35);
+    color: var(--color-text);
     font-size: 1rem;
     line-height: 1.4;
     resize: vertical;
@@ -234,13 +283,14 @@ textarea::placeholder {
 
 .mobile-comment__stream h2 {
     margin: 0 0 6px;
-    font-size: 1.05rem;
+    font-size: 18px;
 }
 
 .mobile-comment__stream p {
     margin: 0 0 16px;
     color: var(--mobile-muted);
-    font-size: 0.9rem;
+    font-size: 14px;
+    line-height: 1.4;
 }
 
 .livechat-stream {
@@ -293,4 +343,37 @@ textarea::placeholder {
 .select option {
     color: #000000bb;
     background: #ffffffd3;
+}
+
+.mobile-comment__header > h1 {
+    margin-top: 30px;
+}
+
+.mobile-comment__header > p {
+    line-height: 1.4;
+}
+
+
+/* 채팅 메시지 UI */
+
+/* 메타데이터 숨기자 */
+.chat-row__meta {
+    position: absolute;
+    visibility: hidden;
+}
+
+/* 시간 */
+.chat-row__track {
+    font-size: 11px;
+    color: var(--mobile-muted);
+    top: 0px;
+    right: 10px;
+}
+
+/* 텍스트 내용 */
+.chat-row__message {
+    display: block;
+    position: relative;
+    padding: 10px 5px 2px 10px;
+    font-size: 17px;
 }
