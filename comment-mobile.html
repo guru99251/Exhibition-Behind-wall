@@ -21,7 +21,11 @@
             <h1>모바일 방명록</h1>
             <p class="mobile-comment__lead">큐알코드 또는 NFC 태그를 통해 접속한 모바일 전용 페이지입니다. 현장에서 떠오르는 생각을 바로 남겨주세요.</p>
         </header>
-
+        <section class="mobile-comment__status">
+            <span class="connection-badge" data-connection-badge>Offline</span>
+            <button type="button" class="comment-retry" data-comment-retry>다시 연결</button>
+        </section>
+        
         <section class="mobile-comment__composer">
             <div class="composer-modal composer-modal--inline is-open" data-composer aria-hidden="false">
                 <div class="composer-dialog">
@@ -64,11 +68,6 @@
                     </form>
                 </div>
             </div>
-        </section>
-
-        <section class="mobile-comment__status">
-            <span class="connection-badge" data-connection-badge>Offline</span>
-            <button type="button" class="comment-retry" data-comment-retry>다시 연결</button>
         </section>
 
         <section class="mobile-comment__stream">
