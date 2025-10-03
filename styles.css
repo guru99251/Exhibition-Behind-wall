@@ -2773,6 +2773,28 @@ body.page-artworks::-webkit-scrollbar {
   padding: 1rem;
   width: 26vh;
 }
+.page-comment .filters-row::before {
+  content: '필터가 작동 중입니다';
+  position: absolute;
+  top: -2.4rem;
+  left: 0;
+  width: 100%;
+  text-align: center;
+  font-weight: 700;
+  font-size: 1rem;
+  color: #ff1744dd;
+  text-shadow: 0 0 10px rgba(255, 23, 68, 0.15);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(6px);
+  transition: opacity 140ms ease, transform 140ms ease;
+  border: 2px double #ff174444;
+  padding: 3px 0px;
+}
+.page-comment .filters-row.is-filtering::before {
+  opacity: 1;
+  transform: translateY(0);
+}
 
 /* styles.css — 정렬 버튼 그룹 스타일 */
 .page-comment .sort-control {

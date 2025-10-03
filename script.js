@@ -2638,6 +2638,7 @@ function hydratePoster(imgEl, fullSrc) {
   const filterZoneSel = root.querySelector('[data-filter-zone]');
   const filterCodeSel = root.querySelector('[data-filter-code]');
   const sortGroup     = root.querySelector('[data-sort-group]');
+  const filtersRow    = root.querySelector('[data-filters]');
 
   if (!stream || !form) return;
 
@@ -2888,6 +2889,8 @@ function hydratePoster(imgEl, fullSrc) {
     const codeValue = normalizeCodeCandidate(filterCodeSel?.value);
     const rows = Array.from(stream.children);
     const isAllZone = !zoneValue || zoneValue === 'ALL';
+    const filterActive = (!!zoneValue && zoneValue !== 'ALL') || !!codeValue;
+    filtersRow?.classList.toggle('is-filtering', filterActive);
 
     // ===== 디버깅 로그 추가 =====
     console.log('[Filter Debug]', {
