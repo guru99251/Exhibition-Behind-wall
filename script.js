@@ -2642,18 +2642,58 @@ function hydratePoster(imgEl, fullSrc) {
   if (!stream || !form) return;
 
   // 요구 사양: C:101~111, E:112~116, F:117~125  
-  // ===== DB로 대체 필요
-  const ARTWORK_BY_ZONE = Object.freeze({
-    C: Array.from({ length: 11 }, (_, i) => `C-${101 + i}`),
-    E: Array.from({ length: 5 }, (_, i) => `E-${112 + i}`),
-    F: Array.from({ length: 9 }, (_, i) => `F-${117 + i}`),
-  });
+  // // ===== DB로 대체 필요 -> 완료 (아래 추가 블럭)
+  // const ARTWORK_BY_ZONE = Object.freeze({
+  //   C: Array.from({ length: 11 }, (_, i) => `C-${101 + i}`),
+  //   E: Array.from({ length: 5 }, (_, i) => `E-${112 + i}`),
+  //   F: Array.from({ length: 9 }, (_, i) => `F-${117 + i}`),
+  // });
+  
+  // ===== 🔥 DB에서 실제 작품 코드 가져오기 (추가) =====
+  let ARTWORK_BY_ZONE = {}; // 하드코딩된 상수 제거하고 변수로 변경
+  
+  async function loadArtworksByZone() {
+    try {
+      const client = window.sb;
+      if (!client) {
+        console.warn('[Filter] Supabase client not available, using hardcoded data');
+        return;
+      }
+  
+      // zone_artworks 테이블에서 구역별 작품 코드 가져오기
+      const { data, error } = await client
+        .from('zone_artworks')
+        .select('zone_code, artwork_code')
+        .order('zone_code', { ascending: true })
+        .order('position', { ascending: true });
+  
+      if (error) throw error;
+  
+      // 구역별로 그룹화
+      const grouped = {};
+      (data || []).forEach(row => {
+        const zone = String(row.zone_code || '').toUpperCase();
+        const code = row.artwork_code;
+        if (!zone || !code) return;
+        
+        if (!grouped[zone]) grouped[zone] = [];
+        grouped[zone].push(code);
+      });
+  
+      ARTWORK_BY_ZONE = grouped;
+      console.log('[Filter] Loaded artworks by zone:', ARTWORK_BY_ZONE);
+    } catch (err) {
+      console.error('[Filter] Failed to load artworks:', err);
+    }
+  }
+  // ===== 🔥 끝 =====
 
   const CODE_TO_ZONE = Object.freeze(Object.fromEntries(
     Object.entries(ARTWORK_BY_ZONE).flatMap(([zone, codes]) =>
       codes.map(label => [Number(label.replace(/\D/g, '')), zone])
-    )
-  ));
+  )
+));
+
 
   const autoFocusComposer = root.dataset.autoFocusComposer !== 'false';
   const lockComposer = root.dataset.composerPresentation === 'inline';
@@ -2752,13 +2792,27 @@ function hydratePoster(imgEl, fullSrc) {
     const pool = (!normalizedZone || normalizedZone === 'ALL')
       ? Object.values(ARTWORK_BY_ZONE).flat()
       : (ARTWORK_BY_ZONE[normalizedZone] || []);
+    
     const opts = ['<option value="">(선택 없음)</option>'];
-    opts.push(...pool.map(label => {
-      const num = parseInt(label.replace(/\D/g, ''), 10);
-      return Number.isNaN(num) ? '' : `<option value="${num}">${label}</option>`;
+    opts.push(...pool.map(code => {
+      // 🔥 수정: 이미 숫자인 경우 그대로 사용
+      const num = typeof code === 'number' ? code : parseInt(String(code).replace(/\D/g, ''), 10);
+      if (Number.isNaN(num)) return '';
+      
+      // 🔥 표시는 "Zone-Code" 형식, 값은 숫자
+      const label = normalizedZone ? `${normalizedZone}-${num}` : String(num);
+      return `<option value="${num}">${label}</option>`;
     }).filter(Boolean));
+    
     sel.innerHTML = opts.join('');
   }
+  // ===== 🔥 끝 =====
+  // ===== 🔥 페이지 로드 시 작품 목록 가져오기 =====
+  loadArtworksByZone().then(() => {
+    // 초기 필터 옵션 설정
+    setFilterCodeOptions(filterZoneSel?.value || initialPrefill.zone || '');
+  });
+  // ===== 🔥 끝 =====
 
   setFilterCodeOptions(filterZoneSel?.value || initialPrefill.zone || '');
 
@@ -2836,18 +2890,44 @@ function hydratePoster(imgEl, fullSrc) {
     const rows = Array.from(stream.children);
     const isAllZone = !zoneValue || zoneValue === 'ALL';
 
+    // ===== 디버깅 로그 추가 =====
+    console.log('[Filter Debug]', {
+      selectedZone: filterZoneSel?.value,
+      selectedCode: filterCodeSel?.value,
+      normalizedZone: zoneValue,
+      normalizedCode: codeValue,
+      totalRows: rows.length
+    });
+
+    let visibleCount = 0;
     rows.forEach(row => {
       const rowZone = normalizeZoneCandidate(row.dataset.zone);
       const rowCode = row.dataset.code || '';
+      const rowCodeNormalized = normalizeCodeCandidate(rowCode);
+      
+      // ===== 각 행마다 디버깅 로그 =====
+      if (codeValue && rowCode) {
+        console.log('[Row Debug]', {
+          rawCode: rowCode,
+          normalizedCode: rowCodeNormalized,
+          filterCode: codeValue,
+          matches: rowCodeNormalized === codeValue
+        });
+      }
+      
       let visible = true;
       if (!isAllZone) {
         visible = visible && rowZone === zoneValue;
       }
-      if (!isAllZone && codeValue) {
-        visible = visible && rowCode === codeValue;
+      if (codeValue) {
+        visible = visible && rowCodeNormalized === codeValue;
       }
+      
+      if (visible) visibleCount++;
       row.style.display = visible ? '' : 'none';
     });
+
+  console.log('[Filter Result]', `${visibleCount} / ${rows.length} rows visible`);
 
     const visibleRows = rows.filter(r => r.style.display !== 'none');
     visibleRows.sort((a, b) => {
