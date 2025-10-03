@@ -82,10 +82,10 @@ body {
 .mobile-comment {
     width: min(640px, 100%);
     margin: 0 auto;
-    padding: 28px 18px 48px;
+    padding: 28px 18px 32px;
     display: flex;
     flex-direction: column;
-    gap: calc(var(--mobile-gap) + 4px);
+    gap: var(--mobile-gap);
 }
 
 .mobile-comment__header h1 {
@@ -279,11 +279,16 @@ textarea::placeholder {
     border-radius: var(--mobile-radius);
     padding: 16px clamp(14px, 3vw, 22px);
     backdrop-filter: blur(16px);
+    max-height: 500px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
 .mobile-comment__stream h2 {
     margin: 0 0 6px;
     font-size: 18px;
+    flex-shrink: 0;
 }
 
 .mobile-comment__stream p {
@@ -291,6 +296,7 @@ textarea::placeholder {
     color: var(--mobile-muted);
     font-size: 14px;
     line-height: 1.4;
+    flex-shrink: 0;
 }
 
 .livechat-stream {
@@ -300,7 +306,8 @@ textarea::placeholder {
     display: flex;
     flex-direction: column;
     gap: 12px;
-    max-height: min(50vh, 420px);
+    flex: 1;
+    min-height: 0;
     overflow-y: auto;
 }
 

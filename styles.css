@@ -2629,10 +2629,10 @@ body.page-artworks::-webkit-scrollbar {
   width: 100%;
   border: 1px solid rgba(148, 163, 184, 0.35);
   border-radius: 10px;
-  /* color: #000000bb;
-  background: #ffffffd3; */
-  background: rgba(30, 41, 59, 0.35);
-  color: var(--color-text);
+  color: #000000;
+  background: #f6f6ffe9;
+  /* background: rgba(30, 41, 59, 0.35);
+  color: var(--color-text); */
   padding: 0.45rem 0.6rem;
 }
 .composer-foot {

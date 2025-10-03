@@ -2686,7 +2686,6 @@ function hydratePoster(imgEl, fullSrc) {
       console.error('[Filter] Failed to load artworks:', err);
     }
   }
-  // ===== 🔥 끝 =====
 
   const CODE_TO_ZONE = Object.freeze(Object.fromEntries(
     Object.entries(ARTWORK_BY_ZONE).flatMap(([zone, codes]) =>
@@ -2785,28 +2784,38 @@ function hydratePoster(imgEl, fullSrc) {
 
   const initialPrefill = resolveInitialTarget();
 
-  function setFilterCodeOptions(zone) {
-    const sel = root.querySelector('[data-filter-code]');
-    if (!sel) { return; }
-    const normalizedZone = normalizeZoneCandidate(zone);
-    const pool = (!normalizedZone || normalizedZone === 'ALL')
-      ? Object.values(ARTWORK_BY_ZONE).flat()
-      : (ARTWORK_BY_ZONE[normalizedZone] || []);
-    
-    const opts = ['<option value="">(선택 없음)</option>'];
-    opts.push(...pool.map(code => {
-      // 🔥 수정: 이미 숫자인 경우 그대로 사용
-      const num = typeof code === 'number' ? code : parseInt(String(code).replace(/\D/g, ''), 10);
-      if (Number.isNaN(num)) return '';
+  // 통합된 작품 코드 옵션 설정 함수
+    function setCodeOptions(selector, zone, selectedCode = null) {
+      const sel = typeof selector === 'string' ? root.querySelector(selector) : selector;
+      if (!sel) { return; }
       
-      // 🔥 표시는 "Zone-Code" 형식, 값은 숫자
-      const label = normalizedZone ? `${normalizedZone}-${num}` : String(num);
-      return `<option value="${num}">${label}</option>`;
-    }).filter(Boolean));
-    
-    sel.innerHTML = opts.join('');
-  }
-  // ===== 🔥 끝 =====
+      const normalizedZone = normalizeZoneCandidate(zone);
+      const pool = (!normalizedZone || normalizedZone === 'ALL')
+        ? Object.values(ARTWORK_BY_ZONE).flat()
+        : (ARTWORK_BY_ZONE[normalizedZone] || []);
+      
+      const opts = ['<option value="">(선택 없음)</option>'];
+      opts.push(...pool.map(code => {
+        const num = typeof code === 'number' ? code : parseInt(String(code).replace(/\D/g, ''), 10);
+        if (Number.isNaN(num)) return '';
+        
+        const label = normalizedZone ? `${normalizedZone}-${num}` : String(num);
+        return `<option value="${num}">${label}</option>`;
+      }).filter(Boolean));
+      
+      sel.innerHTML = opts.join('');
+      
+      // 선택된 코드가 있으면 설정
+      if (selectedCode) {
+        const codeValue = String(selectedCode);
+        sel.value = codeValue;
+      }
+    }
+
+    function setFilterCodeOptions(zone) {
+      setCodeOptions('[data-filter-code]', zone);
+    }
+
   // ===== 🔥 페이지 로드 시 작품 목록 가져오기 =====
   loadArtworksByZone().then(() => {
     // 초기 필터 옵션 설정
@@ -2817,35 +2826,25 @@ function hydratePoster(imgEl, fullSrc) {
   setFilterCodeOptions(filterZoneSel?.value || initialPrefill.zone || '');
 
   function setComposerCodeOptions(zone, selectedCode, selectedLabel) {
-    if (!selCode) { return; }
-    const normalizedZone = normalizeZoneCandidate(zone);
-    const pool = (!normalizedZone || normalizedZone === 'ALL')
-      ? Object.values(ARTWORK_BY_ZONE).flat()
-      : (ARTWORK_BY_ZONE[normalizedZone] || []);
-    const options = ['<option value="">(선택 없음)</option>'];
-    options.push(...pool.map(label => {
-      const num = parseInt(label.replace(/\D/g, ''), 10);
-      return Number.isNaN(num) ? '' : `<option value="${num}">${label}</option>`;
-    }).filter(Boolean));
-    selCode.innerHTML = options.join('');
-
-    if (selectedCode) {
-      const codeValue = String(selectedCode);
-      let opt = selCode.querySelector(`option[value="${codeValue}"]`);
-      if (!opt) {
-        const fallbackZone = normalizedZone || normalizeZoneCandidate(CODE_TO_ZONE[Number(codeValue)]);
-        const computed = selectedLabel || computeLabel(fallbackZone, codeValue);
-        opt = document.createElement('option');
-        opt.value = codeValue;
-        opt.textContent = computed || codeValue;
-        opt.dataset.dynamic = '1';
-        selCode.appendChild(opt);
+      if (!selCode) { return; }
+      setCodeOptions(selCode, zone, selectedCode);
+      
+      if (selectedCode) {
+        const codeValue = String(selectedCode);
+        let opt = selCode.querySelector(`option[value="${codeValue}"]`);
+        if (!opt) {
+          const normalizedZone = normalizeZoneCandidate(zone);
+          const fallbackZone = normalizedZone || normalizeZoneCandidate(CODE_TO_ZONE[Number(codeValue)]);
+          const computed = selectedLabel || computeLabel(fallbackZone, codeValue);
+          opt = document.createElement('option');
+          opt.value = codeValue;
+          opt.textContent = computed || codeValue;
+          opt.dataset.dynamic = '1';
+          selCode.appendChild(opt);
+        }
+        selCode.value = codeValue;
       }
-      selCode.value = codeValue;
-    } else {
-      selCode.value = '';
     }
-  }
 
   function applyInitialSelection(target) {
     const zoneValue = normalizeZoneCandidate(target?.zone) || '';
