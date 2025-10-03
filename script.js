@@ -1413,13 +1413,7 @@ function initCommentPage(container) {
       const client = (COMMENT_STATE.connection && COMMENT_STATE.connection.supabase) || window.sb;
       if (!client) { throw new Error('Supabase client not initialized'); }
 
-      /* 변경 전 */
-      // const { error } = await client
-      //   .from('comment_reactions')
-      //   .insert([{ comment_id: commentId, emoji: 'like', count: 1 }]);
-
-      /* 변경 후 */
-// ✅ REPLACE this whole RPC block in the like click handler
+      // REPLACE this whole RPC block in the like click handler
       const { data, error } = await client.rpc('increment_like', {
         p_comment_id: commentId,
         p_actor_hash: null,
@@ -3497,10 +3491,14 @@ function hydratePoster(imgEl, fullSrc) {
   // [02-comment] 전송: 이모지 포함, 초기화 보강
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
+    console.log('[Comment] Form submit triggered');
 
     const fd = new FormData(form);
     const msg = (fd.get('message') || '').toString().trim();
-    if (!msg) { return; }
+    if (!msg) { 
+      console.warn('[Comment] Empty message, skipping submit');
+      return; 
+    }
 
     const rawArtworkCode = (fd.get('artworkCode') || '').toString().trim();
     const normalizedArtworkCode = deriveArtworkCode(rawArtworkCode);
@@ -3518,40 +3516,69 @@ function hydratePoster(imgEl, fullSrc) {
     if (normalizedArtworkCode !== null) {
       payload.artwork_code = normalizedArtworkCode;
     }
-    prependRow(payload);
+
+    console.log('[Comment] Payload:', payload);
 
     const client = getSupabaseClient();
     if (client) {
+      console.log('[Comment] Supabase client available, attempting DB insert');
       const normalizedZone = normalizeZoneValue(payload.zone);
       const normalizedZones = normalizedZone ? [normalizedZone] : [];
       const artworkCode = normalizedArtworkCode;
       const reactionMap = buildReactionMap(payload.emojis);
-      // Supabase only accepts concrete zone codes (A-J); skip synthetic ALL fallback.
-      const zonesForRpc = normalizedZones;
+      
       let persisted = false;
+      
+      // Direct insert 우선 시도 (더 안정적)
       try {
+        console.log('[Comment] Attempting direct insert...');
         const direct = await insertCommentDirect(client, payload, normalizedZones, artworkCode, reactionMap);
         persisted = direct.success;
+        if (persisted) {
+          console.log('[Comment] Direct insert successful');
+        }
       } catch (err) {
-        console.error('[Supabase] direct insert failed:', err);
-      }
-      if (!persisted) {
-        const rpc = await sendCommentViaRpc(client, payload, zonesForRpc, artworkCode, reactionMap);
-        persisted = rpc.success;
+        console.error('[Comment] Direct insert failed:', err);
+        // RPC 폴백 시도
+        try {
+          console.log('[Comment] Attempting RPC fallback...');
+          const zonesForRpc = normalizedZones;
+          const rpc = await sendCommentViaRpc(client, payload, zonesForRpc, artworkCode, reactionMap);
+          persisted = rpc.success;
+          if (persisted) {
+            console.log('[Comment] RPC insert successful');
+          }
+        } catch (rpcErr) {
+          console.error('[Comment] RPC insert failed:', rpcErr);
+        }
       }
 
       if (persisted) {
-        await ensureCommentMetadata(client, payload.id, normalizedZones, artworkCode);
-        updateConnectionBadge('online')
+        console.log('[Comment] Persisted to DB, ensuring metadata...');
+        try {
+          await ensureCommentMetadata(client, payload.id, normalizedZones, artworkCode);
+        } catch (metaErr) {
+          console.warn('[Comment] Metadata update failed (non-critical):', metaErr);
+        }
+        updateConnectionBadge('online');
       } else {
+        console.warn('[Comment] Failed to persist to DB');
         updateConnectionBadge('offline');
+        alert('코멘트를 저장하는 중 오류가 발생했습니다. 다시 시도해주세요.');
       }
     } else {
       console.warn('[Supabase] client unavailable; comment stored locally only.');
+      alert('서버 연결이 불가능합니다. 코멘트가 로컬에만 표시됩니다.');
     }
 
-      if (typeof ws !== 'undefined' && ws && ws.readyState === 1) {
-      try { ws.send(JSON.stringify(payload)); } catch (_) {}
+    // WebSocket이 있으면 전송 시도
+    if (typeof ws !== 'undefined' && ws && ws.readyState === 1) {
+      try { 
+        ws.send(JSON.stringify(payload)); 
+        console.log('[Comment] Sent via WebSocket');
+      } catch (wsErr) {
+        console.warn('[Comment] WebSocket send failed:', wsErr);
+      }
     }
 
     closeModal();
@@ -3559,6 +3586,7 @@ function hydratePoster(imgEl, fullSrc) {
     selectedEmojis.clear();
     form.querySelectorAll('.emoji.is-selected').forEach((btn) => btn.classList.remove('is-selected'));
     typingControls?.ensurePrompt?.();
+    console.log('[Comment] Form reset complete');
   });
 })();
 
