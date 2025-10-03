@@ -2313,8 +2313,7 @@ const ARTWORKS_STATE = {
   filterBar: null,
   data: [],
   currentZone: 'ALL',
-  filterButtons: [],
-  commentFormPath: 'comment-mobile.html'
+  filterButtons: []
 };
 
 // ===== DB로 대체 필요?
@@ -2348,105 +2347,6 @@ function uniq(arr) {
     if (!seen.has(key)) { seen.add(key); out.push(v); }
   }
   return out;
-}
-
-function buildCommentShareUrl(item) {
-  const base = ARTWORKS_STATE.commentFormPath || 'comment-mobile.html';
-  try {
-    const originUrl = typeof window !== 'undefined' ? window.location.href : base;
-    const url = new URL(base, originUrl);
-    const zone = (item?.zone || '').toString().trim().toUpperCase();
-    const code = item?.code == null ? '' : String(item.code).trim();
-    if (zone && zone !== 'ALL') {
-      url.searchParams.set('zone', zone);
-    }
-    if (code) {
-      url.searchParams.set('code', code);
-    }
-    const label = buildZoneCodeLabel(zone, code);
-    if (label) {
-      url.searchParams.set('artwork', label);
-    }
-    return url.toString();
-  } catch (err) {
-    console.warn('[Artworks] share url build failed:', err);
-    return base;
-  }
-}
-
-function createShareControls(item, shareUrl) {
-  if (!shareUrl) { return null; }
-  const wrapper = document.createElement('div');
-  wrapper.className = 'artwork-card__share';
-
-  const label = document.createElement('span');
-  label.className = 'artwork-card__share-label';
-  const codeLabel = buildZoneCodeLabel(item.zone, item.code);
-  label.textContent = codeLabel ? `모바일 코멘트 · ${codeLabel}` : '모바일 코멘트';
-
-  const actions = document.createElement('div');
-  actions.className = 'artwork-card__share-actions';
-
-  const openLink = document.createElement('a');
-  openLink.className = 'artwork-card__share-open';
-  openLink.href = shareUrl;
-  openLink.target = '_blank';
-  openLink.rel = 'noopener';
-  openLink.textContent = '열기';
-
-  const copyBtn = document.createElement('button');
-  copyBtn.type = 'button';
-  copyBtn.className = 'artwork-card__share-copy';
-  copyBtn.dataset.shareUrl = shareUrl;
-  copyBtn.dataset.label = '링크 복사';
-  copyBtn.dataset.doneLabel = '복사 완료';
-  copyBtn.textContent = copyBtn.dataset.label;
-
-  actions.append(openLink, copyBtn);
-
-  const urlText = document.createElement('p');
-  urlText.className = 'artwork-card__share-url';
-  urlText.textContent = shareUrl;
-
-  wrapper.append(label, actions, urlText);
-  return wrapper;
-}
-
-function handleShareCopyClick(event) {
-  const button = event.target.closest('.artwork-card__share-copy');
-  if (!button) { return; }
-  const shareUrl = button.dataset.shareUrl;
-  if (!shareUrl) { return; }
-  button.blur();
-
-  const baseLabel = button.dataset.label || button.textContent || '링크 복사';
-  const doneLabel = button.dataset.doneLabel || '복사 완료';
-
-  const markDone = () => {
-    button.textContent = doneLabel;
-    button.classList.add('is-copied');
-    setTimeout(() => {
-      button.textContent = baseLabel;
-      button.classList.remove('is-copied');
-    }, 1800);
-  };
-
-  const fallback = () => {
-    try {
-      window.prompt('아래 주소를 복사하세요.', shareUrl);
-    } catch (err) {
-      console.warn('[Artworks] clipboard fallback failed:', err);
-    }
-    markDone();
-  };
-
-  if (navigator?.clipboard?.writeText) {
-    navigator.clipboard.writeText(shareUrl).then(markDone).catch(() => {
-      fallback();
-    });
-  } else {
-    fallback();
-  }
 }
 
 /* DB 연결 부분 */
@@ -2501,12 +2401,7 @@ async function initArtworksPage(root) {
   ARTWORKS_STATE.root = root;
   ARTWORKS_STATE.grid = root.querySelector('[data-artworks-grid]');
   ARTWORKS_STATE.filterBar = root.querySelector('[data-filter-bar]');
-  ARTWORKS_STATE.commentFormPath = root.dataset.commentForm || ARTWORKS_STATE.commentFormPath || 'comment-mobile.html';
 
-  if (ARTWORKS_STATE.grid && !ARTWORKS_STATE.grid.dataset.shareBound) {
-    ARTWORKS_STATE.grid.dataset.shareBound = '1';
-    ARTWORKS_STATE.grid.addEventListener('click', handleShareCopyClick);
-  }
 
   try {
     const rows = await fetchArtworksForCards();
@@ -2661,12 +2556,6 @@ function createArtworkCard(item) {
   }
 
   body.appendChild(meta);
-
-  const shareUrl = buildCommentShareUrl(item);
-  const shareBlock = createShareControls(item, shareUrl);
-  if (shareBlock) {
-    body.appendChild(shareBlock);
-  }
 
   card.append(fig, body);
   return card;

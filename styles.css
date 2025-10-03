@@ -2591,8 +2591,8 @@ body.page-artworks::-webkit-scrollbar {
   width: 100%;
   border: 1px solid rgba(148, 163, 184, 0.35);
   border-radius: 12px;
-  background: rgba(30, 41, 59, 0.35);
-  color: var(--color-text);
+  /* background: #fff;
+  color: #000; */
   padding: 0.6rem 0.8rem;
   min-height: 3.2rem;
 }
@@ -2624,8 +2624,8 @@ body.page-artworks::-webkit-scrollbar {
   width: 100%;
   border: 1px solid rgba(148, 163, 184, 0.35);
   border-radius: 10px;
-  background: rgba(30, 41, 59, 0.35);
-  color: var(--color-text);
+  color: #000000bb;
+  background: #ffffffd3;
   padding: 0.45rem 0.6rem;
 }
 .composer-foot {
@@ -2965,61 +2965,8 @@ body.page-artworks::-webkit-scrollbar {
 }
 
 /* --- Artwork share controls --- */
-.artwork-card__share {
-    margin-top: 18px;
-    padding-top: 12px;
-    border-top: 1px dashed rgba(148, 163, 184, 0.25);
-    display: grid;
-    gap: 10px;
-}
 
-.artwork-card__share-label {
-    font-size: 0.75rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: rgba(148, 163, 184, 0.72);
-}
-
-.artwork-card__share-actions {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
-}
-
-.artwork-card__share-open {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    padding: 6px 14px;
-    border-radius: 999px;
-    background: linear-gradient(135deg, rgba(45, 212, 191, 0.16), rgba(59, 130, 246, 0.22));
-    border: 1px solid rgba(94, 234, 212, 0.4);
-    color: #e0f2fe;
-    font-size: 0.85rem;
-    text-decoration: none;
-    transition: transform 0.15s ease;
-}
-
-.artwork-card__share-open:hover {
-    transform: translateY(-1px);
-}
-
-.artwork-card__share-copy {
-    padding: 6px 14px;
-    border-radius: 999px;
-    border: 1px solid rgba(148, 163, 184, 0.35);
-    background: rgba(15, 23, 42, 0.55);
-    color: rgba(226, 232, 240, 0.86);
-    font-size: 0.85rem;
-    cursor: pointer;
-}
-
-.artwork-card__share-url {
-    margin: 0;
-    font-family: 'Fira Code', 'Roboto Mono', monospace;
-    font-size: 0.85rem;
-    color: rgba(148, 163, 184, 0.85);
-    word-break: break-all;
+.select option {
+  color: #000000bb;
+  background: #ffffffd3;
 }
