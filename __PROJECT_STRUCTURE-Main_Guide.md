@@ -170,165 +170,88 @@ Diposium이라는 전시회에서 빔프로젝트로 한쪽 벽면을 가로로 
 -- WARNING: This schema is for context only and is not meant to be run.
 -- Table order and constraints may not be valid for execution.
 
-CREATE TABLE public.artwork_genres (
-  artwork_code smallint NOT NULL,
-  genre_id integer NOT NULL,
-  CONSTRAINT artwork_genres_pkey PRIMARY KEY (genre_id, artwork_code),
-  CONSTRAINT artwork_genres_artwork_code_fkey FOREIGN KEY (artwork_code) REFERENCES public.artworks(code),
-  CONSTRAINT artwork_genres_genre_id_fkey FOREIGN KEY (genre_id) REFERENCES public.genres(id)
-);
-CREATE TABLE public.artwork_members (
-  artwork_code smallint NOT NULL,
-  person_id uuid NOT NULL,
-  role text,
-  ord smallint,
-  CONSTRAINT artwork_members_pkey PRIMARY KEY (artwork_code, person_id),
-  CONSTRAINT artwork_members_artwork_code_fkey FOREIGN KEY (artwork_code) REFERENCES public.artworks(code),
-  CONSTRAINT artwork_members_person_id_fkey FOREIGN KEY (person_id) REFERENCES public.persons(id)
-);
-CREATE TABLE public.artwork_tools (
-  artwork_code smallint NOT NULL,
-  tool_id integer NOT NULL,
-  CONSTRAINT artwork_tools_pkey PRIMARY KEY (tool_id, artwork_code),
-  CONSTRAINT artwork_tools_artwork_code_fkey FOREIGN KEY (artwork_code) REFERENCES public.artworks(code),
-  CONSTRAINT artwork_tools_tool_id_fkey FOREIGN KEY (tool_id) REFERENCES public.tools(id)
-);
-CREATE TABLE public.artworks (
-  code smallint NOT NULL CHECK (code >= 101 AND code <= 125),
-  slug text UNIQUE,
-  title text NOT NULL,
-  description text,
-  team_name text,
-  video_url text,
-  cover_url text,
-  created_at timestamp with time zone NOT NULL DEFAULT now(),
-  updated_at timestamp with time zone NOT NULL DEFAULT now(),
-  search tsvector DEFAULT (setweight(to_tsvector('simple'::regconfig, COALESCE(title, ''::text)), 'A'::"char") || setweight(to_tsvector('simple'::regconfig, COALESCE(description, ''::text)), 'B'::"char")),
-  search_tsv tsvector,
-  CONSTRAINT artworks_pkey PRIMARY KEY (code)
-);
-CREATE TABLE public.behind_wall_images (
-  id uuid NOT NULL DEFAULT gen_random_uuid(),
-  artwork_code smallint,
-  zone_code character,
-  gcs_path text NOT NULL,
-  public_url text,
-  caption text,
-  ord smallint DEFAULT 0,
-  created_at timestamp with time zone NOT NULL DEFAULT now(),
-  CONSTRAINT behind_wall_images_pkey PRIMARY KEY (id),
-  CONSTRAINT behind_wall_images_artwork_code_fkey FOREIGN KEY (artwork_code) REFERENCES public.artworks(code),
-  CONSTRAINT behind_wall_images_zone_code_fkey FOREIGN KEY (zone_code) REFERENCES public.zones(code)
-);
-CREATE TABLE public.comment_reactions (
-  comment_id uuid NOT NULL,
-  emoji text NOT NULL,
-  count integer NOT NULL DEFAULT 1 CHECK (count >= 0),
-  CONSTRAINT comment_reactions_pkey PRIMARY KEY (comment_id, emoji),
-  CONSTRAINT comment_reactions_comment_id_fkey FOREIGN KEY (comment_id) REFERENCES public.comments(id)
-);
-CREATE TABLE public.comment_zones (
-  comment_id uuid NOT NULL,
-  zone_code character NOT NULL DEFAULT 'ALL'::bpchar CHECK (zone_code ~ '^[A-J]$'::text),
-  artwork_code smallint,
-  CONSTRAINT comment_zones_pkey PRIMARY KEY (comment_id, zone_code),
-  CONSTRAINT comment_zones_zone_code_fkey FOREIGN KEY (zone_code) REFERENCES public.zones(code),
-  CONSTRAINT comment_zones_comment_id_fkey FOREIGN KEY (comment_id) REFERENCES public.comments(id)
-);
-CREATE TABLE public.comments (
-  id uuid NOT NULL DEFAULT gen_random_uuid(),
-  external_id text UNIQUE,
-  text text NOT NULL CHECK (length(text) >= 1 AND length(text) <= 500),
-  author_name text,
-  author_dept text,
-  author_sid text CHECK (author_sid ~ '^\d{10}$'::text OR author_sid IS NULL),
-  artwork_code integer,
-  artwork_title text,
-  artwork_poster text,
-  created_at timestamp with time zone NOT NULL DEFAULT now(),
-  updated_at timestamp with time zone NOT NULL DEFAULT now(),
-  source_ip_hash text,
-  CONSTRAINT comments_pkey PRIMARY KEY (id),
-  CONSTRAINT comments_artwork_code_fkey FOREIGN KEY (artwork_code) REFERENCES public.artworks(code)
-);
-CREATE TABLE public.genres (
-  id integer NOT NULL DEFAULT nextval('genres_id_seq'::regclass),
-  name text NOT NULL UNIQUE,
-  CONSTRAINT genres_pkey PRIMARY KEY (id)
-);
-CREATE TABLE public.media_assets (
-  id uuid NOT NULL DEFAULT gen_random_uuid(),
-  artwork_code smallint,
-  kind USER-DEFINED NOT NULL,
-  gcs_path text NOT NULL,
-  public_url text,
-  caption text,
-  width integer,
-  height integer,
-  ord smallint DEFAULT 0,
-  blurhash text,
-  created_at timestamp with time zone NOT NULL DEFAULT now(),
-  CONSTRAINT media_assets_pkey PRIMARY KEY (id),
-  CONSTRAINT media_assets_artwork_code_fkey FOREIGN KEY (artwork_code) REFERENCES public.artworks(code)
-);
-CREATE TABLE public.person_roles (
-  person_id uuid NOT NULL,
-  role USER-DEFINED NOT NULL,
-  CONSTRAINT person_roles_pkey PRIMARY KEY (role, person_id),
-  CONSTRAINT person_roles_person_id_fkey FOREIGN KEY (person_id) REFERENCES public.persons(id)
-);
-CREATE TABLE public.persons (
-  id uuid NOT NULL DEFAULT gen_random_uuid(),
+CREATE TABLE storage.buckets (
+  id text NOT NULL,
   name text NOT NULL,
-  student_id character varying CHECK (student_id::text ~ '^\d{2}$'::text OR student_id IS NULL),
+  owner uuid,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  public boolean DEFAULT false,
+  avif_autodetection boolean DEFAULT false,
+  file_size_limit bigint,
+  allowed_mime_types ARRAY,
+  owner_id text,
+  type USER-DEFINED NOT NULL DEFAULT 'STANDARD'::storage.buckettype,
+  CONSTRAINT buckets_pkey PRIMARY KEY (id)
+);
+CREATE TABLE storage.buckets_analytics (
+  id text NOT NULL,
+  type USER-DEFINED NOT NULL DEFAULT 'ANALYTICS'::storage.buckettype,
+  format text NOT NULL DEFAULT 'ICEBERG'::text,
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   updated_at timestamp with time zone NOT NULL DEFAULT now(),
-  CONSTRAINT persons_pkey PRIMARY KEY (id)
+  CONSTRAINT buckets_analytics_pkey PRIMARY KEY (id)
 );
-CREATE TABLE public.staff_assignments (
-  person_id uuid NOT NULL,
-  part_id integer NOT NULL,
-  task text NOT NULL DEFAULT ''::text,
-  CONSTRAINT staff_assignments_pkey PRIMARY KEY (task, person_id, part_id),
-  CONSTRAINT staff_assignments_person_id_fkey FOREIGN KEY (person_id) REFERENCES public.persons(id),
-  CONSTRAINT staff_assignments_part_id_fkey FOREIGN KEY (part_id) REFERENCES public.staff_parts(id)
+CREATE TABLE storage.migrations (
+  id integer NOT NULL,
+  name character varying NOT NULL UNIQUE,
+  hash character varying NOT NULL,
+  executed_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT migrations_pkey PRIMARY KEY (id)
 );
-CREATE TABLE public.staff_parts (
-  id integer NOT NULL DEFAULT nextval('staff_parts_id_seq'::regclass),
-  name text NOT NULL UNIQUE,
-  CONSTRAINT staff_parts_pkey PRIMARY KEY (id)
+CREATE TABLE storage.objects (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  bucket_id text,
+  name text,
+  owner uuid,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  last_accessed_at timestamp with time zone DEFAULT now(),
+  metadata jsonb,
+  path_tokens ARRAY DEFAULT string_to_array(name, '/'::text),
+  version text,
+  owner_id text,
+  user_metadata jsonb,
+  level integer,
+  CONSTRAINT objects_pkey PRIMARY KEY (id),
+  CONSTRAINT objects_bucketId_fkey FOREIGN KEY (bucket_id) REFERENCES storage.buckets(id)
 );
-CREATE TABLE public.team_members (
-  team_id integer NOT NULL,
-  person_id uuid NOT NULL,
-  role text NOT NULL CHECK (role = ANY (ARRAY['leader'::text, 'member'::text])),
-  CONSTRAINT team_members_pkey PRIMARY KEY (team_id, person_id),
-  CONSTRAINT team_members_team_id_fkey FOREIGN KEY (team_id) REFERENCES public.teams(id),
-  CONSTRAINT team_members_person_id_fkey FOREIGN KEY (person_id) REFERENCES public.persons(id)
-);
-CREATE TABLE public.teams (
-  id integer NOT NULL DEFAULT nextval('teams_id_seq'::regclass),
-  leader_id uuid UNIQUE,
-  CONSTRAINT teams_pkey PRIMARY KEY (id),
-  CONSTRAINT teams_leader_id_fkey FOREIGN KEY (leader_id) REFERENCES public.persons(id)
-);
-CREATE TABLE public.tools (
-  id integer NOT NULL DEFAULT nextval('tools_id_seq'::regclass),
-  name text NOT NULL UNIQUE,
-  CONSTRAINT tools_pkey PRIMARY KEY (id)
-);
-CREATE TABLE public.zone_artworks (
-  zone_code character NOT NULL,
-  artwork_code smallint NOT NULL,
-  position smallint DEFAULT 0,
-  CONSTRAINT zone_artworks_pkey PRIMARY KEY (artwork_code, zone_code),
-  CONSTRAINT zone_artworks_zone_code_fkey FOREIGN KEY (zone_code) REFERENCES public.zones(code),
-  CONSTRAINT zone_artworks_artwork_code_fkey FOREIGN KEY (artwork_code) REFERENCES public.artworks(code)
-);
-CREATE TABLE public.zones (
-  code character NOT NULL,
+CREATE TABLE storage.prefixes (
+  bucket_id text NOT NULL,
   name text NOT NULL,
-  CONSTRAINT zones_pkey PRIMARY KEY (code)
+  level integer NOT NULL DEFAULT storage.get_level(name),
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT prefixes_pkey PRIMARY KEY (bucket_id, name, level),
+  CONSTRAINT prefixes_bucketId_fkey FOREIGN KEY (bucket_id) REFERENCES storage.buckets(id)
+);
+CREATE TABLE storage.s3_multipart_uploads (
+  id text NOT NULL,
+  in_progress_size bigint NOT NULL DEFAULT 0,
+  upload_signature text NOT NULL,
+  bucket_id text NOT NULL,
+  key text NOT NULL,
+  version text NOT NULL,
+  owner_id text,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  user_metadata jsonb,
+  CONSTRAINT s3_multipart_uploads_pkey PRIMARY KEY (id),
+  CONSTRAINT s3_multipart_uploads_bucket_id_fkey FOREIGN KEY (bucket_id) REFERENCES storage.buckets(id)
+);
+CREATE TABLE storage.s3_multipart_uploads_parts (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  upload_id text NOT NULL,
+  size bigint NOT NULL DEFAULT 0,
+  part_number integer NOT NULL,
+  bucket_id text NOT NULL,
+  key text NOT NULL,
+  etag text NOT NULL,
+  owner_id text,
+  version text NOT NULL,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT s3_multipart_uploads_parts_pkey PRIMARY KEY (id),
+  CONSTRAINT s3_multipart_uploads_parts_upload_id_fkey FOREIGN KEY (upload_id) REFERENCES storage.s3_multipart_uploads(id),
+  CONSTRAINT s3_multipart_uploads_parts_bucket_id_fkey FOREIGN KEY (bucket_id) REFERENCES storage.buckets(id)
 );
 ```
 

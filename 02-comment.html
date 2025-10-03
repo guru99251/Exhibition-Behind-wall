@@ -20,169 +20,154 @@
         </nav>
     </aside>
 
-    <!-- <div id="mosaic"></div>
-    <div class="page-backdrop" aria-hidden="true"></div> -->
-
-    <!-- main contents -->
     <main
-    class="page-main comment-main"
-    data-comment-root
-    data-supabase-url="https://tbegcazozckpkjtaticj.supabase.co"
-    data-supabase-key="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRiZWdjYXpvemNrcGtqdGF0aWNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg1NDkyNjIsImV4cCI6MjA3NDEyNTI2Mn0.GMpSO8iBTSRM97ZMMIfqyjc2ZW_kLtQrZwduFNGtxws">
+        class="page-main comment-main"
+        data-comment-root
+        data-supabase-url="https://tbegcazozckpkjtaticj.supabase.co"
+        data-supabase-key="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRiZWdjYXpvemNrcGtqdGF0aWNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg1NDkyNjIsImV4cCI6MjA3NDEyNTI2Mn0.GMpSO8iBTSRM97ZMMIfqyjc2ZW_kLtQrZwduFNGtxws">
         <header class="comment-header">
             <div class="comment-header__title">
-                <h1>실시간 방명록</h1>
-                <p>전시장에 방문한 관람객들의 채팅, 응원, 반응, 이모지를 확인할 수 있는 페이지입니다. 자유롭게 남겨보세요!<br>
-                    특정 작품이나 구역을 지정하여 코멘트를 남길 수도 있습니다! (리플렛 참고)
+                <h1>전시 실시간 코멘트</h1>
+                <p>현장을 방문한 관객들의 메시지와 반응이 한눈에 모이는 보드입니다. 팀별 피드백과 응원의 말들을 자유롭게 살펴보세요.<br>
+                    작품별 코멘트를 남기고 싶다면 아래 NFC/QR 전용 링크를 활용해 주세요.
                 </p>
             </div>
             <div class="comment-header__status">
                 <span class="connection-badge" data-connection-badge>Offline</span>
-                <button type="button" class="comment-retry" data-comment-retry>Reconnect</button>
+                <button type="button" class="comment-retry" data-comment-retry>다시 연결</button>
             </div>
         </header>
 
         <section class="comment-columns" data-comment-columns>
-            <!-- LEFT column: Live chat main pane -->
             <header class="livechat-head">
-                <h2>전체 게시판</h2>
+                <h2>전체 피드</h2>
                 <div class="livechat-head__row">
-                    <p>참여자와 스태프를 향한 응원메시지 남겨주시면 아주 큰 힘이 됩니다!</p>
+                    <p>현장의 말들을 놓치지 않도록 정렬을 조합해 보세요.</p>
                     <div class="sort-control" data-sort-group>
                         <span class="label">정렬</span>
-                        <!-- 정렬 셀렉터 -->
                         <div class="sort-buttons">
                             <button type="button" class="btn sort is-active" data-sort="latest">최신</button>
                             <button type="button" class="btn sort" data-sort="likes">좋아요</button>
-                            <button type="button" class="btn sort" data-sort="oldest">오래된</button>
-                            <button type="button" class="btn sort" data-sort="length">긴 글</button>
-                            <button type="button" class="btn ghost refresh" data-sort-refresh aria-label="정렬 새로고침">⟳</button>
+                            <button type="button" class="btn sort" data-sort="oldest">시간↑</button>
+                            <button type="button" class="btn sort" data-sort="length">글 길이</button>
+                            <button type="button" class="btn ghost refresh" data-sort-refresh aria-label="정렬 새로고침">↻</button>
                         </div>
                     </div>
                 </div>
             </header>
 
-                <!-- 채팅 내역 -->
-                <ol class="livechat-stream" data-livechat-stream data-comment-stream="ALL" role="feed" aria-live="polite"></ol>
-            </div>
+            <ol class="livechat-stream" data-livechat-stream data-comment-stream="ALL" role="feed" aria-live="polite"></ol>
         </section>
-        <!-- RIGHT column: Narrow aside (QR + compose trigger) -->
-        <!-- 필터링 공간 -->
+
         <div class="filters-row" data-filters>
             <label class="field">
-                <span class="label">구역</span>
+                <span class="label">전시 구역</span>
                 <select class="select" data-filter-zone>
-                <option value="">All</option>
-                <option>A</option><option>B</option><option>C</option>
-                <option>D</option><option>E</option><option>F</option>
-                <option>G</option><option>H</option><option>I</option>
+                    <option value="">전체</option>
+                    <option>A</option><option>B</option><option>C</option>
+                    <option>D</option><option>E</option><option>F</option>
+                    <option>G</option><option>H</option><option>I</option>
                 </select>
             </label>
             <label class="field">
                 <span class="label">작품 코드</span>
                 <select class="select" data-filter-code>
-                <option value="">(선택 안 함)</option>
+                    <option value="">(선택 없음)</option>
                 </select>
             </label>
         </div>
         
-        <!-- 사용자 참여 유도 박스 -->
         <aside class="comment-aside" data-comment-aside>
             <header class="comment-aside__head">
-                나도 한마디 ~ !
+                현장 참여 안내
             </header>
-            <!-- 참여 QR코드 -->
             <div class="qr-card">
                 <figure class="qr-figure">
-                    <!-- 전시 참여용 QR 이미지 경로로 교체 -->
-                    <img src="assets/qr-join-chat.png" alt="스캔하고 참여하기" />
-                    <figcaption>참여 QR</figcaption>
+                    <img src="assets/qr-join-chat.png" alt="전시 QR 코드" />
+                    <figcaption>공용 QR</figcaption>
                 </figure>
             </div>
-            <!-- 참여 버튼 -->
+            <!-- <div class="mobile-link">
+                <a class="btn primary mobile-link__button" href="comment-mobile.html" target="_blank" rel="noopener">모바일 코멘트 열기</a>
+                <p class="mobile-link__hint">QR 또는 NFC 태그에 이 주소를 연결하면 관람객이 바로 코멘트를 남길 수 있습니다.</p>
+            </div> -->
             <button type="button" class="open-composer" data-open-composer>
-                > 응원 남기기
+                > 메시지 작성
             </button>
         </aside>
 
-        <!-- COMPOSER MODAL (typing animation.md 간이 포트) -->
         <div class="composer-modal" data-composer aria-hidden="true">
             <div class="composer-backdrop" data-close-composer></div>
             <div class="composer-dialog" role="dialog" aria-modal="true" aria-labelledby="composer-title">
-            <header class="composer-head">
-                <h3 id="composer-title">메시지 작성</h3>
-                <button type="button" class="composer-close" data-close-composer aria-label="닫기">×</button>
-            </header>
+                <header class="composer-head">
+                    <h3 id="composer-title">메시지 작성</h3>
+                    <button type="button" class="composer-close" data-close-composer aria-label="닫기">×</button>
+                </header>
 
-            <form class="composer-form" data-composer-form>
-                <div class="composer-body">
-                <!-- typing animation.md 참고: 입력 전/중 효과 미니 프리뷰 -->
-                <div class="typing-demo" data-typing-demo>
-                    <svg id="ta-svg" class="typing-svg" aria-hidden="true"></svg>
-                    <p id="ta-text" class="typing-text" aria-hidden="true"></p>
-                </div>
+                <form class="composer-form" data-composer-form>
+                    <div class="composer-body">
+                        <div class="typing-demo" data-typing-demo>
+                            <svg id="ta-svg" class="typing-svg" aria-hidden="true"></svg>
+                            <p id="ta-text" class="typing-text" aria-hidden="true"></p>
+                        </div>
 
-                <label class="field">
-                    <span class="label">메시지</span>
-                    <textarea class="input message-input" name="message" rows="3" placeholder="텍스트/이모지 입력"></textarea>
-                </label>
+                        <label class="field">
+                            <span class="label">메시지</span>
+                            <textarea class="input message-input" name="message" rows="3" placeholder="감상이나 응원의 한마디를 남겨주세요."></textarea>
+                        </label>
 
-                <div class="quick-picks">
-                    <div class="emoji-row" role="group" aria-label="빠른 이모지">
-                    <button type="button" class="emoji">👏</button>
-                    <button type="button" class="emoji">😍</button>
-                    <button type="button" class="emoji">🔥</button>
-                    <button type="button" class="emoji">🤯</button>
-                    <button type="button" class="emoji">🙌</button>
+                        <div class="quick-picks">
+                            <div class="emoji-row" role="group" aria-label="빠른 이모지">
+                                <button type="button" class="emoji">😊</button>
+                                <button type="button" class="emoji">🔥</button>
+                                <button type="button" class="emoji">👏</button>
+                                <button type="button" class="emoji">💡</button>
+                                <button type="button" class="emoji">🎉</button>
+                            </div>
+                            <div class="phrase-row" role="group" aria-label="추천 멘트">
+                                <button type="button" class="phrase">너무 인상 깊었어요!</button>
+                                <button type="button" class="phrase">다음에도 보고 싶어요.</button>
+                                <button type="button" class="phrase">팀원들의 노력이 느껴집니다.</button>
+                                <button type="button" class="phrase">새로운 영감을 얻었습니다.</button>
+                                <button type="button" class="phrase">감사합니다!</button>
+                                <button type="button" class="phrase">와아아아!!!</button>
+                            </div>
+                        </div>
+
+                        <div class="meta-selects">
+                            <label class="field">
+                                <span class="label">대상 작품</span>
+                                <select name="artworkCode" class="select select-code">
+                                    <option value="">(전체)</option>
+                                </select>
+                            </label>
+
+                            <label class="field">
+                                <span class="label">전시 구역</span>
+                                <select name="zone" class="select select-zone">
+                                    <option value="">전체</option>
+                                    <option>A</option><option>B</option><option>C</option>
+                                    <option>D</option><option>E</option><option>F</option>
+                                    <option>G</option><option>H</option><option>I</option><option>J</option>
+                                </select>
+                            </label>
+                        </div>
                     </div>
-                    <div class="phrase-row" role="group" aria-label="지정 멘트">
-                    <button type="button" class="phrase">정말 멋있어요!</button>
-                    <button type="button" class="phrase">잘 보고 갑니다!</button>
-                    <button type="button" class="phrase">디콘 최고!</button>
-                    <button type="button" class="phrase">내년이 기대되네요!</button>
-                    <button type="button" class="phrase">❤</button>
-                    <button type="button" class="phrase">!!!!!!!!!!!!!!!!!</button>
-                    </div>
-                </div>
 
-                <div class="meta-selects">
-                    <label class="field">
-                    <span class="label">전시 작품 (참여자 지정)</span>
-                    <select name="artworkCode" class="select select-code">
-                        <option value="">(전체)</option>
-                        <!-- 고유코드 목록을 서버/JS에서 주입 -->
-                    </select>
-                    </label>
-
-                    <label class="field">
-                    <span class="label">전시 구역</span>
-                    <select name="zone" class="select select-zone">
-                        <option value="">All</option>
-                        <option>A</option><option>B</option><option>C</option>
-                        <option>D</option><option>E</option><option>F</option>
-                        <option>G</option><option>H</option><option>I</option><option>J</option>
-                    </select>
-                    </label>
-                </div>
-                </div>
-
-                <footer class="composer-foot">
-                <button type="button" class="btn ghost" data-close-composer>취소</button>
-                <button type="submit" class="btn primary">보내기</button>
-                </footer>
-            </form>
+                    <footer class="composer-foot">
+                        <button type="button" class="btn ghost" data-close-composer>취소</button>
+                        <button type="submit" class="btn primary">보내기</button>
+                    </footer>
+                </form>
             </div>
         </div>
 
     </main>
 
-    <!-- ADD: Supabase JS SDK (v2) -->
     <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollToPlugin.min.js"></script>
-
     <script defer src="./script.js"></script>
 </body>
 </html>

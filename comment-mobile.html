@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Behind Wall · 모바일 코멘트</title>
+    <link rel="stylesheet" href="mobile.css">
+</head>
+<body class="page page-mobile-comment">
+    <main
+        class="mobile-comment"
+        data-comment-root
+        data-composer-mode="mobile-inline"
+        data-composer-presentation="inline"
+        data-auto-open-composer="true"
+        data-auto-focus-composer="false"
+        data-supabase-url="https://tbegcazozckpkjtaticj.supabase.co"
+        data-supabase-key="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRiZWdjYXpvemNrcGtqdGF0aWNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg1NDkyNjIsImV4cCI6MjA3NDEyNTI2Mn0.GMpSO8iBTSRM97ZMMIfqyjc2ZW_kLtQrZwduFNGtxws">
+        <header class="mobile-comment__header">
+            <p class="mobile-comment__tag" data-target-label>전체 전시</p>
+            <h1>모바일 방명록</h1>
+            <p class="mobile-comment__lead">큐알코드 또는 NFC 태그를 통해 접속한 모바일 전용 페이지입니다. 현장에서 떠오르는 생각을 바로 남겨주세요.</p>
+        </header>
+
+        <section class="mobile-comment__composer">
+            <div class="composer-modal composer-modal--inline is-open" data-composer aria-hidden="false">
+                <div class="composer-dialog">
+                    <form class="composer-form" data-composer-form>
+                        <fieldset class="mobile-fieldset">
+                            <label class="field">
+                                <span class="label">메시지</span>
+                                <textarea class="input message-input" name="message" rows="4" maxlength="500" placeholder="전시에 대한 감상이나 메시지를 남겨주세요."></textarea>
+                            </label>
+
+                            <div class="field-row">
+                                <label class="field">
+                                    <span class="label">전시 구역</span>
+                                    <select class="select select-zone" name="zone">
+                                        <option value="">전체</option>
+                                        <option>A</option>
+                                        <option>B</option>
+                                        <option>C</option>
+                                        <option>D</option>
+                                        <option>E</option>
+                                        <option>F</option>
+                                        <option>G</option>
+                                        <option>H</option>
+                                        <option>I</option>
+                                        <option>J</option>
+                                    </select>
+                                </label>
+                                <label class="field">
+                                    <span class="label">작품 코드</span>
+                                    <select class="select select-code" name="artworkCode">
+                                        <option value="">(선택 없음)</option>
+                                    </select>
+                                </label>
+                            </div>
+                        </fieldset>
+
+                        <footer class="composer-foot composer-foot--mobile">
+                            <button type="submit" class="btn primary">보내기</button>
+                        </footer>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <section class="mobile-comment__status">
+            <span class="connection-badge" data-connection-badge>Offline</span>
+            <button type="button" class="comment-retry" data-comment-retry>다시 연결</button>
+        </section>
+
+        <section class="mobile-comment__stream">
+            <header>
+                <h2>실시간 반응</h2>
+                <p>최신 댓글이 도착하면 잠시 뒤에 자동으로 보입니다.</p>
+            </header>
+            <ol class="livechat-stream" data-livechat-stream data-comment-stream="ALL" aria-live="polite"></ol>
+        </section>
+    </main>
+
+    <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollToPlugin.min.js"></script>
+    <script defer src="./script.js"></script>
+</body>
+</html>
