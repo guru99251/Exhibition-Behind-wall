@@ -1684,7 +1684,7 @@ function setupSupabaseRealtime(container) {
         .from('v_comment_feed')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(400);
+        .limit(1000);
       if (!error && Array.isArray(data)) {
         data.forEach((row) => handleIncomingComment(mapFeedRowToPayload(row)));
       }
@@ -3711,6 +3711,16 @@ function hydratePoster(imgEl, fullSrc) {
     }
 
     closeModal();
+
+    // 최신순 필터 자동 선택
+    if (sortGroup) {
+      currentSort = 'latest';
+      sortGroup.querySelectorAll('[data-sort]').forEach((node) => {
+        node.classList.toggle('is-active', node.dataset.sort === 'latest');
+      });
+      applyFiltersAndSort();
+    }
+
     form.reset();
     selectedEmojis.clear();
     form.querySelectorAll('.emoji.is-selected').forEach((btn) => btn.classList.remove('is-selected'));
