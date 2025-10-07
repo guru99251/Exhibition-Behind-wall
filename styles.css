@@ -2842,7 +2842,7 @@ body.page-artworks::-webkit-scrollbar {
   bottom: auto;
   left: 14vw;
   width: 220px;
-  height: 72vh;
+  height: 75vh;
 }
 
 #column-participants-ux-ui {
@@ -2868,7 +2868,7 @@ body.page-artworks::-webkit-scrollbar {
   top: 64vh;
   right: auto;
   bottom: auto;
-  left: 3vw;
+  left: 2vw;
   width: 280px;
 }
 

@@ -1538,8 +1538,21 @@ function mapFeedRowToPayload(row) {
   const rx = row?.reactions || {};
   const { like, ...emojisObj } = rx;
   const emojisArr = Object.keys(emojisObj || {});
-  // zones: ['A'] 형태 우선, 없으면 'ALL'
-  const zone = Array.isArray(row.zones) && row.zones.length ? String(row.zones[0]).toUpperCase() : 'ALL';
+
+  // zones 배열에서 zone 추출, 없으면 artwork_code로 추론
+  let zone = Array.isArray(row.zones) && row.zones.length ? String(row.zones[0]).toUpperCase() : '';
+
+  // zone이 없는데 artwork_code가 있으면 코드 범위로 zone 추론
+  if (!zone && row.artwork_code) {
+    const code = Number(row.artwork_code);
+    if (code >= 101 && code <= 111) zone = 'C';
+    else if (code >= 112 && code <= 116) zone = 'E';
+    else if (code >= 117 && code <= 127) zone = 'F';  // 127까지 확장
+  }
+
+  // 여전히 zone이 없으면 'ALL'
+  if (!zone) zone = 'ALL';
+
   return {
     id: row.id,
     message: row.text || '',
@@ -1919,7 +1932,13 @@ function renderRow(item) {
 
   const tag = document.createElement('span');
   tag.className = `chat-tag ${item.code ? '--code' : (item.zone ? `--zone-${String(item.zone).toUpperCase()}` : '--all')}`;
-  tag.textContent = item.code ? item.code : (item.zone ? String(item.zone).toUpperCase() : 'All');
+  // buildZoneCodeLabel 사용하여 "F-126" 형태로 표시
+  const zoneStr = item.zone || '';
+  const codeStr = item.code || '';
+  const labelText = item.code
+    ? (typeof buildZoneCodeLabel === 'function' ? buildZoneCodeLabel(zoneStr, codeStr) : `${zoneStr}-${codeStr}`)
+    : (zoneStr ? String(zoneStr).toUpperCase() : 'All');
+  tag.textContent = labelText;
 
   // 이모지
   let emojiWrap = null;
@@ -2150,7 +2169,9 @@ const CONTRIBUTORS_STATE = {
         { name: '권민주', studentId: '23' },
         { name: '권미진', studentId: '23' },
         { name: '김가영', studentId: '23' },
-        { name: '윤샘', studentId: '23' }
+        { name: '윤샘', studentId: '23' },
+        { name: '문희원', studentId: '23' },
+        { name: '나예린', studentId: '23' }
       ],
       'UX/UI': [
         { name: '김효준', studentId: '23' },
@@ -2789,23 +2810,44 @@ function hydratePoster(imgEl, fullSrc) {
     function setCodeOptions(selector, zone, selectedCode = null) {
       const sel = typeof selector === 'string' ? root.querySelector(selector) : selector;
       if (!sel) { return; }
-      
+
       const normalizedZone = normalizeZoneCandidate(zone);
-      const pool = (!normalizedZone || normalizedZone === 'ALL')
-        ? Object.values(ARTWORK_BY_ZONE).flat()
-        : (ARTWORK_BY_ZONE[normalizedZone] || []);
-      
+
+      // zone이 비어있거나 ALL이면 모든 zone의 코드를 zone 정보와 함께 가져옴
+      let pool = [];
+      if (!normalizedZone || normalizedZone === 'ALL') {
+        // 모든 zone의 코드를 { zone, code } 형태로 저장
+        Object.entries(ARTWORK_BY_ZONE).forEach(([zoneKey, codes]) => {
+          codes.forEach(code => {
+            pool.push({ zone: zoneKey, code });
+          });
+        });
+        // 코드 번호순으로 정렬
+        pool.sort((a, b) => {
+          const numA = typeof a.code === 'number' ? a.code : parseInt(String(a.code).replace(/\D/g, ''), 10);
+          const numB = typeof b.code === 'number' ? b.code : parseInt(String(b.code).replace(/\D/g, ''), 10);
+          return numA - numB;
+        });
+      } else {
+        // 특정 zone의 코드만 가져옴
+        const codes = ARTWORK_BY_ZONE[normalizedZone] || [];
+        pool = codes.map(code => ({ zone: normalizedZone, code }));
+      }
+
       const opts = ['<option value="">(선택 없음)</option>'];
-      opts.push(...pool.map(code => {
-        const num = typeof code === 'number' ? code : parseInt(String(code).replace(/\D/g, ''), 10);
+      opts.push(...pool.map(item => {
+        const num = typeof item.code === 'number' ? item.code : parseInt(String(item.code).replace(/\D/g, ''), 10);
         if (Number.isNaN(num)) return '';
-        
-        const label = normalizedZone ? `${normalizedZone}-${num}` : String(num);
+
+        // zone 정보를 포함한 label 생성
+        const label = typeof buildZoneCodeLabel === 'function'
+          ? buildZoneCodeLabel(item.zone, num)
+          : `${item.zone}-${num}`;
         return `<option value="${num}">${label}</option>`;
       }).filter(Boolean));
-      
+
       sel.innerHTML = opts.join('');
-      
+
       // 선택된 코드가 있으면 설정
       if (selectedCode) {
         const codeValue = String(selectedCode);
@@ -2821,6 +2863,11 @@ function hydratePoster(imgEl, fullSrc) {
   loadArtworksByZone().then(() => {
     // 초기 필터 옵션 설정
     setFilterCodeOptions(filterZoneSel?.value || initialPrefill.zone || '');
+    // composer 작품 선택 옵션 초기화 (전체 구역일 때 모든 작품 표시)
+    const composerZone = selZone?.value || initialPrefill.zone || '';
+    if (selCode) {
+      setCodeOptions(selCode, composerZone, initialPrefill.code);
+    }
   });
   // ===== 🔥 끝 =====
 
