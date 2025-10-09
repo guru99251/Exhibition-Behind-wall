@@ -1,13 +1,14 @@
 _참고사항.md
 # .past-file/
 .test/
-src/
 node_modules/
 .database_downloaded/
 AGENTS.md
 
 # dev
+src/
 settings.json
 .vscode/
 .env*
 .claude/
+test-supabase.html

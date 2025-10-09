@@ -898,7 +898,126 @@ if (introTrigger) {
 
   planMap?.addEventListener('mouseleave', () => hoverBubble?.hide?.());
 
+  // === Load artwork images from Supabase for plan-cards ===
+  async function loadPlanCardImages() {
+    console.log('[Wall] Starting image load...');
+    console.log('[Wall] window.sb available:', !!window.sb);
 
+    if (!window.sb) {
+      console.warn('[Wall] Supabase client not available, skipping image load');
+      return;
+    }
+
+    try {
+      console.log('[Wall] Fetching from behind_wall_images table...');
+
+      // Fetch images from behind_wall_images table
+      // Table structure: id, artwork_code, zone_code, gcs_path, public_url, caption, ord, created_at
+      const { data: wallImages, error } = await window.sb
+        .from('behind_wall_images')
+        .select('*')
+        .order('artwork_code', { ascending: true })
+        .order('ord', { ascending: true });
+
+      console.log('[Wall] Query result:', {
+        dataCount: wallImages?.length,
+        error: error,
+        sampleData: wallImages?.[0]
+      });
+
+      if (error) {
+        console.error('[Wall] Failed to fetch wall images:', error);
+        console.error('[Wall] Error details:', JSON.stringify(error, null, 2));
+        return;
+      }
+
+      if (!wallImages || !wallImages.length) {
+        console.warn('[Wall] No wall images found in table');
+        return;
+      }
+
+      console.log(`[Wall] Successfully fetched ${wallImages.length} images from database`);
+
+      // Group images by artwork_code
+      const imagesByArtworkCode = new Map();
+      wallImages.forEach(img => {
+        if (img.artwork_code) {
+          const code = String(img.artwork_code);
+          if (!imagesByArtworkCode.has(code)) {
+            imagesByArtworkCode.set(code, []);
+          }
+          imagesByArtworkCode.get(code).push(img);
+        }
+      });
+
+      console.log(`[Wall] Grouped images by artwork_code:`, Array.from(imagesByArtworkCode.keys()));
+
+      // Update all plan-cards with images
+      const allCards = document.querySelectorAll('.plan-card');
+      console.log(`[Wall] Found ${allCards.length} plan cards in DOM`);
+      let loadedCount = 0;
+
+      allCards.forEach((card, index) => {
+        const artworkCode = card.dataset.artworkCode;
+        const floor = parseInt(card.dataset.floor);
+
+        console.log(`[Wall] Card ${index}: artwork_code=${artworkCode}, floor=${floor}`);
+
+        if (!artworkCode || !floor) {
+          console.warn(`[Wall] Card ${index} missing artwork_code or floor`);
+          return;
+        }
+
+        // Get all images for this artwork
+        const artworkImages = imagesByArtworkCode.get(artworkCode);
+
+        if (!artworkImages || artworkImages.length === 0) {
+          console.warn(`[Wall] No images found for artwork_code: ${artworkCode}`);
+          return;
+        }
+
+        // Use floor number as index (1-based to 0-based: floor 1 = index 0)
+        // If there are multiple images, use floor to pick one
+        // If only one image exists, use it for all floors
+        const imageIndex = artworkImages.length > 1 ? Math.min(floor - 1, artworkImages.length - 1) : 0;
+        const imageData = artworkImages[imageIndex];
+
+        console.log(`[Wall] Using image ${imageIndex} of ${artworkImages.length} for artwork ${artworkCode}, floor ${floor}`);
+        console.log(`[Wall] Image data:`, imageData);
+
+        const photo = card.querySelector('.plan-card__photo');
+
+        if (photo && imageData.public_url) {
+          // Set background image using public_url
+          photo.style.backgroundImage = `url('${imageData.public_url}')`;
+          photo.style.backgroundSize = 'cover';
+          photo.style.backgroundPosition = 'center';
+          console.log(`[Wall] ✓ Set image for artwork ${artworkCode} floor ${floor}: ${imageData.public_url}`);
+          loadedCount++;
+        } else {
+          console.warn(`[Wall] ✗ No public_url found for artwork ${artworkCode}. Image data:`, imageData);
+        }
+
+        // Set caption as title if available
+        const nameEl = card.querySelector('.plan-card__name');
+        if (nameEl && imageData.caption) {
+          nameEl.textContent = imageData.caption;
+        }
+      });
+
+      console.log(`[Wall] ✓ Loaded ${loadedCount} images from behind_wall_images (${wallImages.length} total available)`);
+    } catch (err) {
+      console.error('[Wall] ✗ Error loading plan card images:', err);
+      console.error('[Wall] Error stack:', err.stack);
+    }
+  }
+
+  // Load images when page is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', loadPlanCardImages);
+  } else {
+    loadPlanCardImages();
+  }
 
 
 
