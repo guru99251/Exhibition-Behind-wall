@@ -670,7 +670,8 @@ body.page #mosaic {
   transform: translate(-50%, -50%);
   display: grid;
   gap: var(--plan-card-gap, 0.65rem);
-  width: var(--plan-card-width, clamp(9rem, 16vw, 12.5rem));
+  width: var(--card-width, var(--plan-card-width, clamp(9rem, 16vw, 12.5rem)));
+  height: var(--card-height, auto);
   padding: var(--plan-card-padding, clamp(0.55rem, 1vw, 0.75rem));
   border: 1px solid var(--plan-card-border, var(--color-text-border-opacity04));
   background: var(--plan-card-surface, var(--color-bg));
@@ -706,7 +707,9 @@ body.page #mosaic {
   position: relative;
   box-sizing: border-box;
   border: 1px solid var(--plan-card-photo-border, var(--color-text-border-opacity04));
-  padding: var(--plan-card-photo-padding, clamp(1.6rem, 4vw, 2.4rem));
+  --plan-card-photo-gutter: var(--plan-card-photo-padding, clamp(1.2rem, 2.6vw, 1.6rem));
+  height: var(--plan-card-photo-height, clamp(5.4rem, 9vw, 6rem));
+  padding: 0;
   display: grid;
   place-items: center;
   text-align: center;
@@ -722,6 +725,16 @@ body.page #mosaic {
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--plan-card-label-color, var(--color-text-border-opacity04));
+  width: 100%;
+  height: 100%;
+  padding: var(--plan-card-photo-gutter);
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  line-height: 1.2;
+  white-space: normal;
 }
 
 .plan-card__name {
