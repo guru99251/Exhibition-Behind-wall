@@ -5,8 +5,7 @@ node_modules/
 .database_downloaded/
 AGENTS.md
 
-# dev
-src/
+dev
 settings.json
 .vscode/
 .env*

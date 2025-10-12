@@ -1091,8 +1091,8 @@ if (introTrigger) {
   const floorCount = floorData.length;
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
-  const INACTIVITY_DELAY = 1_000; // 문구 팝업 시간
-  const AUTO_ADVANCE_DELAY = 5_000; // 다음층 전환 시간
+  const INACTIVITY_DELAY = 25_000; // 문구 팝업 시간
+  const AUTO_ADVANCE_DELAY = 50_000; // 다음층 전환 시간
   let inactivityTimer = null;
   let autoTimer = null;
   let autoCycling = false;
@@ -1672,6 +1672,16 @@ function mapFeedRowToPayload(row) {
   // 여전히 zone이 없으면 'ALL'
   if (!zone) zone = 'ALL';
 
+  // likes 처리: like 속성이 number면 사용, 아니면 기존 tracker에서 가져오거나 0
+  let likesValue = 0;
+  if (typeof like === 'number' && like >= 0) {
+    likesValue = like;
+  } else if (row.id && COMMENT_STATE.likeTracker?.has(row.id)) {
+    // 기존 tracker에 서버 값이 있으면 사용 (재조회 시 이전 값 유지)
+    const tracker = COMMENT_STATE.likeTracker.get(row.id);
+    likesValue = tracker?.server || 0;
+  }
+
   return {
     id: row.id,
     message: row.text || '',
@@ -1680,7 +1690,7 @@ function mapFeedRowToPayload(row) {
     ts: row.created_at ? new Date(row.created_at).getTime() : Date.now(),
     code: row.artwork_code || '',
     emojis: emojisArr,
-    likes: (typeof like === 'number' ? like : 0),
+    likes: likesValue,
     artworkPoster: row.artwork_poster || ''
   };
 }
@@ -1709,8 +1719,14 @@ function setupSupabaseRealtime(container) {
   const updateConnecting = () => updateConnectionBadge('connecting');
   const updateOffline = () => updateConnectionBadge('offline');
 
-  async function fetchAndEmitById(id) {
+  async function fetchAndEmitById(id, retryDelay = 0) {
     if (!id) return;
+
+    // 지연이 있으면 대기 (새 메시지의 reactions 집계 대기)
+    if (retryDelay > 0) {
+      await new Promise(resolve => setTimeout(resolve, retryDelay));
+    }
+
     const { data, error } = await client
       .from('v_comment_feed')
       .select('*')
@@ -1741,7 +1757,9 @@ function setupSupabaseRealtime(container) {
         event: '*', schema: 'public', table: 'comments',
       }, (e) => {
         const id = e?.new?.id || e?.old?.id;
-        fetchAndEmitById(id);
+        // INSERT 이벤트는 약간 지연 후 조회 (reactions 집계 대기)
+        const isInsert = e?.eventType === 'INSERT';
+        fetchAndEmitById(id, isInsert ? 300 : 0);
       })
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') updateOnline();
