@@ -2242,58 +2242,52 @@ const CONTRIBUTORS_STATE = {
   root: null,
   data: {
     participants: {
-      '2D': [
-        { name: '진서연', studentId: '23' },
-        { name: '황은빈', studentId: '23' },
-        { name: '박재은', studentId: '23' },
-        { name: '신민주', studentId: '23' },
-        { name: '장서영', studentId: '23' },
-        { name: '이아림', studentId: '23' },
-        { name: '정지원', studentId: '23' }
-      ],
       '3D': [
-        { name: '조수빈', studentId: '23' },
-        { name: '김영우', studentId: '23' },
         { name: '김성은', studentId: '23' },
-        { name: '권준서', studentId: '23' },
-        { name: '안현영', studentId: '23' },
-        { name: '정재희', studentId: '23' },
+        { name: '김영우', studentId: '23' },
+        { name: '조수빈', studentId: '23' },
         { name: '이서진', studentId: '23' },
         { name: '조은서', studentId: '23' },
-        { name: 'Ar Raudhah', studentId: '23' },
+        { name: 'AR RAUDHAHVINTI ULULAZAMI', studentId: '23' },
         { name: '진가언', studentId: '23' },
-        { name: '이현지', studentId: '23' },
-        { name: '최수현', studentId: '23' },
         { name: '전인서', studentId: '23' },
-        { name: '박지영', studentId: '23' },
+        { name: '권준서', studentId: '23' },
+        { name: '안현영', studentId: '23' },
+        { name: '장서영', studentId: '23' },
+        { name: '정재희', studentId: '23' },
         { name: '노서진', studentId: '23' },
+        { name: '박재은', studentId: '23' },
+        { name: '신민주', studentId: '23' },
+        { name: '이아림', studentId: '23' },
+        { name: '정지원', studentId: '23' },
+        { name: '진서연', studentId: '23' },
+        { name: '황은빈', studentId: '23' },
         { name: '김지원', studentId: '23' },
         { name: '이채빈', studentId: '23' },
-        { name: '권민주', studentId: '23' },
-        { name: '권미진', studentId: '23' },
-        { name: '김가영', studentId: '23' },
-        { name: '윤샘', studentId: '23' },
-        { name: '문희원', studentId: '23' },
-        { name: '나예린', studentId: '23' }
-      ],
-      'UX/UI': [
         { name: '김효준', studentId: '23' },
-        { name: '오주희', studentId: '23' },
         { name: '이주빈', studentId: '23' },
+        { name: '오주희', studentId: '23' },
         { name: '한서은', studentId: '23' },
-        { name: '이지인', studentId: '23' }
+        { name: '권민주', studentId: '23' },
+        { name: '최수연', studentId: '23' },
+        { name: '김가영', studentId: '23' }
+      ],
+      '2D Animation': [
+        { name: '윤샘', studentId: '23' },
+        { name: '이수인', studentId: '23' },
+        { name: '서혜린', studentId: '23' },
+        { name: '안현영', studentId: '23' },
+        { name: '문희원', studentId: '23' }
       ],
       'Game': [
-        { name: '권준서', studentId: '23' },
-        { name: '장서영', studentId: '23' },
-        { name: '이시현', studentId: '23' },
-        { name: '최수연', studentId: '23' },
-        { name: '이수인', studentId: '23' },
-        { name: '서혜린', studentId: '23' }
+        { name: '이시현', studentId: '23' }
       ],
       'Film': [
-        { name: '이유경', studentId: '23' },
-        { name: '지서현', studentId: '23' }
+        { name: '지서현', studentId: '23' },
+        { name: '이지인', studentId: '23' }
+      ],
+      'Media Art': [
+        { name: '최수현', studentId: '23' }
       ]
     },
     staff: {
