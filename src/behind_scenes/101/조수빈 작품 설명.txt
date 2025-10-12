@@ -1,0 +1,11 @@
+1. 제목: 사건 번호 065-03
+
+2. 참여자 이름: 김성은, 김영우, 조수빈
+
+3. 작품 설명: 격리된 연구소에서 잊혀 가던 낡은 비디오 테이프가 다시 재생된다. 영상 속에는 사건 당시의 긴박한 상황이 고스란히 담겨 있다.
+
+4. 사용 프로그램: Blender, Substance 3D Painter, Unreal Engine, After Effects, Premiere Pro, Vegas Pro
+
+5. 분야: 3D animation
+
+6. 소속 : 3D-김성은, 김영우, 조수빈
