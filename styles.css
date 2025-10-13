@@ -722,6 +722,13 @@ body.page #mosaic {
   transform: translate(-50%, -50%) scale(1.03);
 }
 
+/* 7F (최종_전시) 카드는 세로 비율 (9:16) */
+.plan-card[data-floor="7"] {
+  width: var(--card-width, clamp(7rem, 12vw, 9rem));
+  height: var(--card-height, clamp(12.5rem, 21vw, 16rem));
+  aspect-ratio: 9 / 16;
+}
+
 .plan-card:focus-visible {
   outline: 2px solid rgba(125, 211, 252, 0.9);
   outline-offset: 4px;
