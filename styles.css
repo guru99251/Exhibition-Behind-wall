@@ -2866,12 +2866,12 @@ body.page-artworks::-webkit-scrollbar {
 
 #column-participants-3d {
   position: absolute;
-  top: -1vh;
+  top: -4vh;
   right: auto;
   bottom: auto;
   left: 14vw;
   width: 220px;
-  height: 75vh;
+  height: 79vh;
 }
 
 #column-participants-ux-ui {
@@ -2899,6 +2899,15 @@ body.page-artworks::-webkit-scrollbar {
   bottom: auto;
   left: 2vw;
   width: 280px;
+}
+
+#column-participants-media-art {
+  position: absolute;
+  top: 4vh;
+  right: auto;
+  bottom: auto;
+  left: 26vw;
+  width: 240px;
 }
 
 /* ───────────── 운영진 (Staff) ───────────── */

@@ -918,20 +918,27 @@ if (introTrigger) {
 
   // 이미지 파일 매핑 데이터 (src/behind_scenes 폴더 구조 기반)
   const artworkImageMap = {
-    "101": {4: "작업_사진.png", 5: "작업_스샷.png"},
+    "101": {2: "스토리보드.png", 4: "작업_사진.png", 5: "작업_스샷.png"},
     "102": {2: "스토리보드.png", 4: "작업_사진.png", 5: "작업_스샷.png"},
     "103": {4: "작업_사진.jpg", 5: "작업_스샷.jpg", 6: "전시_준비.jpg"},
     "105": {5: "작업_스샷.png"},
     "107": {5: "작업_스샷.png"},
-    "108": {5: "작업_스샷.png"},
+    "108": {1: "기획안_스케치.png", 5: "작업_스샷.png"},
     "109": {3: "품평회.jpg", 5: "작업_스샷.jpg", 7: "최종_전시.png"},
-    "111": {4: "작업_사진.png", 5: "작업_스샷.png"},
-    "114": {4: "작업_사진.png", 5: "작업_스샷.png"},
-    "117": {5: "작업_스샷.jpg"},
+    "110": {1: "기획안_스케치.png"},
+    "111": {1: "기획안_스케치.png", 4: "작업_사진.png", 5: "작업_스샷.png"},
+    "113": {1: "기획안_스케치.png"},
+    "114": {2: "스토리보드.png", 4: "작업_사진.png", 5: "작업_스샷.png"},
+    "117": {1: "기획안_스케치.png", 5: "작업_스샷.jpg"},
+    "118": {1: "기획안_스케치.png"},
     "119": {3: "품평회.jpg", 4: "작업_사진.png", 5: "작업_스샷.jpg", 6: "전시_준비.jpg"},
-    "121": {1: "기획안_스케치.jpg", 4: "작업_사진.jpg", 5: "작업_스샷.png", 6: "전시_준비.jpg"},
-    "123": {5: "작업_스샷.png", 7: "최종_전시.png"},
-    "124": {5: "작업_스샷.png"}
+    "120": {2: "스토리보드.png"},
+    "121": {1: "기획안_스케치.jpg", 2: "스토리보드.png", 4: "작업_사진.jpg", 5: "작업_스샷.png", 6: "전시_준비.jpg"},
+    "122": {1: "기획안_스케치.png"},
+    "123": {2: "스토리보드.png", 5: "작업_스샷.png", 7: "최종_전시.png"},
+    "124": {5: "작업_스샷.png"},
+    "125": {1: "기획안_스케치.png"},
+    "127": {2: "스토리보드.png"}
   };
 
   // 각 층별로 어떤 작품이 있는지 계산
@@ -2249,52 +2256,55 @@ const CONTRIBUTORS_STATE = {
   root: null,
   data: {
     participants: {
+      '2D': [
+        { name: '이수인', studentId: '21' },
+        { name: '윤샘', studentId: '22' },
+        { name: '문희원', studentId: '23' },
+        { name: '서혜린', studentId: '23' },
+        { name: '안현영', studentId: '25' }
+      ],
       '3D': [
+        { name: 'Ar Raudhah', studentId: '23' },
+        { name: '권민주', studentId: '24' },
         { name: '김성은', studentId: '23' },
         { name: '김영우', studentId: '23' },
-        { name: '조수빈', studentId: '23' },
         { name: '이서진', studentId: '23' },
-        { name: '조은서', studentId: '23' },
-        { name: 'AR RAUDHAHVINTI ULULAZAMI', studentId: '23' },
-        { name: '진가언', studentId: '23' },
-        { name: '전인서', studentId: '23' },
-        { name: '권준서', studentId: '23' },
-        { name: '안현영', studentId: '23' },
-        { name: '장서영', studentId: '23' },
-        { name: '정재희', studentId: '23' },
-        { name: '노서진', studentId: '23' },
-        { name: '박재은', studentId: '23' },
-        { name: '신민주', studentId: '23' },
-        { name: '이아림', studentId: '23' },
-        { name: '정지원', studentId: '23' },
-        { name: '진서연', studentId: '23' },
-        { name: '황은빈', studentId: '23' },
-        { name: '김지원', studentId: '23' },
         { name: '이채빈', studentId: '23' },
-        { name: '김효준', studentId: '23' },
-        { name: '이주빈', studentId: '23' },
-        { name: '오주희', studentId: '23' },
-        { name: '한서은', studentId: '23' },
-        { name: '권민주', studentId: '23' },
-        { name: '최수연', studentId: '23' },
-        { name: '김가영', studentId: '23' }
-      ],
-      '2D Animation': [
-        { name: '윤샘', studentId: '23' },
-        { name: '이수인', studentId: '23' },
-        { name: '서혜린', studentId: '23' },
-        { name: '안현영', studentId: '23' },
-        { name: '문희원', studentId: '23' }
-      ],
-      'Game': [
-        { name: '이시현', studentId: '23' }
-      ],
-      'Film': [
-        { name: '지서현', studentId: '23' },
-        { name: '이지인', studentId: '23' }
+        { name: '이현지', studentId: '23' },
+        { name: '전인서', studentId: '23' },
+        { name: '조수빈', studentId: '23' },
+        { name: '진가언', studentId: '23' },
+        { name: '김지원', studentId: '24' },
+        { name: '노서진', studentId: '24' },
+        { name: '오주희', studentId: '24' },
+        { name: '조은서', studentId: '24' },
+        { name: '진서연', studentId: '24' },
+        { name: '황은빈', studentId: '24' },
+        { name: '권준서', studentId: '25' },
+        { name: '김효준', studentId: '25' },
+        { name: '박재은', studentId: '25' },
+        { name: '신민주', studentId: '25' },
+        { name: '이아림', studentId: '25' },
+        { name: '이주빈', studentId: '25' },
+        { name: '장서영', studentId: '25' },
+        { name: '정재희', studentId: '25' },
+        { name: '정지원', studentId: '25' },
+        { name: '한서은', studentId: '25' }
       ],
       'Media Art': [
-        { name: '최수현', studentId: '23' }
+        { name: '권미진', studentId: '23' },
+        { name: '박지영', studentId: '23' },
+        { name: '김가영', studentId: '24' },
+        { name: '최수연', studentId: '24' },
+        { name: '최수현', studentId: '24' }
+      ],
+      'Film': [
+        { name: '이유경', studentId: '22' },
+        { name: '이지인', studentId: '23' },
+        { name: '지서현', studentId: '24' }
+      ],
+      'Game': [
+        { name: '이시현', studentId: '21' }
       ]
     },
     staff: {
