@@ -1694,9 +1694,9 @@ body.page.page-wall {
   --sidebar-safe: calc(12rem + 6vw);
   position: relative;
   min-height: 100vh;
-  padding: clamp(4.5rem, 5vw, 5.5rem) clamp(1.5rem, 4vw, 3.25rem)
+  padding: clamp(4.5rem, 5vw, 5.5rem) 0
     clamp(3rem, 6vw, 4.5rem);
-  padding-left: calc(var(--sidebar-safe) + clamp(1rem, 3vw, 2rem));
+  padding-left: calc(var(--sidebar-safe));
   display: flex;
   flex-direction: column;
   gap: clamp(1.5rem, 3vw, 2.5rem);

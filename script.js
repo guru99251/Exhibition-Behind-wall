@@ -898,92 +898,7 @@ if (introTrigger) {
 
   planMap?.addEventListener('mouseleave', () => hoverBubble?.hide?.());
 
-  // === Load artwork images from local src folder for plan-cards ===
-  function loadPlanCardImages() {
-    console.log('[Wall] Starting local image load...');
-
-    // Floor name mapping for file names
-    const floorNameMap = {
-      1: '기획안_스케치',
-      2: '스토리보드',
-      3: '품평회',
-      4: '작업_사진',
-      5: '작업_스샷',
-      6: '전시_준비',
-      7: '최종_전시'
-    };
-
-    // Find all plan-cards
-    const allCards = document.querySelectorAll('.plan-card');
-    console.log(`[Wall] Found ${allCards.length} plan cards in DOM`);
-    let loadedCount = 0;
-
-    allCards.forEach((card, index) => {
-      const artworkCode = card.dataset.artworkCode;
-      const floor = parseInt(card.dataset.floor);
-
-      if (!artworkCode || !floor) {
-        console.warn(`[Wall] Card ${index} missing artwork_code or floor`);
-        return;
-      }
-
-      const floorName = floorNameMap[floor];
-      if (!floorName) {
-        console.warn(`[Wall] Unknown floor number: ${floor}`);
-        return;
-      }
-
-      // Try loading image with different extensions
-      const basePath = `src/behind_scenes/${artworkCode}/${floorName}`;
-      const extensions = ['jpg', 'jpeg', 'png', 'webp'];
-
-      const photo = card.querySelector('.plan-card__photo');
-      const nameEl = card.querySelector('.plan-card__name');
-
-      // Set title to artwork code
-      if (nameEl) {
-        nameEl.textContent = artworkCode;
-      }
-
-      if (!photo) return;
-
-      // Try to load image with different extensions
-      let imageLoaded = false;
-      for (const ext of extensions) {
-        const imagePath = `${basePath}.${ext}`;
-        const img = new Image();
-
-        img.onload = () => {
-          if (!imageLoaded) {
-            photo.style.backgroundImage = `url('${imagePath}')`;
-            photo.style.backgroundSize = 'cover';
-            photo.style.backgroundPosition = 'center';
-            console.log(`[Wall] ✓ Loaded image: ${imagePath}`);
-            loadedCount++;
-            imageLoaded = true;
-          }
-        };
-
-        img.onerror = () => {
-          console.log(`[Wall] ✗ Failed to load: ${imagePath}`);
-        };
-
-        img.src = imagePath;
-
-        // If image loaded successfully, break the loop
-        if (imageLoaded) break;
-      }
-    });
-
-    console.log(`[Wall] Image loading initiated for ${allCards.length} cards`);
-  }
-
-  // Load images when page is ready
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', loadPlanCardImages);
-  } else {
-    loadPlanCardImages();
-  }
+  // 이미지 로딩은 applyFloor 함수 내에서 처리됨
 
 
 
@@ -1001,6 +916,35 @@ if (introTrigger) {
     }
   });
 
+  // 이미지 파일 매핑 데이터 (src/behind_scenes 폴더 구조 기반)
+  const artworkImageMap = {
+    "101": {4: "작업_사진.png", 5: "작업_스샷.png"},
+    "102": {2: "스토리보드.png", 4: "작업_사진.png", 5: "작업_스샷.png"},
+    "103": {4: "작업_사진.jpg", 5: "작업_스샷.jpg", 6: "전시_준비.jpg"},
+    "105": {5: "작업_스샷.png"},
+    "107": {5: "작업_스샷.png"},
+    "108": {5: "작업_스샷.png"},
+    "109": {3: "품평회.jpg", 5: "작업_스샷.jpg", 7: "최종_전시.png"},
+    "111": {4: "작업_사진.png", 5: "작업_스샷.png"},
+    "114": {4: "작업_사진.png", 5: "작업_스샷.png"},
+    "117": {5: "작업_스샷.jpg"},
+    "119": {3: "품평회.jpg", 4: "작업_사진.png", 5: "작업_스샷.jpg", 6: "전시_준비.jpg"},
+    "121": {1: "기획안_스케치.jpg", 4: "작업_사진.jpg", 5: "작업_스샷.png", 6: "전시_준비.jpg"},
+    "123": {5: "작업_스샷.png", 7: "최종_전시.png"},
+    "124": {5: "작업_스샷.png"}
+  };
+
+  // 각 층별로 어떤 작품이 있는지 계산
+  const floorArtworkMap = {};
+  for (let floor = 1; floor <= 7; floor++) {
+    floorArtworkMap[floor] = [];
+    for (const [code, floors] of Object.entries(artworkImageMap)) {
+      if (floors[floor]) {
+        floorArtworkMap[floor].push({code, filename: floors[floor]});
+      }
+    }
+  }
+
   const applyFloor = (floorIndex) => {
     const data = floorData[floorIndex];
     if (!data) { return; }
@@ -1011,34 +955,97 @@ if (introTrigger) {
       baseHeader.innerHTML = data.headerHTML;
     }
 
-    baseCards.forEach((card, idx) => {
-      const cardData = data.cards[idx];
-      if (!cardData) {
-        card.setAttribute('hidden', 'true');
-        card.classList.remove('plan-card--final-preview');
-        card.removeAttribute('data-original-label');
-        card.dataset.artwork = '';
-        return;
-      }
+    // 기존 카드 모두 제거
+    const planMap = baseSection.querySelector('.plan-map');
+    if (!planMap) return;
 
-      card.classList.remove('plan-card--final-preview');
-      card.removeAttribute('data-original-label');
-      card.removeAttribute('hidden');
-      card.dataset.artwork = cardData.artwork || '';
-      card.dataset.floor = data.floor || '';
+    const existingCards = planMap.querySelectorAll('.plan-card');
+    existingCards.forEach(card => card.remove());
 
-      const photo = card.querySelector('.plan-card__photo');
-      if (photo) {
-        photo.dataset.label = cardData.label || '';
-      }
+    // 현재 층 번호
+    const currentFloor = parseInt(data.floor);
+    const artworks = floorArtworkMap[currentFloor] || [];
 
-      const nameNode = card.querySelector('.plan-card__name');
-      if (nameNode) {
-        nameNode.textContent = cardData.name || '';
+    console.log(`[Wall] Switching to floor ${currentFloor}, ${artworks.length} artworks`);
+
+    // 카드 배치 좌표 계산 (균등 분배)
+    const positions = [];
+    const count = artworks.length;
+
+    if (count === 1) {
+      positions.push({x: 50, y: 50});
+    } else if (count === 2) {
+      positions.push({x: 35, y: 50}, {x: 65, y: 50});
+    } else if (count <= 5) {
+      const spacing = 80 / (count + 1);
+      for (let i = 0; i < count; i++) {
+        positions.push({x: spacing * (i + 1) + 10, y: 50});
       }
+    } else {
+      // 여러 줄로 배치
+      const cols = Math.ceil(Math.sqrt(count));
+      const rows = Math.ceil(count / cols);
+      const xSpacing = 80 / (cols + 1);
+      const ySpacing = 80 / (rows + 1);
+
+      for (let i = 0; i < count; i++) {
+        const row = Math.floor(i / cols);
+        const col = i % cols;
+        positions.push({
+          x: xSpacing * (col + 1) + 10,
+          y: ySpacing * (row + 1) + 10
+        });
+      }
+    }
+
+    // 새 카드 생성
+    artworks.forEach((artwork, idx) => {
+      const pos = positions[idx] || {x: 50, y: 50};
+
+      const card = document.createElement('button');
+      card.type = 'button';
+      card.className = 'plan-card';
+      card.dataset.artwork = `artwork-${artwork.code}`;
+      card.dataset.floor = currentFloor;
+      card.dataset.artworkCode = artwork.code;
+      card.style.cssText = `--x:${pos.x}; --y:${pos.y};`;
+
+      const photo = document.createElement('div');
+      photo.className = 'plan-card__photo';
+      photo.dataset.label = artwork.filename.replace(/\.(jpg|png|jpeg|webp)$/i, '').replace(/_/g, ' ');
+
+      const name = document.createElement('div');
+      name.className = 'plan-card__name';
+      name.textContent = artwork.code;
+
+      card.appendChild(photo);
+      card.appendChild(name);
+      planMap.appendChild(card);
+
+      // 이미지 로드
+      const imagePath = `src/behind_scenes/${artwork.code}/${artwork.filename}`;
+      const img = new Image();
+      img.onload = () => {
+        photo.style.backgroundImage = `url('${imagePath}')`;
+        photo.style.backgroundSize = 'cover';
+        photo.style.backgroundPosition = 'center';
+        photo.style.backgroundRepeat = 'no-repeat';
+        photo.setAttribute('data-has-image', 'true');
+        console.log(`[Wall] ✓ Loaded: ${imagePath}`);
+      };
+      img.onerror = () => {
+        console.warn(`[Wall] ✗ Failed to load: ${imagePath}`);
+      };
+      img.src = imagePath;
+
+      // 호버 이벤트 추가
+      card.addEventListener('mouseenter', () => revealFinalPreview(card));
+      card.addEventListener('focusin', () => revealFinalPreview(card));
+      card.addEventListener('mouseleave', () => resetFinalPreview(card));
+      card.addEventListener('focusout', () => resetFinalPreview(card));
     });
-    hoverBubble?.hide?.();
 
+    hoverBubble?.hide?.();
   };
 
   const setActiveFloor = (floorVal) => {
