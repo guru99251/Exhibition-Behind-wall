@@ -2940,12 +2940,12 @@ body.page-artworks::-webkit-scrollbar {
 
 #column-participants-3d {
   position: absolute;
-  top: -4vh;
+  top: -6vh;
   right: auto;
   bottom: auto;
   left: 14vw;
   width: 220px;
-  height: 79vh;
+  height: 82vh;
 }
 
 #column-participants-ux-ui {
