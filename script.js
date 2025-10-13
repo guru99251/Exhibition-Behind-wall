@@ -978,44 +978,34 @@ if (introTrigger) {
 
     console.log(`[Wall] Switching to floor ${currentFloor}, ${artworks.length} artworks`);
 
-    // 카드 배치 좌표 계산 (불규칙 분산 배치)
+    // 카드 배치 좌표 계산 (균등 grid 배치)
     const positions = [];
     const count = artworks.length;
-    const MIN_DISTANCE = 18; // 카드 간 최소 거리 (%)
 
-    // 랜덤 위치 생성 함수 (겹침 방지)
-    const generateRandomPosition = (existingPositions) => {
-      const maxAttempts = 100;
-      for (let attempt = 0; attempt < maxAttempts; attempt++) {
-        const x = Math.random() * 85 + 5;  // 5-90% 범위
-        const y = Math.random() * 85 + 5;  // 5-90% 범위
-
-        // 기존 위치들과 거리 체크
-        let tooClose = false;
-        for (const pos of existingPositions) {
-          const dx = x - pos.x;
-          const dy = y - pos.y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-          if (distance < MIN_DISTANCE) {
-            tooClose = true;
-            break;
-          }
-        }
-
-        if (!tooClose) {
-          return {x, y};
-        }
+    if (count === 1) {
+      positions.push({x: 50, y: 50});
+    } else if (count === 2) {
+      positions.push({x: 35, y: 50}, {x: 65, y: 50});
+    } else if (count <= 5) {
+      const spacing = 80 / (count + 1);
+      for (let i = 0; i < count; i++) {
+        positions.push({x: spacing * (i + 1) + 10, y: 50});
       }
-      // 실패시 안전한 위치 반환
-      return {
-        x: Math.random() * 60 + 20,
-        y: Math.random() * 60 + 20
-      };
-    };
+    } else {
+      // 여러 줄로 배치
+      const cols = Math.ceil(Math.sqrt(count));
+      const rows = Math.ceil(count / cols);
+      const xSpacing = 80 / (cols + 1);
+      const ySpacing = 80 / (rows + 1);
 
-    // 모든 카드에 대해 랜덤 위치 생성
-    for (let i = 0; i < count; i++) {
-      positions.push(generateRandomPosition(positions));
+      for (let i = 0; i < count; i++) {
+        const row = Math.floor(i / cols);
+        const col = i % cols;
+        positions.push({
+          x: xSpacing * (col + 1) + 10,
+          y: ySpacing * (row + 1) + 10
+        });
+      }
     }
 
     // 새 카드 생성
