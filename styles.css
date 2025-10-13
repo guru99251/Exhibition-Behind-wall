@@ -556,6 +556,28 @@ body.page #mosaic {
   opacity: 0.8;
 }
 
+/* 사용 방법 안내 */
+.wall-instructions {
+  position: fixed;
+  top: 70px;
+  right: 70px;
+  z-index: 100;
+  padding: clamp(0.8rem, 1.2vw, 1.2rem) clamp(1rem, 1.5vw, 1.5rem);
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: var(--global-border-radius, 8px);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.wall-instructions p {
+  font-size: clamp(1rem, 1vw, 1.2rem);
+  line-height: 1.6;
+  color: rgba(226, 232, 240, 0.9);
+  margin: 0;
+  letter-spacing: 0.02em;
+}
+
 /* (층별) 가변 콘텐츠 */
 .floor-section {
   padding: clamp(1.3rem, 2vw, 1.5rem);
@@ -669,9 +691,11 @@ body.page #mosaic {
   top: calc(var(--y) * 1%);
   transform: translate(-50%, -50%);
   display: grid;
+  grid-template-rows: 1fr auto;
   gap: var(--plan-card-gap, 0.65rem);
   width: var(--card-width, var(--plan-card-width, clamp(9rem, 16vw, 12.5rem)));
   height: var(--card-height, auto);
+  min-height: 120px;
   padding: var(--plan-card-padding, clamp(0.55rem, 1vw, 0.75rem));
   border: 1px solid var(--plan-card-border, var(--color-text-border-opacity04));
   background: var(--plan-card-surface, var(--color-bg));
@@ -708,15 +732,17 @@ body.page #mosaic {
   box-sizing: border-box;
   border: 1px solid var(--plan-card-photo-border, var(--color-text-border-opacity04));
   --plan-card-photo-gutter: var(--plan-card-photo-padding, clamp(1.2rem, 2.6vw, 1.6rem));
-  height: var(--plan-card-photo-height, clamp(5.4rem, 9vw, 6rem));
+  height: 100%;
+  min-height: 80px;
   padding: 0;
   display: grid;
   place-items: center;
   text-align: center;
   overflow: hidden;
   background: var(--plan-card-photo-bg, transparent);
-  background-size: var(--plan-card-photo-bg-size, cover);
+  background-size: var(--photo-fit-mode, cover);
   background-position: var(--plan-card-photo-bg-position, center);
+  background-repeat: no-repeat;
 }
 
 .plan-card__photo::after {
@@ -764,6 +790,47 @@ body.page #mosaic {
 
 .plan-card--final-preview .plan-card__name {
   color: var(--plan-card-preview-name-color);
+}
+
+/* === plan-card 드래그 & 리사이즈 스타일 === */
+.plan-card--dragging {
+  opacity: 0.7;
+  box-shadow: 0 24px 56px rgba(56, 189, 248, 0.5);
+  transform: translate(-50%, -50%) scale(1.05);
+  z-index: 100;
+  transition: none;
+}
+
+.plan-card--resizing {
+  transition: none;
+  z-index: 100;
+}
+
+.plan-card__resize-handle {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: rgba(148, 163, 184, 0.6);
+  cursor: nwse-resize;
+  opacity: 0;
+  transition: opacity 0.3s ease, color 0.3s ease;
+  user-select: none;
+  z-index: 10;
+}
+
+.plan-card:hover .plan-card__resize-handle {
+  opacity: 1;
+}
+
+.plan-card__resize-handle:hover {
+  color: rgba(125, 211, 252, 0.9);
+  transform: scale(1.2);
 }
 
 .plan-hover-bubble {

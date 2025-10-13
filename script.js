@@ -1063,10 +1063,215 @@ if (introTrigger) {
       card.addEventListener('focusin', () => revealFinalPreview(card));
       card.addEventListener('mouseleave', () => resetFinalPreview(card));
       card.addEventListener('focusout', () => resetFinalPreview(card));
+
+      // 드래그 & 리사이즈 기능 추가
+      makePlanCardDraggable(card, planMap);
+      makePlanCardResizable(card);
+
+      // localStorage에서 저장된 위치/크기 불러오기
+      loadCardTransform(card);
     });
 
     hoverBubble?.hide?.();
   };
+
+  // === plan-card 드래그 & 리사이즈 기능 ===
+  function makePlanCardDraggable(card, container) {
+    let isDragging = false;
+    let startX = 0;
+    let startY = 0;
+    let startLeft = 0;
+    let startTop = 0;
+
+    card.addEventListener('mousedown', (e) => {
+      // Ctrl 키를 누르고 있을 때만 드래그 시작
+      if (!e.ctrlKey) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      isDragging = true;
+      card.classList.add('plan-card--dragging');
+
+      startX = e.clientX;
+      startY = e.clientY;
+
+      // 현재 --x, --y 값을 가져옴
+      const currentX = parseFloat(getComputedStyle(card).getPropertyValue('--x')) || 50;
+      const currentY = parseFloat(getComputedStyle(card).getPropertyValue('--y')) || 50;
+
+      startLeft = currentX;
+      startTop = currentY;
+
+      document.body.style.cursor = 'move';
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+
+      e.preventDefault();
+
+      const rect = container.getBoundingClientRect();
+      const deltaX = e.clientX - startX;
+      const deltaY = e.clientY - startY;
+
+      // 백분율로 변환
+      const deltaXPercent = (deltaX / rect.width) * 100;
+      const deltaYPercent = (deltaY / rect.height) * 100;
+
+      let newX = startLeft + deltaXPercent;
+      let newY = startTop + deltaYPercent;
+
+      // 경계 제한
+      newX = Math.max(0, Math.min(100, newX));
+      newY = Math.max(0, Math.min(100, newY));
+
+      card.style.setProperty('--x', newX);
+      card.style.setProperty('--y', newY);
+    });
+
+    document.addEventListener('mouseup', () => {
+      if (isDragging) {
+        isDragging = false;
+        card.classList.remove('plan-card--dragging');
+        document.body.style.cursor = '';
+
+        // localStorage에 저장
+        saveCardTransform(card);
+      }
+    });
+  }
+
+  function makePlanCardResizable(card) {
+    // 리사이즈 핸들 생성
+    const handle = document.createElement('div');
+    handle.className = 'plan-card__resize-handle';
+    handle.innerHTML = '⇲';
+    card.appendChild(handle);
+
+    let isResizing = false;
+    let startX = 0;
+    let startY = 0;
+    let startWidth = 0;
+    let startHeight = 0;
+
+    handle.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      isResizing = true;
+      card.classList.add('plan-card--resizing');
+
+      startX = e.clientX;
+      startY = e.clientY;
+
+      const currentWidth = parseFloat(getComputedStyle(card).getPropertyValue('--card-width')) ||
+                          parseFloat(getComputedStyle(card).width);
+      const currentHeight = parseFloat(getComputedStyle(card).getPropertyValue('--card-height')) ||
+                           parseFloat(getComputedStyle(card).height);
+
+      startWidth = currentWidth;
+      startHeight = currentHeight;
+
+      document.body.style.cursor = 'nwse-resize';
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (!isResizing) return;
+
+      e.preventDefault();
+
+      const deltaX = e.clientX - startX;
+      const deltaY = e.clientY - startY;
+
+      let newWidth = startWidth + deltaX;
+      let newHeight = startHeight + deltaY;
+
+      // 최소/최대 크기 제한
+      newWidth = Math.max(120, Math.min(500, newWidth));
+      newHeight = Math.max(100, Math.min(400, newHeight));
+
+      card.style.setProperty('--card-width', `${newWidth}px`);
+      card.style.setProperty('--card-height', `${newHeight}px`);
+
+      // 이미지 fit 모드 자동 조정
+      updatePhotoFitMode(card, newWidth);
+    });
+
+    document.addEventListener('mouseup', () => {
+      if (isResizing) {
+        isResizing = false;
+        card.classList.remove('plan-card--resizing');
+        document.body.style.cursor = '';
+
+        // localStorage에 저장
+        saveCardTransform(card);
+      }
+    });
+  }
+
+  function updatePhotoFitMode(card, width) {
+    const photo = card.querySelector('.plan-card__photo');
+    if (!photo) return;
+
+    // 카드 너비에 따라 fit 모드 자동 조정
+    // 작은 카드(<150px): contain (이미지 전체 보이기)
+    // 큰 카드(>=150px): cover (이미지 채우기)
+    const fitMode = width < 150 ? 'contain' : 'cover';
+    card.style.setProperty('--photo-fit-mode', fitMode);
+  }
+
+  function saveCardTransform(card) {
+    const key = `plan-card-${card.dataset.artworkCode}-${card.dataset.floor}`;
+    const transform = {
+      x: card.style.getPropertyValue('--x'),
+      y: card.style.getPropertyValue('--y'),
+      width: card.style.getPropertyValue('--card-width'),
+      height: card.style.getPropertyValue('--card-height'),
+      fitMode: card.style.getPropertyValue('--photo-fit-mode')
+    };
+    localStorage.setItem(key, JSON.stringify(transform));
+  }
+
+  function loadCardTransform(card) {
+    const key = `plan-card-${card.dataset.artworkCode}-${card.dataset.floor}`;
+    const saved = localStorage.getItem(key);
+    if (saved) {
+      try {
+        const transform = JSON.parse(saved);
+        if (transform.x) card.style.setProperty('--x', transform.x);
+        if (transform.y) card.style.setProperty('--y', transform.y);
+        if (transform.width) {
+          card.style.setProperty('--card-width', transform.width);
+          // 저장된 너비를 기반으로 fit 모드 업데이트
+          const width = parseFloat(transform.width);
+          if (!isNaN(width)) {
+            updatePhotoFitMode(card, width);
+          }
+        }
+        if (transform.height) card.style.setProperty('--card-height', transform.height);
+        if (transform.fitMode) card.style.setProperty('--photo-fit-mode', transform.fitMode);
+      } catch (e) {
+        console.warn('[Wall] Failed to load saved transform:', e);
+      }
+    }
+  }
+
+  // 키보드 단축키: R 키로 리셋
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'r' || e.key === 'R') {
+      const activeCards = document.querySelectorAll('.plan-card:hover');
+      activeCards.forEach((card) => {
+        card.style.removeProperty('--x');
+        card.style.removeProperty('--y');
+        card.style.removeProperty('--card-width');
+        card.style.removeProperty('--card-height');
+
+        const key = `plan-card-${card.dataset.artworkCode}-${card.dataset.floor}`;
+        localStorage.removeItem(key);
+      });
+    }
+  });
 
   const setActiveFloor = (floorVal) => {
     floorButtons.forEach((button) => {
