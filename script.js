@@ -2009,8 +2009,7 @@ function setupSupabaseRealtime(container) {
       const { data, error } = await client
         .from('v_comment_feed')
         .select('*')
-        .order('created_at', { ascending: false })
-        .limit(1000);
+        .order('created_at', { ascending: false });
       if (!error && Array.isArray(data)) {
         data.forEach((row) => handleIncomingComment(mapFeedRowToPayload(row)));
       }
@@ -2234,7 +2233,7 @@ function upsertMessage(store, zone, item) {
     list.unshift(cloned);
   }
   list.sort((a, b) => (Number(b.ts) || Date.now()) - (Number(a.ts) || Date.now()));
-  store[zone] = list.slice(0, 40);
+  store[zone] = list;
   return store[zone];
 }
 
