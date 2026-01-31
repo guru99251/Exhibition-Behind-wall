@@ -2820,7 +2820,9 @@ function createArtworkCard(item) {
   img.alt = `${item.title || item.code} poster`;
   img.loading = 'lazy';
   img.decoding = 'async';
-  img.dataset.state = 'loading';
+  // example_poster만 어둡게 유지, 나머지는 밝게
+  const isPlaceholder = (item.poster || '').includes('example_poster');
+  img.dataset.state = isPlaceholder ? 'loading' : 'ready';
   img.src = item.lqip || DEFAULT_LQIP;
   hydratePoster(img, item.poster);
   fig.appendChild(img);
@@ -4089,6 +4091,33 @@ function _aw_renderFilterBar(root, zones, { active = 'ALL', onPick } = {}) {
   });
 }
 
+// 로컬 이미지 매핑: 작품 코드별 최종_전시 이미지 경로
+const LOCAL_ARTWORK_IMAGES = {
+  '101': 'src/behind_scenes/101/최종_전시.jpg',
+  '102': 'src/behind_scenes/102/최종_전시.jpg',
+  '103': 'src/behind_scenes/103/최종_전시.jpg',
+  '105': 'src/behind_scenes/105/최종_전시.png',
+  '106': 'src/behind_scenes/106/최종_전시.jpg',
+  '109': 'src/behind_scenes/109/최종_전시.jpg',
+  '110': 'src/behind_scenes/110/최종_전시.jpg',
+  '111': 'src/behind_scenes/111/최종_전시.jpg',
+  '112': 'src/behind_scenes/112/최종_전시.jpg',
+  '113': 'src/behind_scenes/113/최종_전시.jpg',
+  '115': 'src/behind_scenes/115/최종_전시.jpg',
+  '117': 'src/behind_scenes/117/최종_전시.jpg',
+  '118': 'src/behind_scenes/118/최종_전시.jpg',
+  '119': 'src/behind_scenes/119/최종_전시.jpg',
+  '121': 'src/behind_scenes/121/최종_전시.jpg',
+  '123': 'src/behind_scenes/123/최종_전시.jpg',
+  '125': 'src/behind_scenes/125/최종_전시.jpg'
+};
+const DEFAULT_ARTWORK_IMAGE = 'src/posters/example_poster.jpg';
+
+function _aw_getLocalImage(code) {
+  const codeStr = String(code).replace(/^[A-Z]-/, '');
+  return LOCAL_ARTWORK_IMAGES[codeStr] || DEFAULT_ARTWORK_IMAGE;
+}
+
 function _aw_renderCards(grid, items) {
   if (!grid) return;
   if (!items || !items.length) {
@@ -4096,7 +4125,9 @@ function _aw_renderCards(grid, items) {
     return;
   }
   grid.innerHTML = items.map(it => {
-    const cover = it.cover_url || it.poster_url || '';
+    const cover = it.cover_url || it.poster_url || _aw_getLocalImage(it.code);
+    const isPlaceholder = cover.includes('example_poster');
+    const imgState = isPlaceholder ? 'loading' : 'ready';
     const members = Array.isArray(it.members) ? it.members.join(', ') : (it.members || '');
     const tools   = Array.isArray(it.tools)   ? it.tools.join(', ')   : (it.tools || '');
     const genres  = Array.isArray(it.genres)  ? it.genres.join(', ')  : (it.genres || '');
@@ -4105,11 +4136,9 @@ function _aw_renderCards(grid, items) {
     const desc    = zoneLabel && rawDesc ? `(${zoneLabel}) ${rawDesc}` : rawDesc;
     return `
       <article class="artwork-card" data-code="${it.code}">
-        ${cover ? `
-          <figure class="artwork-card__poster">
-            <img loading="lazy" decoding="async" src="${cover}" alt="${it.title} poster" data-state="ready">
-          </figure>` : ''
-        }
+        <figure class="artwork-card__poster">
+          <img loading="lazy" decoding="async" src="${cover}" alt="${it.title || it.code} poster" data-state="${imgState}">
+        </figure>
         <div class="artwork-card__body">
           <h3 class="artwork-card__title">${it.title || it.code}</h3>
           ${desc ? `<p class="artwork-card__description">${desc}</p>` : ''}

@@ -1876,7 +1876,11 @@ body.page.page-wall {
   transition: opacity 0.4s ease;
 }
 
-.artwork-card__poster img[data-state="loading"] {
+/* example_poster 이미지만 어둡게, 나머지는 밝게 */
+.artwork-card__poster img {
+  opacity: 1;
+}
+.artwork-card__poster img[src*="example_poster"] {
   opacity: 0.25;
 }
 
@@ -3046,7 +3050,11 @@ body.page-artworks::-webkit-scrollbar {
 }
 
 /* 로딩 상태 투명도(기존 유지) */
-.artwork-card__poster img[data-state="loading"] {
+/* example_poster 이미지만 어둡게, 나머지는 밝게 */
+.artwork-card__poster img {
+  opacity: 1;
+}
+.artwork-card__poster img[src*="example_poster"] {
   opacity: 0.25;
 }
 
